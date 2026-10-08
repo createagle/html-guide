@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 14-2 · Starter</title>
+  <style>
+    .card { width: min(520px, 100%); border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--surface); }
+    .card h1 { font-size: 18px; margin: 0 0 8px; }
+    video { width: 100%; height: auto; border-radius: 6px; background: #000; }
+  </style>
+</head>
+<body class="demo">
+  <!-- The French subtitles were converted from an .srt file and never appear. Fix the file and the track. -->
+  <article class="card">
+    <h1>A day on the ridge</h1>
+    <video controls width="640" height="360" poster="../media/poster.jpg" preload="metadata" playsinline>
+      <source src="../media/ridge.webm" type='video/webm; codecs="vp9, opus"'>
+      <source src="../media/ridge.mp4" type="video/mp4">
+      <track kind="captions" src="../media/ridge-en.vtt" srclang="en" label="English">
+      <track kind="subtitles" src="02-start.vtt" default>
+    </video>
+  </article>
+</body>
+</html>

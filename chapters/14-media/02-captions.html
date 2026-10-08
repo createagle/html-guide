@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>14-2 Bilingual WebVTT Captions</title>
+  <style>
+    .stage { width: min(900px, 100%); align-items: stretch; }
+    .player { flex: 1 1 520px; position: relative; }
+    video { width: 100%; height: auto; border-radius: 8px; display: block; background: #000; }
+    video::cue { background: rgb(0 0 0 / 0.7); color: #fff; font-family: system-ui, sans-serif; }
+    #dual { position: absolute; inset-inline: 0; bottom: 56px; text-align: center; pointer-events: none; display: grid; gap: 4px; justify-items: center; }
+    #dual span { background: rgb(0 0 0 / 0.7); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: clamp(13px, 2.4vw, 18px); }
+    #dual span:empty { display: none; }
+    #dual .zh { color: #fde68a; }
+    .side { flex: 0 1 300px; display: grid; gap: 10px; align-content: start; }
+    .side pre { font-size: 12px; max-height: 220px; overflow: auto; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">Show
+      <select id="mode">
+        <option value="en">English captions (native)</option>
+        <option value="zh">中文字幕 (native)</option>
+        <option value="both" selected>Both, drawn by script</option>
+        <option value="off">Off</option>
+      </select>
+    </label>
+  </div>
+  <div class="stage">
+    <div class="player">
+      <video id="video" width="640" height="360" controls poster="media/poster.jpg" preload="metadata" playsinline>
+        <source src="media/ridge.webm" type='video/webm; codecs="vp9, opus"'>
+        <source src="media/ridge.mp4" type="video/mp4">
+        <track kind="captions" src="media/ridge-en.vtt" srclang="en" label="English" default>
+        <track kind="subtitles" src="media/ridge-zh.vtt" srclang="zh-Hans" label="简体中文">
+      </video>
+      <div id="dual" aria-hidden="true"><span class="zh" lang="zh-Hans"></span><span class="en"></span></div>
+    </div>
+    <div class="side">
+      <section class="panel" aria-labelledby="active-label">
+        <h2 class="label" id="active-label">Active cues</h2>
+        <p id="active" aria-live="off">—</p>
+      </section>
+      <section class="panel" aria-labelledby="vtt-label">
+        <h2 class="label" id="vtt-label">media/ridge-en.vtt</h2>
+        <pre class="code" id="vtt"></pre>
+      </section>
+    </div>
+  </div>
+  <script>
+    const v = document.getElementById('video');
+    const [en, zh] = v.textTracks;
+    const dual = document.getElementById('dual');
+    // A browser shows one text track at a time; to show two, set them to "hidden" and draw the cues yourself
+    function apply() {
+      const mode = document.getElementById('mode').value;
+      en.mode = mode === 'en' ? 'showing' : mode === 'both' ? 'hidden' : 'disabled';
+      zh.mode = mode === 'zh' ? 'showing' : mode === 'both' ? 'hidden' : 'disabled';
+      dual.hidden = mode !== 'both';
+      update();
+    }
+    function text(track) { return track.activeCues?.length ? [...track.activeCues].map((c) => c.text.replace(/\[.*?\]\n?/, '')).join(' ') : ''; }
+    function update() {
+      dual.querySelector('.en').textContent = text(en);
+      dual.querySelector('.zh').textContent = text(zh);
+      const all = [en, zh].filter((t) => t.mode !== 'disabled').map((t) => `${t.language}: ${text(t) || '—'}`);
+      document.getElementById('active').textContent = all.join(' | ') || 'captions off';
+    }
+    en.addEventListener('cuechange', update);
+    zh.addEventListener('cuechange', update);
+    document.getElementById('mode').addEventListener('change', apply);
+    fetch('media/ridge-en.vtt').then((r) => r.text()).then((t) => { document.getElementById('vtt').textContent = t; });
+    apply();
+  </script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>14-3 What Autoplay Is Allowed</title>
+  <style>
+    .stage { width: min(900px, 100%); display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+    .panel { display: grid; gap: 8px; align-content: start; }
+    video { width: 100%; height: auto; border-radius: 6px; background: #000; }
+    .result { font: 13px var(--mono); margin: 0; }
+    .ok { color: var(--good); }
+    .no { color: var(--bad); }
+    pre.code { font-size: 12px; margin: 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <section class="panel" aria-labelledby="a-label">
+      <h2 class="label" id="a-label">autoplay, with sound</h2>
+      <video id="a" width="640" height="360" playsinline loop>
+        <source src="media/ridge.webm" type="video/webm">
+        <source src="media/ridge.mp4" type="video/mp4">
+      </video>
+      <pre class="code">&lt;video autoplay&gt;</pre>
+      <p class="result" id="a-r">…</p>
+    </section>
+    <section class="panel" aria-labelledby="b-label">
+      <h2 class="label" id="b-label">autoplay, muted</h2>
+      <video id="b" width="640" height="360" playsinline loop muted>
+        <source src="media/ridge.webm" type="video/webm">
+        <source src="media/ridge.mp4" type="video/mp4">
+      </video>
+      <pre class="code">&lt;video autoplay muted playsinline&gt;</pre>
+      <p class="result" id="b-r">…</p>
+    </section>
+    <section class="panel" aria-labelledby="c-label">
+      <h2 class="label" id="c-label">play() after a click</h2>
+      <video id="c" width="640" height="360" playsinline loop>
+        <source src="media/ridge.webm" type="video/webm">
+        <source src="media/ridge.mp4" type="video/mp4">
+      </video>
+      <button type="button" id="go">Play with sound</button>
+      <p class="result" id="c-r">Waiting for a click.</p>
+    </section>
+  </div>
+  <script>
+    // play() returns a promise: it rejects with NotAllowedError when the browser blocks playback
+    function attempt(id, label) {
+      const out = document.getElementById(id + '-r');
+      document.getElementById(id).play()
+        .then(() => { out.className = 'result ok'; out.textContent = `${label}: playing`; })
+        .catch((err) => { out.className = 'result no'; out.textContent = `${label}: blocked (${err.name})`; });
+    }
+    attempt('a', 'Without a click');
+    attempt('b', 'Without a click');
+    document.getElementById('go').addEventListener('click', () => attempt('c', 'After a click'));
+  </script>
+</body>
+</html>

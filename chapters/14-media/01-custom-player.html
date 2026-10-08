@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>14-1 A Custom Video Player</title>
+  <style>
+    .stage { width: min(900px, 100%); align-items: stretch; }
+    .player { flex: 1 1 520px; display: grid; gap: 8px; }
+    video { width: 100%; height: auto; border-radius: 8px; background: #000; display: block; }
+    .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 14px; }
+    .bar button { min-width: 2.5em; }
+    #seek { flex: 1 1 200px; }
+    #time { font-family: var(--mono); font-size: 13px; }
+    #log-panel { flex: 0 1 280px; }
+    #log { margin: 0; padding-left: 20px; font: 12px/1.6 var(--mono); max-height: 300px; overflow: auto; }
+    #src { font: 12px var(--mono); color: var(--muted); }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="player">
+      <video id="video" width="640" height="360" poster="media/poster.jpg" preload="metadata" playsinline>
+        <source src="media/ridge.webm" type='video/webm; codecs="vp9, opus"'>
+        <source src="media/ridge.mp4" type="video/mp4">
+        <track kind="captions" src="media/ridge-en.vtt" srclang="en" label="English">
+        <p>Your browser cannot play this video. <a href="media/ridge.mp4">Download it</a> instead.</p>
+      </video>
+      <div class="bar" role="group" aria-label="Video controls">
+        <button type="button" id="play">Play</button>
+        <input type="range" id="seek" min="0" max="12" step="0.1" value="0" aria-label="Seek">
+        <span id="time">0:00 / 0:00</span>
+      </div>
+      <div class="bar">
+        <button type="button" id="mute" aria-pressed="false">Mute</button>
+        <label>Volume <input type="range" id="volume" min="0" max="1" step="0.05" value="1"></label>
+        <label>Speed <select id="rate"><option>0.5</option><option selected>1</option><option>1.5</option><option>2</option></select></label>
+        <button type="button" id="cc" aria-pressed="false">Captions</button>
+        <button type="button" id="full">Fullscreen</button>
+        <label><input type="checkbox" id="native"> Native controls</label>
+      </div>
+      <p id="src"></p>
+    </div>
+    <section class="panel" id="log-panel" aria-labelledby="log-label">
+      <h2 class="label" id="log-label">Media events</h2>
+      <ol id="log"></ol>
+    </section>
+  </div>
+  <script>
+    const v = document.getElementById('video');
+    const $ = (id) => document.getElementById(id);
+    const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+    function log(text) {
+      const li = Object.assign(document.createElement('li'), { textContent: text });
+      $('log').append(li);
+      $('log').scrollTop = $('log').scrollHeight;
+    }
+    // Everything the custom controls show comes from the media element's own properties and events
+    for (const type of ['loadedmetadata', 'play', 'pause', 'seeking', 'seeked', 'ended', 'ratechange', 'volumechange', 'waiting']) {
+      v.addEventListener(type, () => log(`${type}${type === 'ratechange' ? ' → ' + v.playbackRate : ''}${type === 'volumechange' ? ` → ${v.muted ? 'muted' : v.volume.toFixed(2)}` : ''}`));
+    }
+    v.addEventListener('loadedmetadata', () => {
+      $('seek').max = v.duration;
+      $('time').textContent = `0:00 / ${fmt(v.duration)}`;
+      $('src').textContent = 'Playing: ' + v.currentSrc.split('/').pop() + ` (${v.videoWidth} × ${v.videoHeight})`;
+    });
+    v.addEventListener('timeupdate', () => {
+      $('seek').value = v.currentTime;
+      $('time').textContent = `${fmt(v.currentTime)} / ${fmt(v.duration || 0)}`;
+    });
+    v.addEventListener('play', () => { $('play').textContent = 'Pause'; });
+    v.addEventListener('pause', () => { $('play').textContent = 'Play'; });
+    $('play').addEventListener('click', () => {
+      if (v.paused) v.play().catch((err) => log('play() rejected: ' + err.name));
+      else v.pause();
+    });
+    $('seek').addEventListener('input', (e) => { v.currentTime = Number(e.target.value); });
+    $('mute').addEventListener('click', () => {
+      v.muted = !v.muted;
+      $('mute').setAttribute('aria-pressed', v.muted);
+    });
+    $('volume').addEventListener('input', (e) => { v.volume = Number(e.target.value); });
+    $('rate').addEventListener('change', (e) => { v.playbackRate = Number(e.target.value); });
+    $('cc').addEventListener('click', () => {
+      const track = v.textTracks[0];
+      track.mode = track.mode === 'showing' ? 'hidden' : 'showing';
+      $('cc').setAttribute('aria-pressed', track.mode === 'showing');
+    });
+    $('full').addEventListener('click', () => v.requestFullscreen?.());
+    $('native').addEventListener('change', (e) => { v.controls = e.target.checked; });
+  </script>
+</body>
+</html>

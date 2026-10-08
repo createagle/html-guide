@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>14-4 Which Formats This Browser Plays</title>
+  <style>
+    .stage { width: min(900px, 100%); }
+    .panel { flex: 1 1 320px; }
+    audio { width: 100%; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    td code { font-size: 12px; word-break: break-all; }
+    .answer { font-family: var(--mono); white-space: nowrap; }
+    .none { color: var(--muted); }
+    #picked { font: 12px var(--mono); color: var(--muted); }
+    pre.code { font-size: 12px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <section class="panel" aria-labelledby="audio-label">
+      <h2 class="label" id="audio-label">An audio element with two sources</h2>
+      <audio id="chime" controls preload="metadata">
+        <source src="media/chime.ogg" type='audio/ogg; codecs="opus"'>
+        <source src="media/chime.mp3" type="audio/mpeg">
+        <a href="media/chime.mp3">Download the chime (MP3, 4 seconds)</a>
+      </audio>
+      <p id="picked">Picked: …</p>
+      <pre class="code">&lt;audio controls preload="metadata"&gt;
+  &lt;source src="chime.ogg"
+          type='audio/ogg; codecs="opus"'&gt;
+  &lt;source src="chime.mp3" type="audio/mpeg"&gt;
+&lt;/audio&gt;</pre>
+    </section>
+    <section class="panel" aria-labelledby="table-label">
+      <h2 class="label" id="table-label">canPlayType() in this browser</h2>
+      <table>
+        <thead><tr><th scope="col">type attribute</th><th scope="col">Answer</th></tr></thead>
+        <tbody id="types"></tbody>
+      </table>
+    </section>
+  </div>
+  <script>
+    // The browser walks the source list top to bottom and takes the first type it can play
+    const audio = document.getElementById('chime');
+    const picked = document.getElementById('picked');
+    const showPicked = () => { picked.textContent = 'Picked: ' + (audio.currentSrc.split('/').pop() || 'nothing'); };
+    audio.addEventListener('loadedmetadata', showPicked);
+    showPicked();
+
+    // canPlayType answers "probably", "maybe" or "" (no): it never says yes for sure
+    const types = [
+      'audio/mpeg',
+      'audio/ogg; codecs="opus"',
+      'audio/ogg; codecs="vorbis"',
+      'audio/mp4; codecs="mp4a.40.2"',
+      'audio/flac',
+      'audio/wav',
+      'video/mp4',
+      'video/mp4; codecs="avc1.42E01E, mp4a.40.2"',
+      'video/mp4; codecs="hvc1.1.6.L93.B0"',
+      'video/mp4; codecs="av01.0.05M.08"',
+      'video/webm; codecs="vp9, opus"',
+      'video/webm; codecs="av01.0.05M.08, opus"',
+      'video/x-matroska',
+    ];
+    const probe = document.createElement('video');
+    document.getElementById('types').innerHTML = types.map((t) => {
+      const answer = probe.canPlayType(t);
+      const cls = answer === 'probably' ? 'good' : answer === 'maybe' ? '' : 'none';
+      const safe = t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+      return `<tr><td><code>${safe}</code></td><td class="answer ${cls}">${answer ? answer : '"" (no)'}</td></tr>`;
+    }).join('');
+  </script>
+</body>
+</html>
