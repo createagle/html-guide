@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Exercise 33-2 · Starter</title>
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <!-- The reviews script blocks the parser, and the map loads at once, even if nobody scrolls down -->
+  <script src="02/reviews.js"></script>
+  <style>
+    .trail-page { inline-size: min(600px, 100%); }
+    .trail-page h1 { margin: 0 0 8px; font-size: 28px; }
+    .trail-page h2 { margin: 28px 0 8px; font-size: 20px; }
+    .trail-page p { margin: 0 0 12px; }
+    .trail-page iframe { display: block; inline-size: 100%; block-size: auto; aspect-ratio: 16 / 9; border: 1px solid var(--border); border-radius: 10px; }
+    .reviews { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+    .reviews li { padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; }
+    .reviews p { margin: 4px 0 0; }
+  </style>
+</head>
+<body class="demo">
+  <article class="trail-page">
+    <h1>Ridge Loop</h1>
+    <p>A 14 km circuit that climbs from the north car park through pine forest to Eagle Ridge, follows the crest for three kilometres and drops to the lake before returning along the shore.</p>
+    <h2>Getting there</h2>
+    <p>Take the B road north from the city for 50 minutes. The car park fills by 9:00 on summer weekends; the hourly bus from the station stops at the entrance.</p>
+    <h2>The climb</h2>
+    <p>The first 4 km gain 450 m on a wide forest track. Benches mark each 100 m of height. Above the tree line the path becomes rocky and the views open up to the south.</p>
+    <h2>On the ridge</h2>
+    <p>The crest is exposed: carry a wind layer even on warm days, and turn back if cloud comes down. Two marked descents let you shorten the walk to 9 km.</p>
+    <h2>Down to the lake</h2>
+    <p>A stepped path drops steeply to the water. The lake path is flat but can be muddy after rain; the café at the boathouse is open from April to October.</p>
+    <h2>Map</h2>
+    <iframe src="02/map.html" title="Trail map of the Ridge Loop"></iframe>
+    <section aria-labelledby="reviews-h">
+      <h2 id="reviews-h">Reviews</h2>
+      <div id="review-list"></div>
+    </section>
+  </article>
+  <script>
+    renderReviews(document.getElementById('review-list'));
+  </script>
+</body>
+</html>

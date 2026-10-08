@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270">
+<rect width="480" height="270" fill="#eae1b7"/>
+<circle cx="131" cy="64" r="26" fill="#fff7d6"/>
+<path d="M0 213 Q120 127 240 173 T480 157 V270 H0Z" fill="#64b47d"/>
+<path d="M0 263 Q160 193 300 243 T480 233 V270 H0Z" fill="#307259"/>
+<text x="20" y="250" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#fff">01</text>
+</svg>

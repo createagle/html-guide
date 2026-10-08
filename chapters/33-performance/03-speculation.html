@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>33-3 Speculation Rules</title>
+  <script type="speculationrules">
+  {
+    "prefetch": [{ "where": { "selector_matches": ".prefetch" }, "eagerness": "moderate" }],
+    "prerender": [{ "where": { "selector_matches": ".prerender" }, "eagerness": "moderate" }]
+  }
+  </script>
+  <style>
+    .stage { inline-size: min(560px, 100%); flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 14px; }
+    .links { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+    .links a { display: grid; gap: 2px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; text-decoration: none; color: var(--fg); }
+    .links a:hover, .links a:focus-visible { border-color: var(--accent); }
+    .links a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+    .links strong { color: var(--accent); }
+    .links span { font-size: 13px; color: var(--muted); }
+    .support { margin: 0; font-size: 14px; text-align: center; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <ul class="links">
+      <li><a href="speculation/target.html?via=plain"><strong>Plain link</strong><span>No rule matches. The page is fetched after you click.</span></a></li>
+      <li><a class="prefetch" href="speculation/target.html?via=prefetch"><strong>Prefetch</strong><span>Rest the pointer on it for a moment: the HTML is downloaded in advance.</span></a></li>
+      <li><a class="prerender" href="speculation/target.html?via=prerender"><strong>Prerender</strong><span>Rest the pointer on it: the whole page is loaded and rendered in a hidden tab.</span></a></li>
+    </ul>
+    <p class="support" id="support"></p>
+  </div>
+  <script>
+    const ok = HTMLScriptElement.supports?.('speculationrules');
+    const support = document.getElementById('support');
+    support.textContent = ok ? 'This browser supports speculation rules.' : 'This browser ignores speculation rules: all three links load normally.';
+    support.className = `support ${ok ? 'good' : 'bad'}`;
+  </script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>33-2 Lazy Loading Images</title>
+  <style>
+    body.demo { justify-content: flex-start; padding-block-start: 0; }
+    .controls { position: sticky; inset-block-start: 0; z-index: 1; max-width: none; inline-size: min(760px, 100%); padding: 10px 12px; background: var(--bg); border-block-end: 1px solid var(--border); flex-direction: column; gap: 8px; }
+    fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; justify-content: center; }
+    legend { float: inline-start; font-weight: 600; font-size: 14px; margin-inline-end: 4px; padding: 0; }
+    fieldset .control { color: var(--fg); }
+    .status { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; font-size: 14px; }
+    .dots { display: grid; grid-template-columns: repeat(24, 12px); gap: 3px; margin: 0; padding: 0; list-style: none; }
+    .dots li { block-size: 12px; border-radius: 3px; background: var(--surface); border: 1px solid var(--border); }
+    .dots li.loaded { background: var(--good); border-color: var(--good); }
+    .dots li.seen { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .stage { inline-size: min(480px, 100%); flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 18px; }
+    .stage img { display: block; inline-size: 100%; block-size: auto; aspect-ratio: 16 / 9; border-radius: 10px; background: var(--surface); }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls" id="mode-form">
+    <fieldset>
+      <legend>Load images with</legend>
+      <label class="control"><input type="radio" name="mode" value="lazy" checked> <code>loading="lazy"</code></label>
+      <label class="control"><input type="radio" name="mode" value="observer"> IntersectionObserver</label>
+      <label class="control"><input type="radio" name="mode" value="eager"> <code>loading="eager"</code></label>
+    </fieldset>
+    <div class="status">
+      <output id="count">0 of 24 loaded</output>
+      <ol class="dots" id="dots" aria-hidden="true"></ol>
+    </div>
+  </div>
+  <div class="stage" id="gallery"></div>
+  <script>
+    const mode = new URLSearchParams(location.search).get('mode') ?? 'lazy';
+    document.querySelector(`input[name="mode"][value="${mode}"]`).checked = true;
+    document.getElementById('mode-form').addEventListener('change', (e) => {
+      location.search = `?mode=${e.target.value}`; // reload: images start loading as the page is built
+    });
+
+    // Build the gallery: 24 images, each 270 px tall in a long column
+    const gallery = document.getElementById('gallery');
+    const dots = document.getElementById('dots');
+    const images = [];
+    for (let i = 1; i <= 24; i++) {
+      const n = String(i).padStart(2, '0');
+      const figure = document.createElement('figure');
+      const img = document.createElement('img');
+      img.alt = `Hills at viewpoint ${i}`;
+      img.width = 480;
+      img.height = 270;
+      const caption = document.createElement('figcaption');
+      caption.textContent = `Viewpoint ${i}`;
+      figure.append(img, caption);
+      gallery.append(figure); // in the document first: a detached image always loads at once
+      if (mode === 'observer') img.dataset.src = `img/view-${n}.svg`;
+      else {
+        img.loading = mode;
+        img.src = `img/view-${n}.svg`;
+      }
+      dots.append(document.createElement('li'));
+      images.push(img);
+    }
+
+    // IntersectionObserver: set src when an image comes within 200 px of the viewport
+    if (mode === 'observer') {
+      const observer = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const img = entry.target;
+          img.src = img.dataset.src;
+          observer.unobserve(img);
+        }
+      }, { rootMargin: '200px 0px' });
+      for (const img of images) observer.observe(img);
+    }
+
+    // Readout: which images have been fetched, and which are on screen
+    let loaded = 0;
+    images.forEach((img, i) => img.addEventListener('load', () => {
+      dots.children[i].classList.add('loaded');
+      loaded += 1;
+      document.getElementById('count').textContent = `${loaded} of 24 loaded`;
+    }));
+    const onScreen = new IntersectionObserver((entries) => {
+      for (const entry of entries) dots.children[images.indexOf(entry.target)].classList.toggle('seen', entry.isIntersecting);
+    });
+    for (const img of images) onScreen.observe(img);
+  </script>
+</body>
+</html>

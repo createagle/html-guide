@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>33-3 Arrived</title>
+  <style>
+    .stage { inline-size: min(560px, 100%); flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 14px; }
+    .verdict { margin: 0; font-size: 20px; font-weight: 700; }
+    dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; font-size: 14px; }
+    dt { font-family: var(--mono); color: var(--muted); }
+    dd { margin: 0; font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <section class="panel" aria-labelledby="verdict">
+      <p class="label">How this page was loaded</p>
+      <p class="verdict" id="verdict">…</p>
+      <dl id="facts"></dl>
+    </section>
+    <p><a href="../03-speculation.html">Back to the links</a></p>
+  </div>
+  <script>
+    const asked = new URLSearchParams(location.search).get('via') ?? 'plain';
+    const startedHidden = document.prerendering === true;
+
+    function report() {
+      const nav = performance.getEntriesByType('navigation')[0];
+      const prerendered = nav.activationStart > 0 || startedHidden;
+      const prefetched = nav.deliveryType === 'navigational-prefetch';
+      const verdict = prerendered ? 'Prerendered before you clicked'
+        : prefetched ? 'HTML prefetched before you clicked'
+        : 'Loaded after you clicked';
+      document.getElementById('verdict').textContent = verdict;
+      const facts = [
+        ['link', asked],
+        ['document.prerendering at start', String(startedHidden)],
+        ['activationStart', `${Math.round(nav.activationStart)} ms`],
+        ['deliveryType', nav.deliveryType || '(empty)'],
+        ['responseEnd', `${Math.round(nav.responseEnd)} ms`],
+      ];
+      document.getElementById('facts').replaceChildren(...facts.flatMap(([k, v]) => {
+        const dt = document.createElement('dt');
+        const dd = document.createElement('dd');
+        dt.textContent = k;
+        dd.textContent = v;
+        return [dt, dd];
+      }));
+    }
+
+    // A prerendered page runs its scripts while hidden; wait until the user actually arrives
+    if (document.prerendering) document.addEventListener('prerenderingchange', report, { once: true });
+    else addEventListener('load', report);
+  </script>
+</body>
+</html>
