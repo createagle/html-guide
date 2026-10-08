@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 16-1 · Starter</title>
+  <style>
+    .card { width: min(560px, 100%); }
+    canvas { width: 100%; height: auto; display: block; border: 1px solid var(--border); border-radius: 8px; }
+  </style>
+</head>
+<body class="demo">
+  <!-- The chart is blurry when the canvas is wider than 300px, and a screen reader gets nothing from it. -->
+  <div class="card">
+    <canvas id="chart" width="300" height="150"></canvas>
+  </div>
+  <script>
+    const rain = [['Mon', 2], ['Tue', 0], ['Wed', 6], ['Thu', 11], ['Fri', 4], ['Sat', 0], ['Sun', 1]];
+    const ctx = document.getElementById('chart').getContext('2d');
+    ctx.font = '10px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    rain.forEach(([day, mm], i) => {
+      const x = 20 + i * 40;
+      ctx.fillStyle = '#2563eb';
+      ctx.fillRect(x, 125 - mm * 9, 24, mm * 9);
+      ctx.fillStyle = '#57534e';
+      ctx.fillText(day, x + 12, 140);
+    });
+  </script>
+</body>
+</html>

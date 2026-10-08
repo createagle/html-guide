@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>16-3 Pixels or Objects</title>
+  <style>
+    .stage { width: min(900px, 100%); display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+    .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+    .cell { border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: grid; gap: 8px; align-content: start; }
+    .board { width: 100%; max-width: 400px; height: auto; aspect-ratio: 2 / 1; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); display: block; }
+    #svg circle { fill: var(--dot, #2563eb); cursor: pointer; }
+    .readout { font: 12px var(--mono); margin: 0; min-height: 1.5em; word-break: break-all; }
+    dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 0; font-size: 13px; }
+    dt { color: var(--muted); }
+    dd { margin: 0; font-family: var(--mono); }
+    .hint { font-size: 13px; color: var(--muted); margin: 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="controls">
+      <button type="button" id="add">Add 200 dots to each</button>
+      <button type="button" id="recolor">Recolor every dot</button>
+      <button type="button" id="clear">Clear</button>
+    </div>
+    <div class="row">
+      <section class="cell" aria-labelledby="c-label">
+        <h2 class="label" id="c-label">&lt;canvas&gt;: a grid of pixels</h2>
+        <canvas class="board" id="canvas" width="400" height="200">Dots drawn on a canvas.</canvas>
+        <p class="readout" id="c-read">Hover: the canvas can only tell you a pixel’s color.</p>
+        <dl>
+          <dt>Dots</dt><dd id="c-dots">0</dd>
+          <dt>Elements inside</dt><dd id="c-els">0</dd>
+          <dt>To recolor</dt><dd id="c-time">—</dd>
+        </dl>
+      </section>
+      <section class="cell" aria-labelledby="s-label">
+        <h2 class="label" id="s-label">&lt;svg&gt;: a tree of elements</h2>
+        <svg class="board" id="svg" viewBox="0 0 400 200" role="img" aria-label="Dots drawn as SVG circles"></svg>
+        <p class="readout" id="s-read">Hover: SVG tells you which element is under the pointer.</p>
+        <dl>
+          <dt>Dots</dt><dd id="s-dots">0</dd>
+          <dt>Elements inside</dt><dd id="s-els">0</dd>
+          <dt>To recolor</dt><dd id="s-time">—</dd>
+        </dl>
+      </section>
+    </div>
+    <p class="hint">Click a dot to remove it. On the canvas, the script has to search its own list of dots to find which one you hit, then repaint everything.</p>
+  </div>
+  <script>
+    const colors = ['#2563eb', '#16a34a', '#dc2626', '#7c3aed', '#ca8a04'];
+    let colorIndex = 0;
+    const dots = []; // the canvas only remembers what we remember
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const svg = document.getElementById('svg');
+    const NS = 'http://www.w3.org/2000/svg';
+
+    function paint() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = colors[colorIndex];
+      for (const d of dots) { ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2); ctx.fill(); }
+    }
+    function stats() {
+      document.getElementById('c-dots').textContent = dots.length;
+      document.getElementById('c-els').textContent = canvas.querySelectorAll('*').length;
+      document.getElementById('s-dots').textContent = svg.querySelectorAll('circle').length;
+      document.getElementById('s-els').textContent = svg.querySelectorAll('*').length;
+    }
+
+    document.getElementById('add').addEventListener('click', () => {
+      for (let i = 0; i < 200; i++) {
+        const d = { x: 6 + Math.random() * 388, y: 6 + Math.random() * 188, r: 3 + Math.random() * 4 };
+        dots.push(d);
+        const c = document.createElementNS(NS, 'circle');
+        c.setAttribute('cx', d.x.toFixed(1));
+        c.setAttribute('cy', d.y.toFixed(1));
+        c.setAttribute('r', d.r.toFixed(1));
+        svg.append(c);
+      }
+      paint();
+      stats();
+    });
+
+    document.getElementById('recolor').addEventListener('click', () => {
+      colorIndex = (colorIndex + 1) % colors.length;
+      paint(); // canvas: clear and redraw every dot from our own list
+      document.getElementById('c-time').textContent = `script cleared and redrew ${dots.length} dots`;
+      svg.style.setProperty('--dot', colors[colorIndex]); // SVG: change one style, the browser repaints
+      document.getElementById('s-time').textContent = 'script set one CSS property';
+    });
+
+    document.getElementById('clear').addEventListener('click', () => {
+      dots.length = 0;
+      svg.replaceChildren();
+      paint();
+      stats();
+    });
+
+    const toBoard = (e) => { const r = canvas.getBoundingClientRect(); return { x: (e.clientX - r.left) * 400 / r.width, y: (e.clientY - r.top) * 200 / r.height }; };
+    canvas.addEventListener('mousemove', (e) => {
+      const p = toBoard(e);
+      const [r, g, b, a] = ctx.getImageData(Math.floor(p.x), Math.floor(p.y), 1, 1).data;
+      document.getElementById('c-read').textContent = a ? `Pixel (${Math.floor(p.x)}, ${Math.floor(p.y)}) is rgb(${r} ${g} ${b})` : `Pixel (${Math.floor(p.x)}, ${Math.floor(p.y)}) is transparent`;
+    });
+    canvas.addEventListener('click', (e) => {
+      const p = toBoard(e);
+      for (let i = dots.length - 1; i >= 0; i--) {
+        const d = dots[i];
+        if ((p.x - d.x) ** 2 + (p.y - d.y) ** 2 <= d.r ** 2) { dots.splice(i, 1); paint(); stats(); return; }
+      }
+    });
+    svg.addEventListener('mousemove', (e) => {
+      const el = e.target;
+      document.getElementById('s-read').textContent = el.localName === 'circle'
+        ? `<circle cx="${el.getAttribute('cx')}" cy="${el.getAttribute('cy')}" r="${el.getAttribute('r')}">`
+        : 'No element: the empty <svg> itself';
+    });
+    svg.addEventListener('click', (e) => { if (e.target.localName === 'circle') { e.target.remove(); stats(); } });
+  </script>
+</body>
+</html>

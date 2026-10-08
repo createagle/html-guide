@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>16-1 One Chart, Three Ways</title>
+  <style>
+    .stage { width: min(960px, 100%); display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+    .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+    .cell { border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+    .view { overflow: auto; }
+    .chart { display: block; width: calc(var(--w, 300) * 1px); max-width: none; height: auto; aspect-ratio: 300 / 180; }
+    #svg .bar { fill: var(--accent); transition: fill .15s; }
+    #svg .bar:hover { fill: var(--good); }
+    #svg .axis { stroke: var(--border); }
+    #svg text { font: 11px system-ui, sans-serif; fill: var(--muted); }
+    .note { font-size: 13px; margin: 0; }
+    .note b { font-weight: 600; }
+    #hover { font: 12px var(--mono); color: var(--muted); min-height: 1.4em; margin: 0; }
+    .sr-out { font: 12px/1.5 var(--mono); background: var(--surface); border-radius: 6px; padding: 8px; margin: 0; white-space: pre-wrap; }
+    canvas table { font-size: 12px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="controls">
+      <span class="control"><label for="width">Display width</label> <input type="range" id="width" min="300" max="900" step="50" value="300"> <output id="width-out" for="width">300px</output></span>
+      <label class="control"><input type="checkbox" id="redraw"> Redraw the canvas at the displayed size</label>
+    </div>
+    <div class="row">
+      <section class="cell" aria-labelledby="c-label">
+        <h2 class="label" id="c-label">&lt;canvas&gt;</h2>
+        <div class="view">
+          <canvas class="chart" id="canvas" width="300" height="180">
+            <table>
+              <caption>Hikers per month on North Ridge, April to September</caption>
+              <tr><th scope="row">Month</th><td>Apr</td><td>May</td><td>Jun</td><td>Jul</td><td>Aug</td><td>Sep</td></tr>
+              <tr><th scope="row">Hikers</th><td>300</td><td>500</td><td>900</td><td>1100</td><td>1000</td><td>600</td></tr>
+            </table>
+          </canvas>
+        </div>
+        <p id="hover">Hover a bar: the script works out which one.</p>
+        <p class="note"><b>Pixels.</b> Scale it up and it blurs unless you redraw. Hover needs your own hit testing. Colors are read once at draw time.</p>
+        <pre class="sr-out">Screen reader: the fallback table inside &lt;canvas&gt;</pre>
+      </section>
+      <section class="cell" aria-labelledby="s-label">
+        <h2 class="label" id="s-label">Inline &lt;svg&gt;</h2>
+        <div class="view">
+          <svg class="chart" id="svg" viewBox="0 0 300 180" role="img" aria-labelledby="svg-title svg-desc">
+            <title id="svg-title">Hikers per month on North Ridge</title>
+            <desc id="svg-desc">From 300 in April, rising to a peak of 1100 in July, then falling to 600 in September.</desc>
+            <line class="axis" x1="30" y1="150" x2="290" y2="150"/>
+          </svg>
+        </div>
+        <p class="note"><b>Elements.</b> Stays sharp at any size. Each bar is a DOM element: CSS :hover and the page’s colors just work.</p>
+        <pre class="sr-out">Screen reader: “Hikers per month on North Ridge, image” plus the description</pre>
+      </section>
+      <section class="cell" aria-labelledby="i-label">
+        <h2 class="label" id="i-label">&lt;img src="chart.svg"&gt;</h2>
+        <div class="view">
+          <img class="chart" src="media/chart.svg" width="300" height="180" alt="Bar chart of hikers per month on North Ridge: 300 in April, rising to 1100 in July, 600 in September.">
+        </div>
+        <p class="note"><b>A picture of a document.</b> Sharp at any size, but sealed: no page CSS, no events, no scripts inside.</p>
+        <pre class="sr-out">Screen reader: the alt text</pre>
+      </section>
+    </div>
+  </div>
+  <script>
+    const data = [['Apr', 300], ['May', 500], ['Jun', 900], ['Jul', 1100], ['Aug', 1000], ['Sep', 600]];
+    const bar = (i, v) => ({ x: 40 + i * 42, y: 150 - v * 0.12, w: 28, h: v * 0.12 });
+
+    // SVG: build each bar as an element; a <title> child gives it a tooltip
+    const svg = document.getElementById('svg');
+    const NS = 'http://www.w3.org/2000/svg';
+    data.forEach(([m, v], i) => {
+      const b = bar(i, v);
+      const rect = document.createElementNS(NS, 'rect');
+      rect.setAttribute('class', 'bar');
+      for (const k of ['x', 'y']) rect.setAttribute(k, b[k]);
+      rect.setAttribute('width', b.w);
+      rect.setAttribute('height', b.h);
+      const tip = document.createElementNS(NS, 'title');
+      tip.textContent = `${m}: ${v} hikers`;
+      rect.append(tip);
+      const label = document.createElementNS(NS, 'text');
+      label.setAttribute('x', b.x + 14);
+      label.setAttribute('y', 166);
+      label.setAttribute('text-anchor', 'middle');
+      label.textContent = m;
+      svg.append(rect, label);
+    });
+
+    // Canvas: draw pixels; the browser forgets the bars as soon as they are painted
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let hot = -1;
+    function draw() {
+      const css = getComputedStyle(document.body);
+      const scale = document.getElementById('redraw').checked ? canvas.clientWidth / 300 * devicePixelRatio : 1;
+      canvas.width = Math.round(300 * scale);
+      canvas.height = Math.round(180 * scale);
+      ctx.setTransform(scale, 0, 0, scale, 0, 0);
+      ctx.strokeStyle = css.getPropertyValue('--border');
+      ctx.beginPath(); ctx.moveTo(30, 150.5); ctx.lineTo(290, 150.5); ctx.stroke();
+      ctx.font = '11px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      data.forEach(([m, v], i) => {
+        const b = bar(i, v);
+        ctx.fillStyle = css.getPropertyValue(i === hot ? '--good' : '--accent');
+        ctx.fillRect(b.x, b.y, b.w, b.h);
+        ctx.fillStyle = css.getPropertyValue('--muted');
+        ctx.fillText(m, b.x + 14, 166);
+      });
+    }
+    canvas.addEventListener('mousemove', (e) => {
+      const r = canvas.getBoundingClientRect();
+      const x = (e.clientX - r.left) * 300 / r.width;
+      const y = (e.clientY - r.top) * 180 / r.height;
+      const i = data.findIndex(([, v], k) => { const b = bar(k, v); return x >= b.x && x <= b.x + b.w && y >= b.y && y <= 150; });
+      if (i !== hot) { hot = i; draw(); }
+      document.getElementById('hover').textContent = i < 0 ? 'Hover a bar: the script works out which one.' : `Hit test found ${data[i][0]}: ${data[i][1]} hikers`;
+    });
+    canvas.addEventListener('mouseleave', () => {
+      hot = -1;
+      draw();
+      document.getElementById('hover').textContent = 'Hover a bar: the script works out which one.';
+    });
+
+    const width = document.getElementById('width');
+    function resize() {
+      document.querySelectorAll('.chart').forEach((el) => el.style.setProperty('--w', width.value));
+      document.getElementById('width-out').textContent = width.value + 'px';
+      draw();
+    }
+    width.addEventListener('input', resize);
+    document.getElementById('redraw').addEventListener('change', draw);
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+    resize();
+  </script>
+</body>
+</html>

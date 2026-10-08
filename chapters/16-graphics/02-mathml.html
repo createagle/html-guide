@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>16-2 A MathML Playground</title>
+  <style>
+    .stage { width: min(900px, 100%); align-items: stretch; }
+    .editor { flex: 1 1 380px; display: grid; gap: 8px; align-content: start; }
+    .output { flex: 1 1 380px; display: grid; gap: 12px; align-content: start; }
+    textarea { width: 100%; box-sizing: border-box; min-height: 300px; font: 12px/1.5 var(--mono); padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); resize: vertical; }
+    #render { font-size: 20px; line-height: 1.6; min-height: 120px; overflow-x: auto; }
+    #render p { font-size: 16px; }
+    math { font-family: math; }
+    #tags { margin: 0; padding-left: 18px; font: 12px/1.6 var(--mono); columns: 2; }
+    .controls { justify-content: flex-start; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="editor">
+      <div class="controls">
+        <label class="control">Example
+          <select id="preset">
+            <option value="quadratic">Fraction and root</option>
+            <option value="sum">Sum with limits</option>
+            <option value="matrix">Matrix</option>
+            <option value="inline">Inline in a sentence</option>
+            <option value="chem">Subscripts in chemistry</option>
+          </select>
+        </label>
+      </div>
+      <label class="label" for="src">MathML source (edit it)</label>
+      <textarea id="src" spellcheck="false"></textarea>
+    </div>
+    <div class="output">
+      <section class="panel" aria-labelledby="render-label">
+        <h2 class="label" id="render-label">Rendered by the browser</h2>
+        <div id="render"></div>
+      </section>
+      <section class="panel" aria-labelledby="tags-label">
+        <h2 class="label" id="tags-label">Elements used</h2>
+        <ul id="tags"></ul>
+      </section>
+    </div>
+  </div>
+  <script>
+    const presets = {
+      quadratic: `<math display="block">
+  <mi>x</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mo>−</mo><mi>b</mi>
+      <mo>±</mo>
+      <msqrt>
+        <msup><mi>b</mi><mn>2</mn></msup>
+        <mo>−</mo><mn>4</mn><mi>a</mi><mi>c</mi>
+      </msqrt>
+    </mrow>
+    <mrow><mn>2</mn><mi>a</mi></mrow>
+  </mfrac>
+</math>`,
+      sum: `<math display="block">
+  <munderover>
+    <mo>∑</mo>
+    <mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow>
+    <mi>n</mi>
+  </munderover>
+  <mi>i</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow><mi>n</mi><mo>(</mo><mi>n</mi><mo>+</mo><mn>1</mn><mo>)</mo></mrow>
+    <mn>2</mn>
+  </mfrac>
+</math>`,
+      matrix: `<math display="block">
+  <mi>I</mi>
+  <mo>=</mo>
+  <mrow>
+    <mo>[</mo>
+    <mtable>
+      <mtr><mtd><mn>1</mn></mtd><mtd><mn>0</mn></mtd></mtr>
+      <mtr><mtd><mn>0</mn></mtd><mtd><mn>1</mn></mtd></mtr>
+    </mtable>
+    <mo>]</mo>
+  </mrow>
+</math>`,
+      inline: `<p>A circle of radius <math><mi>r</mi></math> has an area of
+<math><mi>π</mi><msup><mi>r</mi><mn>2</mn></msup></math>,
+so doubling the radius makes it four times as large.</p>`,
+      chem: `<p>Water is
+<math><msub><mi mathvariant="normal">H</mi><mn>2</mn></msub><mi mathvariant="normal">O</mi></math>.
+Without mathvariant="normal", a single-letter mi is drawn in italics:
+<math><msub><mi>H</mi><mn>2</mn></msub><mi>O</mi></math>.</p>`,
+    };
+    const src = document.getElementById('src');
+    const render = document.getElementById('render');
+    const tags = document.getElementById('tags');
+    const meaning = {
+      math: 'the formula', mi: 'identifier', mn: 'number', mo: 'operator', mrow: 'group',
+      mfrac: 'fraction', msqrt: 'square root', mroot: 'nth root', msup: 'superscript', msub: 'subscript',
+      msubsup: 'sub + superscript', munderover: 'under + over', munder: 'under', mover: 'over',
+      mtable: 'table', mtr: 'table row', mtd: 'table cell', mtext: 'text', mspace: 'space',
+    };
+    function update() {
+      render.innerHTML = src.value;
+      const names = [...new Set([...render.querySelectorAll('*')].map((el) => el.localName))].filter((n) => n.startsWith('m'));
+      tags.innerHTML = names.map((n) => `<li>&lt;${n}&gt; ${meaning[n] || ''}</li>`).join('');
+    }
+    document.getElementById('preset').addEventListener('change', (e) => { src.value = presets[e.target.value]; update(); });
+    src.addEventListener('input', update);
+    src.value = presets.quadratic;
+    update();
+  </script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 16-1 · Final</title>
+  <style>
+    .card { width: min(560px, 100%); margin: 0; }
+    canvas { width: 100%; height: auto; aspect-ratio: 2 / 1; display: block; border: 1px solid var(--border); border-radius: 8px; }
+    figcaption { font-size: 14px; color: var(--muted); margin-top: 8px; }
+  </style>
+</head>
+<body class="demo">
+  <figure class="card">
+    <canvas id="chart" width="300" height="150">
+      <table>
+        <caption>Rain per day at North Ridge, in millimetres</caption>
+        <tr><th scope="row">Day</th><td>Mon</td><td>Tue</td><td>Wed</td><td>Thu</td><td>Fri</td><td>Sat</td><td>Sun</td></tr>
+        <tr><th scope="row">Rain (mm)</th><td>2</td><td>0</td><td>6</td><td>11</td><td>4</td><td>0</td><td>1</td></tr>
+      </table>
+    </canvas>
+    <figcaption>Rain per day at North Ridge: wettest on Thursday (11 mm), dry on Tuesday and Saturday.</figcaption>
+  </figure>
+  <script>
+    const rain = [['Mon', 2], ['Tue', 0], ['Wed', 6], ['Thu', 11], ['Fri', 4], ['Sat', 0], ['Sun', 1]];
+    const canvas = document.getElementById('chart');
+    const ctx = canvas.getContext('2d');
+
+    function draw() {
+      // Match the bitmap to the displayed size times the screen's pixel density, then draw in 300×150 units
+      const scale = canvas.clientWidth / 300 * devicePixelRatio;
+      canvas.width = Math.round(300 * scale);
+      canvas.height = Math.round(150 * scale);
+      ctx.setTransform(scale, 0, 0, scale, 0, 0);
+      const css = getComputedStyle(document.body);
+      ctx.font = '10px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      rain.forEach(([day, mm], i) => {
+        const x = 20 + i * 40;
+        ctx.fillStyle = css.getPropertyValue('--accent');
+        ctx.fillRect(x, 125 - mm * 9, 24, mm * 9);
+        ctx.fillStyle = css.getPropertyValue('--muted');
+        ctx.fillText(day, x + 12, 140);
+      });
+    }
+    new ResizeObserver(draw).observe(canvas);
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+  </script>
+</body>
+</html>

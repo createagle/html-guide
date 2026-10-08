@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 16-2 · Final</title>
+  <style>
+    .card { width: min(420px, 100%); border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--surface); }
+    .card h1 { font-size: 18px; margin: 0 0 8px; }
+    .tools { display: flex; gap: 8px; }
+    .tools button { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg); color: var(--fg); cursor: pointer; }
+    .tools button:hover { color: var(--accent); border-color: var(--accent); }
+  </style>
+</head>
+<body class="demo">
+  <article class="card">
+    <h1>Two days on North Ridge</h1>
+    <p>A two-day walk along the crest, with a night at the second saddle.</p>
+    <div class="tools">
+      <button type="button" aria-label="Like">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 21s-7.5-4.6-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2 4.4-9.5 9-9.5 9z"/></svg>
+      </button>
+      <button type="button" aria-label="Save">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M6 3h12v18l-6-4-6 4z"/></svg>
+      </button>
+      <button type="button" aria-label="Share">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M14 4l7 7-7 7v-4c-5 0-8 1.5-10 5 1-5 4-9 10-10z"/></svg>
+      </button>
+    </div>
+  </article>
+</body>
+</html>
