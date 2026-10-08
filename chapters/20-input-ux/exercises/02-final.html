@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 20-2 · Final</title>
+  <style>
+    .chat { width: min(460px, 100%); border: 1px solid var(--border); border-radius: 12px; display: grid; grid-template-rows: 1fr auto; height: 420px; overflow: hidden; }
+    #log { list-style: none; margin: 0; padding: 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+    #log li { align-self: flex-end; max-width: 80%; background: var(--accent); color: var(--bg); padding: 6px 10px; border-radius: 12px 12px 2px 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    #log li.them { align-self: flex-start; background: var(--surface); color: var(--fg); border-radius: 12px 12px 12px 2px; }
+    form { display: flex; gap: 8px; align-items: end; padding: 10px; border-top: 1px solid var(--border); }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    #msg { flex: 1; font-size: 15px; line-height: 1.4; padding: 7px 10px; border: 1px solid var(--border); border-radius: 18px; background: var(--bg); color: var(--fg); resize: none;
+      field-sizing: content; min-height: calc(1lh + 16px); max-height: calc(6lh + 16px); }
+    button { padding: 7px 14px; font-size: 15px; border-radius: 18px; }
+    .hint { margin: 0; padding: 0 12px 8px; font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body class="demo">
+  <section class="chat" aria-label="Chat with support">
+    <ol id="log" aria-live="polite">
+      <li class="them">Hi! How can we help?</li>
+    </ol>
+    <div>
+      <form id="form">
+        <label for="msg" class="visually-hidden">Message</label>
+        <textarea id="msg" name="msg" rows="1" enterkeyhint="send" aria-describedby="msg-hint" required></textarea>
+        <button type="submit">Send</button>
+      </form>
+      <p class="hint" id="msg-hint">Enter to send, Shift+Enter for a new line</p>
+    </div>
+  </section>
+  <script>
+    const form = document.getElementById('form');
+    const msg = document.getElementById('msg');
+    const log = document.getElementById('log');
+
+    // Browsers without field-sizing: grow the box from its scrollHeight (max-height still caps it)
+    function fit() {
+      msg.style.height = 'auto';
+      msg.style.height = msg.scrollHeight + (msg.offsetHeight - msg.clientHeight) + 'px';
+    }
+    if (!CSS.supports('field-sizing', 'content')) {
+      msg.addEventListener('input', fit);
+      fit();
+    }
+
+    msg.addEventListener('keydown', (e) => {
+      // isComposing: Enter is confirming an IME candidate (Chinese, Japanese…), not sending
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = msg.value.trim();
+      if (!text) return;
+      const li = document.createElement('li');
+      li.textContent = text;
+      log.append(li);
+      log.scrollTop = log.scrollHeight;
+      msg.value = '';
+      if (!CSS.supports('field-sizing', 'content')) fit();
+    });
+  </script>
+</body>
+</html>

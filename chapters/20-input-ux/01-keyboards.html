@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>20-1 Mobile Keyboards</title>
+  <style>
+    .stage { width: min(920px, 100%); flex-direction: column; align-items: stretch; }
+    .wrap { overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; font-size: 14px; }
+    caption { text-align: left; font-size: 13px; color: var(--muted); padding-bottom: 8px; }
+    th, td { text-align: left; vertical-align: middle; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    thead th { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+    tbody th { font-weight: 400; }
+    tbody th label { cursor: pointer; }
+    tbody th code { font-size: 12.5px; white-space: nowrap; }
+    tbody tr.group th[colspan] { background: var(--surface); font-weight: 600; font-size: 13px; }
+    td input { width: 11em; font-size: 15px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    td input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    td:last-child { color: var(--muted); }
+    .readout { font: 13px/1.6 var(--mono); }
+    .readout b { color: var(--accent); font-weight: 600; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="wrap">
+      <table>
+        <caption>Open this page on a phone and tap each field.</caption>
+        <thead>
+          <tr><th scope="col">Markup</th><th scope="col">Try it</th><th scope="col">Keyboard on most phones</th></tr>
+        </thead>
+        <tbody>
+          <tr class="group"><th colspan="3" scope="colgroup">type: what the value is</th></tr>
+          <tr><th scope="row"><label for="k1"><code>type="text"</code></label></th><td><input id="k1" type="text"></td><td>Full keyboard, letters first</td></tr>
+          <tr><th scope="row"><label for="k2"><code>type="email"</code></label></th><td><input id="k2" type="email"></td><td>Letters plus <kbd>@</kbd> and <kbd>.</kbd>; no automatic capitals</td></tr>
+          <tr><th scope="row"><label for="k3"><code>type="url"</code></label></th><td><input id="k3" type="url"></td><td>Letters plus <kbd>/</kbd> and <kbd>.</kbd>, sometimes <kbd>.com</kbd></td></tr>
+          <tr><th scope="row"><label for="k4"><code>type="tel"</code></label></th><td><input id="k4" type="tel"></td><td>Phone keypad: 0–9, <kbd>*</kbd>, <kbd>#</kbd>, <kbd>+</kbd></td></tr>
+          <tr><th scope="row"><label for="k5"><code>type="number"</code></label></th><td><input id="k5" type="number"></td><td>Numbers and symbols; varies between systems</td></tr>
+          <tr><th scope="row"><label for="k6"><code>type="search"</code></label></th><td><input id="k6" type="search"></td><td>Full keyboard; Enter key reads “Search” or shows a magnifier</td></tr>
+
+          <tr class="group"><th colspan="3" scope="colgroup">inputmode: which keyboard, value stays text</th></tr>
+          <tr><th scope="row"><label for="k7"><code>inputmode="numeric"</code></label></th><td><input id="k7" type="text" inputmode="numeric"></td><td>Digit pad 0–9, nothing else</td></tr>
+          <tr><th scope="row"><label for="k8"><code>inputmode="decimal"</code></label></th><td><input id="k8" type="text" inputmode="decimal"></td><td>Digit pad plus the decimal separator of the user’s locale</td></tr>
+          <tr><th scope="row"><label for="k9"><code>inputmode="tel"</code></label></th><td><input id="k9" type="text" inputmode="tel"></td><td>Phone keypad, like <code>type="tel"</code></td></tr>
+          <tr><th scope="row"><label for="k10"><code>inputmode="email"</code></label></th><td><input id="k10" type="text" inputmode="email"></td><td>Email keyboard, without email validation</td></tr>
+          <tr><th scope="row"><label for="k11"><code>inputmode="none"</code></label></th><td><input id="k11" type="text" inputmode="none"></td><td>No keyboard at all, for pages that draw their own</td></tr>
+
+          <tr class="group"><th colspan="3" scope="colgroup">enterkeyhint: what the Enter key says</th></tr>
+          <tr><th scope="row"><label for="k12"><code>enterkeyhint="next"</code></label></th><td><input id="k12" type="text" enterkeyhint="next"></td><td>Enter key reads “Next” or shows an arrow</td></tr>
+          <tr><th scope="row"><label for="k13"><code>enterkeyhint="done"</code></label></th><td><input id="k13" type="text" enterkeyhint="done"></td><td>Enter key reads “Done”</td></tr>
+          <tr><th scope="row"><label for="k14"><code>enterkeyhint="send"</code></label></th><td><input id="k14" type="text" enterkeyhint="send"></td><td>Enter key reads “Send” or shows a paper plane</td></tr>
+          <tr><th scope="row"><label for="k15"><code>enterkeyhint="go"</code></label></th><td><input id="k15" type="text" enterkeyhint="go"></td><td>Enter key reads “Go”</td></tr>
+
+          <tr class="group"><th colspan="3" scope="colgroup">autocapitalize and autocorrect: how typing is helped</th></tr>
+          <tr><th scope="row"><label for="k16"><code>autocapitalize="words"</code></label></th><td><input id="k16" type="text" autocapitalize="words"></td><td>Capital at the start of every word, good for names</td></tr>
+          <tr><th scope="row"><label for="k17"><code>autocapitalize="characters"</code></label></th><td><input id="k17" type="text" autocapitalize="characters"></td><td>Caps lock on, good for codes like AB12 CDE</td></tr>
+          <tr><th scope="row"><label for="k18"><code>autocapitalize="none" autocorrect="off"</code></label></th><td><input id="k18" type="text" autocapitalize="none" autocorrect="off" spellcheck="false"></td><td>Nothing capitalized or “fixed”, good for usernames</td></tr>
+          <tr><th scope="row"><label for="k19"><code>autocomplete="one-time-code"</code></label></th><td><input id="k19" type="text" inputmode="numeric" autocomplete="one-time-code"></td><td>Digit pad; the keyboard offers the code from a recent SMS</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <section class="panel" aria-labelledby="focus-label">
+      <h2 class="label" id="focus-label">Focused field, as the browser reads it</h2>
+      <p class="readout" id="readout" aria-live="polite">Focus a field in the table.</p>
+    </section>
+  </div>
+  <script>
+    const readout = document.getElementById('readout');
+    document.querySelector('tbody').addEventListener('focusin', (e) => {
+      const el = e.target;
+      if (el.tagName !== 'INPUT') return;
+      // These IDL properties reflect the attributes; an empty string means "not set"
+      const parts = [
+        ['type', el.type],
+        ['inputMode', el.inputMode || '(default)'],
+        ['enterKeyHint', el.enterKeyHint || '(default)'],
+        ['autocapitalize', el.autocapitalize || '(default)'],
+        ['autocomplete', el.autocomplete || '(not set)'],
+      ];
+      readout.replaceChildren(...parts.flatMap(([k, v], i) => {
+        const b = document.createElement('b');
+        b.textContent = v;
+        return [i ? ' · ' : '', k + ': ', b];
+      }));
+    });
+  </script>
+</body>
+</html>

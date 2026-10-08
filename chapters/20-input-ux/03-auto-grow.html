@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>20-3 Fields That Fit Their Content</title>
+  <style>
+    .stage { width: min(820px, 100%); align-items: stretch; }
+    .fields { flex: 1 1 380px; display: grid; gap: 14px; align-content: start; }
+    .side { flex: 1 1 260px; }
+    .field { display: grid; gap: 4px; justify-items: start; }
+    .field label { font-weight: 600; font-size: 14px; }
+    textarea, input, select { font-size: 15px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    textarea { width: 100%; resize: vertical; }
+
+    /* The whole technique: let the content decide the size, within limits */
+    .fit textarea, .fit input, .fit select { field-sizing: content; }
+    .fit textarea { min-height: 3lh; max-height: 10lh; resize: none; }
+    .fit input { min-width: 6ch; max-width: 100%; }
+
+    /* Without .fit the browser's defaults apply: rows="2", size="10" */
+    pre.code { font-size: 12.5px; }
+    #support { font-size: 13px; margin: 0 0 8px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="toggle" checked> <code>field-sizing: content</code></label>
+  </div>
+  <div class="stage">
+    <div id="fields" class="fields fit">
+      <div class="field">
+        <label for="msg">Message</label>
+        <textarea id="msg" name="msg" rows="2">Type here and press Enter a few times.
+The box grows with each line, up to ten lines, then it scrolls.</textarea>
+      </div>
+      <div class="field">
+        <label for="tag">Tag</label>
+        <input type="text" id="tag" name="tag" size="10" value="html">
+      </div>
+      <div class="field">
+        <label for="size">Size</label>
+        <select id="size" name="size">
+          <option>S</option><option>M</option><option>Extra extra large</option>
+        </select>
+      </div>
+    </div>
+    <section class="panel side" aria-labelledby="m-label">
+      <h2 class="label" id="m-label">Measured size</h2>
+      <p id="support"></p>
+      <pre class="code" id="sizes"></pre>
+    </section>
+  </div>
+  <script>
+    const fields = document.getElementById('fields');
+    const toggle = document.getElementById('toggle');
+    const sizes = document.getElementById('sizes');
+    const supported = CSS.supports('field-sizing', 'content');
+    document.getElementById('support').textContent = supported
+      ? 'This browser supports field-sizing.'
+      : 'This browser does not support field-sizing yet, so the fields keep their default size.';
+    document.getElementById('support').className = supported ? 'good' : 'bad';
+
+    function measure() {
+      const rows = [...fields.querySelectorAll('textarea, input, select')].map((el) => {
+        const r = el.getBoundingClientRect();
+        return `${el.id.padEnd(5)} ${Math.round(r.width)} × ${Math.round(r.height)} px`;
+      });
+      sizes.textContent = rows.join('\n');
+    }
+    toggle.addEventListener('change', () => { fields.classList.toggle('fit', toggle.checked); measure(); });
+    fields.addEventListener('input', measure);
+    new ResizeObserver(measure).observe(fields);
+  </script>
+</body>
+</html>

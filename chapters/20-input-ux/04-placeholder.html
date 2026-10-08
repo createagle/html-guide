@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>20-4 Placeholder Is Not a Label</title>
+  <style>
+    .stage { width: min(960px, 100%); align-items: stretch; }
+    .panel { flex: 1 1 260px; display: grid; gap: 10px; align-content: start; }
+    .field { display: grid; gap: 3px; }
+    .field label { font-weight: 600; font-size: 14px; }
+    .hint { margin: 0; font-size: 13px; color: var(--muted); }
+    input { font-size: 15px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); width: 100%; }
+    .verdict { margin: 0; font-size: 13px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <button type="button" id="fill">Fill all three like a user would</button>
+    <button type="button" id="clear">Clear</button>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="a-label">
+      <h2 class="label" id="a-label">A · placeholder instead of label</h2>
+      <input type="text" aria-label="Card expiry date" placeholder="Expiry date (MM/YY)" autocomplete="cc-exp" inputmode="numeric">
+      <input type="text" aria-label="Security code" placeholder="Security code" autocomplete="cc-csc" inputmode="numeric">
+      <p class="verdict bad">Once typed in, nothing says what each box is or what format it wanted.</p>
+    </section>
+    <section class="panel" aria-labelledby="b-label">
+      <h2 class="label" id="b-label">B · label, format in placeholder</h2>
+      <div class="field"><label for="b1">Expiry date</label><input type="text" id="b1" placeholder="MM/YY" autocomplete="cc-exp" inputmode="numeric"></div>
+      <div class="field"><label for="b2">Security code</label><input type="text" id="b2" placeholder="3 digits on the back" autocomplete="cc-csc" inputmode="numeric"></div>
+      <p class="verdict">Better, but the format disappears while typing, and the faint text looks like a value already filled in.</p>
+    </section>
+    <section class="panel" aria-labelledby="c-label">
+      <h2 class="label" id="c-label">C · label and visible hint</h2>
+      <div class="field"><label for="c1">Expiry date</label><p class="hint" id="c1-hint">For example, 04/29</p><input type="text" id="c1" aria-describedby="c1-hint" autocomplete="cc-exp" inputmode="numeric"></div>
+      <div class="field"><label for="c2">Security code</label><p class="hint" id="c2-hint">The last 3 digits on the back of the card</p><input type="text" id="c2" aria-describedby="c2-hint" autocomplete="cc-csc" inputmode="numeric"></div>
+      <p class="verdict good">The name and the hint stay put, and screen readers read both.</p>
+    </section>
+  </div>
+  <script>
+    const inputs = document.querySelectorAll('.stage input');
+    const values = ['0429', '123'];
+    document.getElementById('fill').addEventListener('click', () => {
+      inputs.forEach((el, i) => { el.value = values[i % 2]; });
+    });
+    document.getElementById('clear').addEventListener('click', () => {
+      inputs.forEach((el) => { el.value = ''; });
+    });
+  </script>
+</body>
+</html>

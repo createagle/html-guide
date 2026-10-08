@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 20-1 · Final</title>
+  <style>
+    form { width: min(440px, 100%); display: grid; gap: 10px; }
+    fieldset { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px 14px; display: grid; gap: 10px; margin: 0; }
+    legend { font-weight: 600; padding: 0 4px; }
+    .field { display: grid; gap: 3px; }
+    .field label { font-weight: 600; font-size: 14px; }
+    .hint { margin: 0; font-size: 13px; color: var(--muted); }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    input { font-size: 15px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); width: 100%; min-width: 0; }
+    button { justify-self: start; padding: 8px 16px; font-size: 15px; }
+    #done { margin: 0; color: var(--good); font-weight: 600; }
+  </style>
+</head>
+<body class="demo">
+  <form id="form">
+    <fieldset>
+      <legend>Your details</legend>
+      <div class="field"><label for="name">Full name</label>
+        <input type="text" id="name" name="name" autocomplete="name" autocapitalize="words" enterkeyhint="next" required></div>
+      <div class="field"><label for="email">Email</label>
+        <input type="email" id="email" name="email" autocomplete="email" spellcheck="false" enterkeyhint="next" required></div>
+      <div class="field"><label for="tel">Phone <span class="hint">optional</span></label>
+        <input type="tel" id="tel" name="tel" autocomplete="tel" enterkeyhint="next"></div>
+      <div class="field"><label for="postcode">Postcode</label>
+        <input type="text" id="postcode" name="postcode" autocomplete="postal-code" autocapitalize="characters" enterkeyhint="next" required></div>
+    </fieldset>
+    <fieldset>
+      <legend>Card</legend>
+      <div class="field"><label for="cc-name">Name on card</label>
+        <input type="text" id="cc-name" name="cc-name" autocomplete="cc-name" autocapitalize="words" enterkeyhint="next" required></div>
+      <div class="field"><label for="cc-number">Card number</label>
+        <input type="text" id="cc-number" name="cc-number" autocomplete="cc-number" inputmode="numeric" enterkeyhint="next" required></div>
+      <div class="row">
+        <div class="field"><label for="cc-exp">Expiry</label><p class="hint" id="cc-exp-hint">MM/YY, for example 04/29</p>
+          <input type="text" id="cc-exp" name="cc-exp" autocomplete="cc-exp" inputmode="numeric" aria-describedby="cc-exp-hint" enterkeyhint="next" required></div>
+        <div class="field"><label for="cc-csc">Security code</label><p class="hint" id="cc-csc-hint">Last 3 digits on the back</p>
+          <input type="text" id="cc-csc" name="cc-csc" autocomplete="cc-csc" inputmode="numeric" aria-describedby="cc-csc-hint" enterkeyhint="done" required></div>
+      </div>
+    </fieldset>
+    <button type="submit">Pay £24.00</button>
+    <p id="done" role="status"></p>
+  </form>
+  <script>
+    document.getElementById('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      document.getElementById('done').textContent = 'Paid (nothing is sent in this demo).';
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>20-2 Autocomplete Tokens</title>
+  <style>
+    .stage { width: min(940px, 100%); align-items: stretch; }
+    form { flex: 1 1 380px; display: grid; gap: 12px; align-content: start; }
+    .side { flex: 1 1 340px; display: grid; gap: 16px; align-content: start; }
+    fieldset { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px 14px; display: grid; gap: 10px; margin: 0; }
+    legend { font-weight: 600; padding: 0 4px; }
+    .field { display: grid; gap: 3px; }
+    .field label { font-weight: 600; font-size: 14px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .field input, .field select { font-size: 15px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); min-width: 0; }
+    .check { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+    button { justify-self: start; padding: 8px 16px; font-size: 15px; }
+    #tokens { margin: 0; padding: 0; list-style: none; font-size: 13px; display: grid; gap: 2px; }
+    #tokens li { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px dashed var(--border); padding: 2px 0; }
+    #tokens code { font-size: 12px; text-align: right; }
+    .tester { display: grid; gap: 8px; }
+    .tester input { font: 14px var(--mono); padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+    .presets button { font: 12px var(--mono); padding: 3px 8px; }
+    #verdict { margin: 0; font-size: 14px; min-height: 3em; }
+    #sent { margin: 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <form id="form">
+      <fieldset>
+        <legend>Delivery</legend>
+        <div class="field"><label for="name">Full name</label><input type="text" id="name" name="name" autocomplete="shipping name" autocapitalize="words" required></div>
+        <div class="row">
+          <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" required></div>
+          <div class="field"><label for="tel">Phone</label><input id="tel" name="tel" type="tel" autocomplete="shipping tel"></div>
+        </div>
+        <div class="field"><label for="line1">Address line 1</label><input type="text" id="line1" name="line1" autocomplete="shipping address-line1" required></div>
+        <div class="field"><label for="line2">Address line 2 <span class="label">optional</span></label><input type="text" id="line2" name="line2" autocomplete="shipping address-line2"></div>
+        <div class="row">
+          <div class="field"><label for="city">Town or city</label><input type="text" id="city" name="city" autocomplete="shipping address-level2" required></div>
+          <div class="field"><label for="postcode">Postcode</label><input type="text" id="postcode" name="postcode" autocomplete="shipping postal-code" autocapitalize="characters" required></div>
+        </div>
+        <div class="field"><label for="country">Country</label>
+          <select id="country" name="country" autocomplete="shipping country">
+            <option value="GB">United Kingdom</option><option value="IE">Ireland</option><option value="FR">France</option><option value="DE">Germany</option><option value="CN">China</option><option value="US">United States</option>
+          </select>
+        </div>
+      </fieldset>
+      <label class="check"><input type="checkbox" id="same" checked> Bill to the delivery address</label>
+      <fieldset id="billing" hidden disabled>
+        <legend>Billing</legend>
+        <div class="field"><label for="b-line1">Address line 1</label><input type="text" id="b-line1" name="b-line1" autocomplete="billing address-line1" required></div>
+        <div class="row">
+          <div class="field"><label for="b-city">Town or city</label><input type="text" id="b-city" name="b-city" autocomplete="billing address-level2" required></div>
+          <div class="field"><label for="b-postcode">Postcode</label><input type="text" id="b-postcode" name="b-postcode" autocomplete="billing postal-code" autocapitalize="characters" required></div>
+        </div>
+      </fieldset>
+      <button type="submit">Continue to payment</button>
+      <p id="sent" role="status"></p>
+    </form>
+
+    <div class="side">
+      <section class="panel" aria-labelledby="t-label">
+        <h2 class="label" id="t-label">autocomplete of each field</h2>
+        <ul id="tokens"></ul>
+      </section>
+      <section class="panel tester" aria-labelledby="tt-label">
+        <h2 class="label" id="tt-label">Token tester</h2>
+        <label for="try">Try an <code>autocomplete</code> value</label>
+        <input type="text" id="try" value="shipping postal-code" spellcheck="false" autocapitalize="none" autocomplete="off">
+        <div class="presets" id="presets" role="group" aria-label="Examples">
+          <button type="button">section-gift shipping name</button>
+          <button type="button">work email</button>
+          <button type="button">new-password</button>
+          <button type="button">one-time-code</button>
+          <button type="button">postcode</button>
+          <button type="button">work street-address</button>
+          <button type="button">name given-name</button>
+        </div>
+        <p id="verdict" aria-live="polite"></p>
+      </section>
+    </div>
+  </div>
+  <script>
+    const form = document.getElementById('form');
+    const tokens = document.getElementById('tokens');
+
+    function listTokens() {
+      tokens.replaceChildren();
+      for (const el of form.querySelectorAll('input:not([type=checkbox]), select')) {
+        if (el.closest('[hidden]')) continue;
+        const li = document.createElement('li');
+        const label = document.createElement('span');
+        label.textContent = (el.closest('#billing') ? 'Billing · ' : '') + el.labels[0].firstChild.textContent.trim();
+        const code = document.createElement('code');
+        code.textContent = el.autocomplete;
+        li.append(label, code);
+        tokens.append(li);
+      }
+    }
+
+    const same = document.getElementById('same');
+    const billing = document.getElementById('billing');
+    same.addEventListener('change', () => {
+      // A disabled fieldset is neither submitted nor validated
+      billing.hidden = billing.disabled = same.checked;
+      listTokens();
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      document.getElementById('sent').textContent = 'Looks good (nothing is sent in this demo).';
+    });
+
+    // The IDL property returns the value only when the browser understands it
+    const tryInput = document.getElementById('try');
+    const verdict = document.getElementById('verdict');
+    const probe = document.createElement('input');
+    function test() {
+      probe.setAttribute('autocomplete', tryInput.value);
+      const read = probe.autocomplete;
+      verdict.className = read ? 'good' : 'bad';
+      verdict.textContent = read
+        ? `Understood. input.autocomplete returns “${read}”.`
+        : 'Not understood. input.autocomplete returns an empty string, so the browser falls back to guessing from name, id and label.';
+    }
+    tryInput.addEventListener('input', test);
+    document.getElementById('presets').addEventListener('click', (e) => {
+      if (e.target.tagName !== 'BUTTON') return;
+      tryInput.value = e.target.textContent;
+      test();
+    });
+
+    listTokens();
+    test();
+  </script>
+</body>
+</html>

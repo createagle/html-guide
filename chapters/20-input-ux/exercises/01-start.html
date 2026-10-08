@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 20-1 · Starter</title>
+  <style>
+    form { width: min(440px, 100%); display: grid; gap: 10px; }
+    fieldset { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px 14px; display: grid; gap: 10px; margin: 0; }
+    legend { font-weight: 600; padding: 0 4px; }
+    input { font-size: 15px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); width: 100%; }
+    button { justify-self: start; padding: 8px 16px; font-size: 15px; }
+    #done { margin: 0; color: var(--good); font-weight: 600; }
+  </style>
+</head>
+<body class="demo">
+  <!-- On a phone this form is slow to fill: no autofill, the wrong keyboards, and the boxes forget what they are. -->
+  <form id="form" autocomplete="off">
+    <fieldset>
+      <legend>Your details</legend>
+      <input type="text" name="f1" placeholder="Full name" aria-label="Full name" required>
+      <input type="text" name="f2" placeholder="Email" aria-label="Email" required>
+      <input type="text" name="f3" placeholder="Phone" aria-label="Phone">
+      <input type="text" name="f4" placeholder="Postcode" aria-label="Postcode" required>
+    </fieldset>
+    <fieldset>
+      <legend>Card</legend>
+      <input type="text" name="f5" placeholder="Name on card" aria-label="Name on card" required>
+      <input type="number" name="f6" placeholder="Card number" aria-label="Card number" required>
+      <input type="text" name="f7" placeholder="Expiry (MM/YY)" aria-label="Expiry" required>
+      <input type="number" name="f8" placeholder="CVC" aria-label="CVC" required>
+    </fieldset>
+    <button type="submit">Pay £24.00</button>
+    <p id="done" role="status"></p>
+  </form>
+  <script>
+    document.getElementById('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      document.getElementById('done').textContent = 'Paid (nothing is sent in this demo).';
+    });
+  </script>
+</body>
+</html>
