@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>3-1 Whitespace Collapsing</title>
+  <style>
+    .stage { width: min(860px, 100%); align-items: stretch; }
+    .stage .panel { flex: 1 1 240px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    textarea { width: 100%; min-height: 150px; resize: vertical; font: 13px/1.55 var(--mono); padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); tab-size: 4; }
+    .result { flex: 1; min-height: 150px; padding: 10px 12px; border: 1px dashed var(--border); border-radius: 8px; overflow: auto; }
+    .result > :first-child { margin-top: 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">Wrap the text in
+      <select id="wrapper">
+        <option value="p">&lt;p&gt;</option>
+        <option value="pre">&lt;pre&gt;</option>
+        <option value="br">&lt;p&gt; with &lt;br&gt; for each line break</option>
+      </select>
+    </label>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="in-label">
+      <h2 class="label" id="in-label"><label for="text">Text with spaces, tabs and line breaks</label></h2>
+      <textarea id="text" spellcheck="false">Roses    are red,
+	violets are blue.
+
+Three   spaces become one,
+and so do  line breaks too.</textarea>
+    </section>
+    <section class="panel" aria-labelledby="out-label">
+      <h2 class="label" id="out-label">Rendered</h2>
+      <div class="result" id="result"></div>
+      <pre class="code" id="markup"></pre>
+    </section>
+  </div>
+  <script>
+    const text = document.getElementById('text');
+    const wrapper = document.getElementById('wrapper');
+    const result = document.getElementById('result');
+    const markup = document.getElementById('markup');
+
+    function update() {
+      let el;
+      if (wrapper.value === 'br') {
+        // One <br> per line break; the remaining spaces still collapse
+        el = document.createElement('p');
+        text.value.split('\n').forEach((line, i) => {
+          if (i) el.append(document.createElement('br'));
+          el.append(line);
+        });
+      } else {
+        el = document.createElement(wrapper.value);
+        el.textContent = text.value;
+      }
+      result.replaceChildren(el);
+      markup.textContent = el.outerHTML;
+    }
+    text.addEventListener('input', update);
+    wrapper.addEventListener('change', update);
+    update();
+  </script>
+</body>
+</html>

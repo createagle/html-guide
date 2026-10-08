@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>3-2 Text-level Semantics</title>
+  <style>
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; width: min(860px, 100%); }
+    .grid .panel { padding: 12px 14px; }
+    .grid p { margin: 0; }
+    .tag { display: block; margin-bottom: 6px; font: 600 12px var(--mono); color: var(--accent); }
+    .meaning { display: block; margin-top: 6px; font-size: 12px; color: var(--muted); }
+    /* "Show tags": outline every element inside the sample sentences */
+    body.outlined .sample * { outline: 1px dashed var(--accent); outline-offset: 1px; }
+    body.outlined .sample *::after { content: attr(data-tag); font: 10px var(--mono); color: var(--accent); vertical-align: super; margin-left: 1px; }
+    body.plain .sample * { all: unset; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="outline"> Show tags</label>
+    <label class="control"><input type="checkbox" id="plain"> Remove default styles</label>
+  </div>
+  <div class="grid">
+    <div class="panel"><span class="tag">strong</span><p class="sample">Do <strong>not</strong> unplug the drive.</p><span class="meaning">Importance, seriousness, urgency</span></div>
+    <div class="panel"><span class="tag">em</span><p class="sample">I <em>did</em> lock the door.</p><span class="meaning">Stress that changes the meaning</span></div>
+    <div class="panel"><span class="tag">mark</span><p class="sample">Results for “tea”: green <mark>tea</mark> leaves</p><span class="meaning">Highlighted for relevance</span></div>
+    <div class="panel"><span class="tag">b</span><p class="sample"><b>Key terms:</b> parser, token, DOM</p><span class="meaning">Draws attention, no extra importance</span></div>
+    <div class="panel"><span class="tag">i</span><p class="sample">The ship <i>Endeavour</i> sailed in 1768.</p><span class="meaning">Alternate voice: titles, terms, other languages</span></div>
+    <div class="panel"><span class="tag">small</span><p class="sample">$9 / month <small>Plus tax. Cancel anytime.</small></p><span class="meaning">Side comments, fine print</span></div>
+    <div class="panel"><span class="tag">s</span><p class="sample">Price: <s>$49</s> $29</p><span class="meaning">No longer accurate or relevant</span></div>
+    <div class="panel"><span class="tag">q · cite</span><p class="sample"><cite>The Hobbit</cite> opens with <q>In a hole in the ground there lived a hobbit.</q></p><span class="meaning">Inline quote · title of a work</span></div>
+    <div class="panel"><span class="tag">abbr</span><p class="sample">Written in <abbr title="HyperText Markup Language">HTML</abbr>.</p><span class="meaning">Abbreviation, expansion in title</span></div>
+    <div class="panel"><span class="tag">code · kbd · samp</span><p class="sample">Run <code>npm test</code>, press <kbd>Ctrl</kbd>+<kbd>C</kbd>, see <samp>Done in 2s</samp>.</p><span class="meaning">Code · user input · program output</span></div>
+    <div class="panel"><span class="tag">var · sub · sup</span><p class="sample">If <var>x</var><sup>2</sup> = 4, then H<sub>2</sub>O…</p><span class="meaning">Variable · superscript · subscript</span></div>
+    <div class="panel"><span class="tag">ruby</span><p class="sample" lang="zh-CN"><ruby>汉<rp>(</rp><rt>hàn</rt><rp>)</rp>字<rp>(</rp><rt>zì</rt><rp>)</rp></ruby></p><span class="meaning">Pronunciation annotations</span></div>
+  </div>
+  <script>
+    // Label each sample element with its tag name for the "Show tags" view
+    document.querySelectorAll('.sample *').forEach((el) => { el.dataset.tag = el.localName; });
+    document.getElementById('outline').addEventListener('change', (e) => document.body.classList.toggle('outlined', e.target.checked));
+    document.getElementById('plain').addEventListener('change', (e) => document.body.classList.toggle('plain', e.target.checked));
+  </script>
+</body>
+</html>
