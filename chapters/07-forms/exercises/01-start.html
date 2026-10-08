@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 7-1 · Starter</title>
+  <style>
+    form { display: grid; gap: 12px; width: min(360px, 100%); }
+    .hint { font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body class="demo">
+  <!-- Submit this form and look at the address bar: nothing is sent. Fix it so every field has a label, a name, and the right type. -->
+  <form class="panel" method="get">
+    <h1 class="label">Join the newsletter</h1>
+    <input type="text" placeholder="Your name">
+    <input type="text" placeholder="Email">
+    <div>
+      <b>How often?</b><br>
+      <input type="radio" value="weekly"> Weekly
+      <input type="radio" value="monthly"> Monthly
+    </div>
+    <div><input type="checkbox"> <span>I agree to the privacy policy</span></div>
+    <p class="hint">After submitting, the data appears after the ? in the address bar.</p>
+    <button>Subscribe</button>
+  </form>
+</body>
+</html>

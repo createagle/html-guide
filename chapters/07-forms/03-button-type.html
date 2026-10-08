@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>7-3 The Default Button Type</title>
+  <style>
+    .stage { width: min(760px, 100%); align-items: stretch; }
+    .stage > .panel { flex: 1 1 300px; }
+    form { display: grid; gap: 10px; font-size: 14px; }
+    form label { display: grid; gap: 4px; }
+    .buttons { display: flex; gap: 8px; }
+    #log { margin: 0; padding-left: 20px; font-size: 13px; font-family: var(--mono); min-height: 8em; }
+    #log .submit { color: var(--bad); }
+    #preview { font-size: 14px; border-left: 3px solid var(--border); padding-left: 10px; color: var(--muted); }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="fix"> Give “Preview” type="button"</label>
+    <button type="button" id="clear">Clear log</button>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="form-label">
+      <h2 class="label" id="form-label">Write a comment</h2>
+      <form id="form" action="/comments" method="post">
+        <label>Title <input type="text" name="title" value="Great article"></label>
+        <label>Comment <textarea name="body" rows="3">Thanks for the clear examples.</textarea></label>
+        <div class="buttons">
+          <button id="preview-btn">Preview</button>
+          <button type="submit">Post comment</button>
+        </div>
+      </form>
+      <p id="preview" hidden></p>
+    </section>
+    <section class="panel" aria-labelledby="log-label">
+      <h2 class="label" id="log-label">Event log</h2>
+      <ol id="log" aria-live="polite"></ol>
+      <pre class="code" id="markup"></pre>
+    </section>
+  </div>
+  <script>
+    const form = document.getElementById('form');
+    const btn = document.getElementById('preview-btn');
+    const log = document.getElementById('log');
+    function add(text, cls) {
+      const li = document.createElement('li');
+      li.textContent = text;
+      if (cls) li.className = cls;
+      log.append(li);
+    }
+    function sync() {
+      if (document.getElementById('fix').checked) btn.type = 'button';
+      else btn.removeAttribute('type');
+      document.getElementById('markup').textContent = btn.outerHTML;
+    }
+    document.getElementById('fix').addEventListener('change', sync);
+    document.getElementById('clear').addEventListener('click', () => log.replaceChildren());
+    btn.addEventListener('click', () => {
+      add(`click on Preview (type is "${btn.type}")`);
+      const p = document.getElementById('preview');
+      p.hidden = false;
+      p.textContent = form.elements.body.value;
+    });
+    form.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.target.type === 'text') add('Enter pressed in Title');
+    });
+    // Stop the real navigation so the page survives; log who triggered the submission
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      add(`submit! submitter = "${e.submitter?.textContent ?? 'none'}"`, 'submit');
+    });
+    sync();
+  </script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 7-2 · Starter</title>
+  <style>
+    form { display: grid; gap: 12px; width: min(380px, 100%); }
+    form label { display: grid; gap: 4px; }
+  </style>
+</head>
+<body class="demo">
+  <!-- Group the drinks properly, turn the suggestions into a datalist, and show the cup count next to the slider. -->
+  <form class="panel" method="get">
+    <h1 class="label">Order a drink</h1>
+    <label>Drink
+      <select name="drink">
+        <option value="">-- Coffee --</option>
+        <option>Espresso</option>
+        <option>Latte</option>
+        <option value="">-- Tea --</option>
+        <option>Sencha</option>
+        <option>Oolong</option>
+      </select>
+    </label>
+    <label>Milk <input type="text" name="milk"></label>
+    <p>Popular choices: whole, oat, soy, almond.</p>
+    <label>Cups <input type="range" name="cups" min="1" max="6" value="1"></label>
+    <button type="submit">Order</button>
+  </form>
+</body>
+</html>

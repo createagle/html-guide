@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 7-1 · Final</title>
+  <style>
+    form { display: grid; gap: 12px; width: min(360px, 100%); }
+    form > label { display: grid; gap: 4px; }
+    form > label.check { display: flex; align-items: center; gap: 8px; }
+    fieldset { border: 1px solid var(--border); border-radius: 8px; margin: 0; }
+    .hint { font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body class="demo">
+  <form class="panel" method="get">
+    <h1 class="label">Join the newsletter</h1>
+    <label>Your name <input type="text" name="name" autocomplete="name"></label>
+    <label>Email <input type="email" name="email" autocomplete="email"></label>
+    <fieldset>
+      <legend>How often?</legend>
+      <label><input type="radio" name="frequency" value="weekly" checked> Weekly</label>
+      <label><input type="radio" name="frequency" value="monthly"> Monthly</label>
+    </fieldset>
+    <label class="check"><input type="checkbox" name="consent" value="yes"> I agree to the privacy policy</label>
+    <p class="hint">After submitting, the data appears after the ? in the address bar.</p>
+    <button type="submit">Subscribe</button>
+  </form>
+</body>
+</html>

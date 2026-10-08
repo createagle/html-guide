@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>7-2 Labels Make Bigger Targets</title>
+  <style>
+    .stage { width: min(760px, 100%); align-items: stretch; }
+    .stage > .panel { flex: 1 1 300px; display: grid; gap: 12px; align-content: start; font-size: 15px; }
+    .row { display: flex; align-items: center; gap: 8px; }
+    .field { display: grid; gap: 4px; }
+    .tally { font-size: 13px; color: var(--muted); }
+    body.show .stage label, body.show .stage input { outline: 2px dashed var(--accent); outline-offset: 2px; background: color-mix(in srgb, var(--accent) 12%, transparent); }
+    .group { display: flex; gap: 16px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="show"> Show click targets</label>
+  </div>
+  <div class="stage">
+    <section class="panel" id="plain" aria-labelledby="plain-label">
+      <h2 class="label" id="plain-label">Without label</h2>
+      <div class="row"><input type="checkbox" aria-label="Remember me"> <span>Remember me</span></div>
+      <div class="group" role="radiogroup" aria-label="Size">
+        <span class="row"><input type="radio" name="size-a" aria-label="Small"> <span>Small</span></span>
+        <span class="row"><input type="radio" name="size-a" aria-label="Medium"> <span>Medium</span></span>
+        <span class="row"><input type="radio" name="size-a" aria-label="Large"> <span>Large</span></span>
+      </div>
+      <div class="field"><span>City</span><input type="text" aria-label="City"></div>
+      <p class="tally" aria-live="polite">Clicks: <output>0</output> · changed something: <output>0</output></p>
+    </section>
+    <section class="panel" id="labelled" aria-labelledby="labelled-label">
+      <h2 class="label" id="labelled-label">With label</h2>
+      <label class="row"><input type="checkbox"> Remember me</label>
+      <fieldset class="group" style="border:0;padding:0;margin:0">
+        <legend class="label">Size</legend>
+        <label class="row"><input type="radio" name="size-b"> Small</label>
+        <label class="row"><input type="radio" name="size-b"> Medium</label>
+        <label class="row"><input type="radio" name="size-b"> Large</label>
+      </fieldset>
+      <div class="field"><label for="city">City</label><input type="text" id="city"></div>
+      <p class="tally" aria-live="polite">Clicks: <output>0</output> · changed something: <output>0</output></p>
+    </section>
+  </div>
+  <script>
+    document.getElementById('show').addEventListener('change', (e) => document.body.classList.toggle('show', e.target.checked));
+    // Click the words, not the boxes: count clicks, and count the ones that checked a box or focused a field
+    for (const panel of document.querySelectorAll('#plain, #labelled')) {
+      const [clicks, hits] = panel.querySelectorAll('output');
+      const state = () => [...panel.querySelectorAll('input')].map((i) => i.checked).join() + '|' + (panel.contains(document.activeElement) ? document.activeElement.type : '');
+      let before = null;
+      panel.addEventListener('pointerdown', (e) => {
+        before = e.target.closest('.tally, h2') ? null : state();
+      });
+      panel.addEventListener('pointerup', () => {
+        if (before === null) return;
+        const snapshot = before;
+        clicks.value = +clicks.value + 1;
+        // The label forwards its click to the control after pointerup, so look a moment later
+        setTimeout(() => { const now = state(); if (now !== snapshot || now.endsWith('|text')) hits.value = +hits.value + 1; }, 50);
+      });
+    }
+  </script>
+</body>
+</html>

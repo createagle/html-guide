@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 7-2 · Final</title>
+  <style>
+    form { display: grid; gap: 12px; width: min(380px, 100%); }
+    form label { display: grid; gap: 4px; }
+    .cups { display: flex; align-items: center; gap: 8px; }
+  </style>
+</head>
+<body class="demo">
+  <form class="panel" method="get" id="order">
+    <h1 class="label">Order a drink</h1>
+    <label>Drink
+      <select name="drink">
+        <optgroup label="Coffee">
+          <option>Espresso</option>
+          <option>Latte</option>
+        </optgroup>
+        <optgroup label="Tea">
+          <option>Sencha</option>
+          <option>Oolong</option>
+        </optgroup>
+      </select>
+    </label>
+    <label>Milk <input type="text" name="milk" list="milks"></label>
+    <datalist id="milks">
+      <option value="whole"></option>
+      <option value="oat"></option>
+      <option value="soy"></option>
+      <option value="almond"></option>
+    </datalist>
+    <label for="cups">Cups</label>
+    <div class="cups">
+      <input type="range" id="cups" name="cups" min="1" max="6" value="1">
+      <output for="cups" name="cupsOut">1</output>
+    </div>
+    <button type="submit">Order</button>
+  </form>
+  <script>
+    const form = document.getElementById('order');
+    form.addEventListener('input', () => { form.elements.cupsOut.value = form.elements.cups.value; });
+  </script>
+</body>
+</html>

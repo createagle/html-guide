@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>7-1 What a Form Submits</title>
+  <style>
+    .stage { width: min(880px, 100%); align-items: stretch; }
+    .stage > .panel { flex: 1 1 340px; }
+    form { display: grid; gap: 12px; font-size: 14px; }
+    form label:not(.inline) { display: grid; gap: 4px; }
+    fieldset { border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px 10px; margin: 0; }
+    legend { padding: 0 4px; color: var(--muted); }
+    .inline { margin-right: 12px; }
+    .buttons { display: flex; gap: 8px; }
+    .note { font-size: 12px; color: var(--muted); }
+    table { border-collapse: collapse; font-size: 13px; width: 100%; }
+    th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--border); font-family: var(--mono); vertical-align: top; }
+    th { font-family: inherit; color: var(--muted); font-weight: 500; }
+    #skipped li { font-size: 13px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">method
+      <select id="method"><option>get</option><option>post</option></select>
+    </label>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="form-label">
+      <h2 class="label" id="form-label">The form</h2>
+      <form id="form" action="/signup">
+        <label>Name <input type="text" name="name" value="Ada Lovelace"></label>
+        <label>Email <input type="email" name="email" value="ada@example.com"></label>
+        <fieldset>
+          <legend>Plan</legend>
+          <label class="inline"><input type="radio" name="plan" value="basic"> Basic</label>
+          <label class="inline"><input type="radio" name="plan" value="pro" checked> Pro</label>
+        </fieldset>
+        <fieldset>
+          <legend>Extras</legend>
+          <label class="inline"><input type="checkbox" name="extras" value="stickers" checked> Stickers</label>
+          <label class="inline"><input type="checkbox" name="extras" value="newsletter"> Newsletter</label>
+          <label class="inline"><input type="checkbox" name="agree" checked> I agree <span class="note">(no value attribute)</span></label>
+        </fieldset>
+        <label>Country
+          <select name="country">
+            <optgroup label="Europe"><option value="uk">United Kingdom</option><option value="fr">France</option></optgroup>
+            <optgroup label="Asia"><option value="jp" selected>Japan</option><option value="cn">China</option></optgroup>
+          </select>
+        </label>
+        <label>Topics <span class="note">(Ctrl / ⌘ + click to pick several)</span>
+          <select name="topic" multiple size="3">
+            <option selected>forms</option><option>tables</option><option selected>media</option>
+          </select>
+        </label>
+        <label>Comments <textarea name="comments" rows="2">Hello &amp; welcome!</textarea></label>
+        <input type="hidden" name="source" value="landing">
+        <label>Coupon <span class="note">(disabled)</span> <input type="text" name="coupon" value="SAVE10" disabled></label>
+        <label>Referral <span class="note">(readonly)</span> <input type="text" name="ref" value="A-1024" readonly></label>
+        <label>Nickname <span class="note">(no name attribute)</span> <input type="text" value="Addy"></label>
+        <div class="buttons">
+          <button type="submit" name="intent" value="save">Save draft</button>
+          <button type="submit" name="intent" value="publish">Publish</button>
+        </div>
+      </form>
+    </section>
+    <section class="panel" aria-labelledby="req-label">
+      <h2 class="label" id="req-label">The request</h2>
+      <pre class="code" id="request">Press a button to submit.</pre>
+      <table id="pairs" hidden>
+        <thead><tr><th scope="col">name</th><th scope="col">value</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <h3 class="label">Not sent</h3>
+      <ul id="skipped"></ul>
+    </section>
+  </div>
+  <script>
+    const form = document.getElementById('form');
+    document.getElementById('method').addEventListener('change', (e) => { form.method = e.target.value; });
+
+    // Why a control did not make it into the submission
+    function reason(el, submitter) {
+      if (el.type === 'submit') return el === submitter ? null : 'not the button that was pressed';
+      if (el.matches('fieldset')) return null;
+      if (!el.name) return 'no name attribute';
+      if (el.disabled) return 'disabled';
+      if ((el.type === 'checkbox' || el.type === 'radio') && !el.checked) return 'not checked';
+      return null;
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const data = new FormData(form, e.submitter);
+      const body = new URLSearchParams(data).toString();
+      const path = form.getAttribute('action');
+      document.getElementById('request').textContent = form.method === 'get'
+        ? `GET ${path}?${body}`
+        : `POST ${path}\nContent-Type: application/x-www-form-urlencoded\n\n${body}`;
+      const tbody = document.querySelector('#pairs tbody');
+      tbody.replaceChildren(...[...data].map(([k, v]) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td></td><td></td>';
+        tr.cells[0].textContent = k;
+        tr.cells[1].textContent = v;
+        return tr;
+      }));
+      document.getElementById('pairs').hidden = false;
+      document.getElementById('skipped').replaceChildren(...[...form.elements].flatMap((el) => {
+        const why = reason(el, e.submitter);
+        if (!why) return [];
+        const li = document.createElement('li');
+        const label = el.labels?.length
+          ? [...el.labels[0].childNodes].filter((n) => n.nodeType === Node.TEXT_NODE).map((n) => n.textContent).join('').trim()
+          : el.textContent;
+        li.textContent = `${label}${el.value && el.type !== 'submit' ? ' = ' + el.value : ''} — ${why}`;
+        return [li];
+      }));
+    });
+  </script>
+</body>
+</html>
