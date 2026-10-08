@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>34-2 JSON-LD Generator</title>
+  <style>
+    .stage { inline-size: min(900px, 100%); display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; }
+    .form { display: grid; gap: 10px; }
+    .type { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+    fieldset { border: 1px solid var(--border); border-radius: 10px; padding: 8px 14px 14px; display: grid; gap: 8px; margin: 0; }
+    legend { font-weight: 600; font-size: 14px; padding: 0 4px; }
+    .field { display: grid; gap: 3px; font-size: 14px; }
+    .field input, .field select, .field textarea, .type select { font: inherit; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); min-inline-size: 0; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .out { display: grid; gap: 10px; }
+    .out pre.code { font-size: 12px; white-space: pre; overflow-x: auto; max-block-size: 420px; }
+    .bar { display: flex; align-items: center; gap: 10px; }
+    ul.notes { margin: 0; padding: 0; list-style: none; font-size: 14px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="form" id="form">
+      <label class="type">Type
+        <select id="type">
+          <option value="Event">Event</option>
+          <option value="Article">Article</option>
+          <option value="Product">Product</option>
+        </select>
+      </label>
+
+      <fieldset data-type="Event">
+        <legend>Event</legend>
+        <label class="field">Name <input type="text" data-key="name" value="Ridge Loop sunrise walk"></label>
+        <div class="row">
+          <label class="field">Starts <input type="datetime-local" data-key="startDate" value="2026-10-17T06:30"></label>
+          <label class="field">Ends <input type="datetime-local" data-key="endDate" value="2026-10-17T12:00"></label>
+        </div>
+        <label class="field">UTC offset <input type="text" data-key="offset" value="+01:00" pattern="[+-]\d\d:\d\d"></label>
+        <label class="field">Venue <input type="text" data-key="venue" value="North car park, Ridge Loop"></label>
+        <div class="row">
+          <label class="field">Street <input type="text" data-key="street" value="1 Forest Road"></label>
+          <label class="field">Town <input type="text" data-key="town" value="Eagleton"></label>
+        </div>
+        <div class="row">
+          <label class="field">Price <input type="number" data-key="price" value="12" min="0" step="0.01"></label>
+          <label class="field">Currency <select data-key="currency"><option>GBP</option><option>EUR</option><option>USD</option><option>CNY</option></select></label>
+        </div>
+        <label class="field">Tickets URL <input type="url" data-key="url" value="https://trailhead.example/events/sunrise"></label>
+      </fieldset>
+
+      <fieldset data-type="Article" hidden>
+        <legend>Article</legend>
+        <label class="field">Headline <input type="text" data-key="headline" value="Ten things to pack for a ridge walk"></label>
+        <label class="field">Author <input type="text" data-key="author" value="Mei Lin"></label>
+        <div class="row">
+          <label class="field">Published <input type="date" data-key="datePublished" value="2026-09-28"></label>
+          <label class="field">Updated <input type="date" data-key="dateModified" value=""></label>
+        </div>
+        <label class="field">Image URL <input type="url" data-key="image" value="https://trailhead.example/img/pack.jpg"></label>
+      </fieldset>
+
+      <fieldset data-type="Product" hidden>
+        <legend>Product</legend>
+        <label class="field">Name <input type="text" data-key="name" value="Trail rain jacket"></label>
+        <label class="field">Brand <input type="text" data-key="brand" value="Trailhead"></label>
+        <label class="field">Image URL <input type="url" data-key="image" value="https://trailhead.example/img/jacket.jpg"></label>
+        <div class="row">
+          <label class="field">Price <input type="number" data-key="price" value="89" min="0" step="0.01"></label>
+          <label class="field">Currency <select data-key="currency"><option>GBP</option><option>EUR</option><option>USD</option><option>CNY</option></select></label>
+        </div>
+        <label class="field">Availability <select data-key="availability"><option>InStock</option><option>OutOfStock</option><option>PreOrder</option></select></label>
+        <div class="row">
+          <label class="field">Average rating <input type="number" data-key="rating" value="4.6" min="1" max="5" step="0.1"></label>
+          <label class="field">Number of reviews <input type="number" data-key="reviews" value="38" min="0"></label>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="out">
+      <pre class="code" id="output"></pre>
+      <div class="bar"><button type="button" id="copy">Copy</button><output id="copied"></output></div>
+      <section class="panel" aria-labelledby="notes-h">
+        <h2 class="label" id="notes-h">Checks</h2>
+        <ul class="notes" id="notes"></ul>
+      </section>
+    </div>
+  </div>
+  <script>
+    const typeSelect = document.getElementById('type');
+
+    function values(type) {
+      const v = {};
+      for (const el of document.querySelectorAll(`fieldset[data-type="${type}"] [data-key]`)) v[el.dataset.key] = el.value.trim();
+      return v;
+    }
+
+    // Build a schema.org object, leaving out anything that is empty
+    function build(type) {
+      const v = values(type);
+      const clean = (obj) => Object.fromEntries(Object.entries(obj).filter(([, x]) => x !== '' && x !== undefined && !(typeof x === 'object' && Object.keys(x).length <= 1)));
+      if (type === 'Event') {
+        return clean({
+          '@context': 'https://schema.org',
+          '@type': 'Event',
+          name: v.name,
+          startDate: v.startDate && `${v.startDate}${v.offset}`,
+          endDate: v.endDate && `${v.endDate}${v.offset}`,
+          eventStatus: 'https://schema.org/EventScheduled',
+          eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+          location: clean({ '@type': 'Place', name: v.venue, address: clean({ '@type': 'PostalAddress', streetAddress: v.street, addressLocality: v.town }) }),
+          offers: v.price === '' ? '' : clean({ '@type': 'Offer', price: v.price, priceCurrency: v.currency, url: v.url, availability: 'https://schema.org/InStock' }),
+        });
+      }
+      if (type === 'Article') {
+        return clean({
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: v.headline,
+          author: v.author && { '@type': 'Person', name: v.author },
+          datePublished: v.datePublished,
+          dateModified: v.dateModified,
+          image: v.image,
+        });
+      }
+      return clean({
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: v.name,
+        image: v.image,
+        brand: v.brand && { '@type': 'Brand', name: v.brand },
+        offers: v.price === '' ? '' : { '@type': 'Offer', price: v.price, priceCurrency: v.currency, availability: `https://schema.org/${v.availability}` },
+        aggregateRating: v.rating && v.reviews ? { '@type': 'AggregateRating', ratingValue: v.rating, reviewCount: v.reviews } : '',
+      });
+    }
+
+    // What Google's rich result documentation lists as required or recommended
+    function check(type, data) {
+      const notes = [];
+      const need = (ok, text) => notes.push([ok ? 'good' : 'bad', text]);
+      if (type === 'Event') {
+        need(data.name, 'name (required)');
+        need(data.startDate, 'startDate (required), with a time zone offset');
+        need(data.location?.address, 'location with an address (required)');
+        need(data.offers, 'offers (recommended)');
+        need(!data.endDate || data.endDate > data.startDate, 'endDate is after startDate');
+      } else if (type === 'Article') {
+        need(data.headline, 'headline (recommended)');
+        need(data.author, 'author (recommended)');
+        need(data.datePublished, 'datePublished (recommended)');
+        need(data.image, 'image (recommended)');
+      } else {
+        need(data.name, 'name (required)');
+        need(data.offers || data.aggregateRating, 'offers, review or aggregateRating (at least one is required)');
+        need(data.image, 'image (recommended)');
+      }
+      return notes;
+    }
+
+    function update() {
+      const type = typeSelect.value;
+      for (const fs of document.querySelectorAll('fieldset[data-type]')) fs.hidden = fs.dataset.type !== type;
+      const data = build(type);
+      // Escape "<" as \u003c so text typed into a field can never close the script element early
+      const json = JSON.stringify(data, null, 2).replace(/\x3c/g, '\\u003c');
+      document.getElementById('output').textContent = `<script type="application/ld+json">\n${json}\n</` + 'script>';
+      document.getElementById('notes').replaceChildren(...check(type, data).map(([kind, text]) => {
+        const li = document.createElement('li');
+        li.className = kind;
+        li.textContent = `${kind === 'good' ? '✓' : '✗'} ${text}`;
+        return li;
+      }));
+      document.getElementById('copied').textContent = '';
+    }
+
+    document.getElementById('form').addEventListener('input', update);
+    document.getElementById('copy').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(document.getElementById('output').textContent);
+        document.getElementById('copied').textContent = 'Copied';
+      } catch {
+        document.getElementById('copied').textContent = 'Copy failed: select the code and copy it by hand';
+      }
+    });
+    update();
+  </script>
+</body>
+</html>

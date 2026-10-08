@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ridge Loop: a 14 km hike above the lake | Trailhead</title>
+  <meta name="description" content="A 14 km circuit from the north car park up to Eagle Ridge and back along the lake. Allow five to six hours. Map, parking and bus times.">
+  <meta name="robots" content="max-image-preview:large">
+  <link rel="canonical" href="https://trailhead.example/walks/ridge-loop">
+  <link rel="alternate" hreflang="en" href="https://trailhead.example/walks/ridge-loop">
+  <link rel="alternate" hreflang="zh-CN" href="https://trailhead.example/zh/walks/ridge-loop">
+  <link rel="alternate" hreflang="x-default" href="https://trailhead.example/walks/ridge-loop">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Ridge Loop: a 14 km hike above the lake">
+  <meta property="og:description" content="Ridge views, a lake and pine forest, an hour from the city.">
+  <meta property="og:url" content="https://trailhead.example/walks/ridge-loop">
+  <meta property="og:image" content="https://trailhead.example/img/ridge-loop-1200x630.jpg">
+  <meta property="og:image:alt" content="The ridge above the lake at sunrise">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Walks", "item": "https://trailhead.example/walks" },
+      { "@type": "ListItem", "position": 2, "name": "Ridge Loop" }
+    ]
+  }
+  </script>
+  <link rel="stylesheet" href="../../assets/style.css">
+  <style>
+    .stage { inline-size: min(760px, 100%); flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 14px; }
+    table { inline-size: 100%; border-collapse: collapse; font-size: 13px; }
+    caption { text-align: start; }
+    th, td { padding: 6px 10px 6px 0; border-block-end: 1px solid var(--border); text-align: start; vertical-align: top; }
+    th { font-family: var(--mono); font-weight: 500; white-space: nowrap; color: var(--muted); }
+    td { overflow-wrap: anywhere; }
+    .card { display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: center; border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
+    .card .thumb { aspect-ratio: 1200 / 630; border-radius: 6px; background: linear-gradient(160deg, #bfdbfe, #86efac 60%, #166534); }
+    .card p { margin: 0; font-size: 13px; }
+    .card .host { color: var(--muted); font-size: 12px; text-transform: uppercase; }
+    .card strong { display: block; font-size: 15px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <section class="panel" aria-labelledby="search-h">
+      <table id="search">
+        <caption class="label" id="search-h">What a search engine reads from this page's head</caption>
+      </table>
+    </section>
+    <section class="panel" aria-labelledby="share-h">
+      <h2 class="label" id="share-h">Link preview built from Open Graph tags</h2>
+      <div class="card">
+        <div class="thumb" role="img" id="og-thumb"></div>
+        <div><p class="host" id="og-host"></p><strong id="og-title"></strong><p id="og-desc"></p></div>
+      </div>
+    </section>
+    <section class="panel" aria-labelledby="ld-h">
+      <h2 class="label" id="ld-h">Structured data (JSON-LD)</h2>
+      <pre class="code" id="ld"></pre>
+    </section>
+  </div>
+  <script>
+    // Everything below is read back from the real <head> of this page
+    const meta = (sel, attr = 'content') => document.head.querySelector(sel)?.getAttribute(attr) ?? '(missing)';
+    const rows = [
+      ['<html lang>', document.documentElement.lang],
+      ['<title>', document.title],
+      ['description', meta('meta[name="description"]')],
+      ['robots', meta('meta[name="robots"]')],
+      ['canonical', meta('link[rel="canonical"]', 'href')],
+      ...[...document.head.querySelectorAll('link[rel="alternate"][hreflang]')].map((l) => [`hreflang ${l.hreflang}`, l.href]),
+    ];
+    const table = document.getElementById('search');
+    for (const [k, v] of rows) {
+      const tr = table.insertRow();
+      const th = document.createElement('th');
+      th.scope = 'row';
+      th.textContent = k;
+      tr.append(th);
+      tr.insertCell().textContent = v;
+    }
+
+    document.getElementById('og-host').textContent = new URL(meta('meta[property="og:url"]')).hostname;
+    document.getElementById('og-title').textContent = meta('meta[property="og:title"]');
+    document.getElementById('og-desc').textContent = meta('meta[property="og:description"]');
+    document.getElementById('og-thumb').setAttribute('aria-label', meta('meta[property="og:image:alt"]'));
+
+    const ld = document.head.querySelector('script[type="application/ld+json"]');
+    document.getElementById('ld').textContent = JSON.stringify(JSON.parse(ld.textContent), null, 2);
+  </script>
+</body>
+</html>

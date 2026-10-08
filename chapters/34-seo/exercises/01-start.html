@@ -1,0 +1,35 @@
+<!doctype html>
+<!-- [html-validate-disable-next element-required-attributes: the missing lang is part of the exercise] -->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- A generic title, no description, no canonical URL, no link preview tags -->
+  <title>Home</title>
+  <meta name="keywords" content="jacket, rain jacket, waterproof, hiking, cheap jacket, best jacket">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <style>
+    .product { inline-size: min(560px, 100%); display: grid; gap: 12px; }
+    .product img { inline-size: min(320px, 100%); block-size: auto; border-radius: 12px; background: var(--surface); }
+    .product .big { font-size: 28px; font-weight: 700; margin: 0; }
+    .product h1, .product h2 { margin: 0; }
+    .product h1 { font-size: 28px; }
+    .product h2 { font-size: 18px; }
+    .product p { margin: 0; }
+    .price { font-size: 20px; font-weight: 700; }
+    .fake-link { color: var(--accent); text-decoration: underline; cursor: pointer; }
+  </style>
+</head>
+<body class="demo">
+  <!-- [html-validate-disable-block wcag/h37: the missing alt text is part of the exercise] -->
+  <div class="product">
+    <div class="big">Trail rain jacket</div>
+    <img src="jacket.svg" width="320" height="320">
+    <p class="price">£89</p>
+    <p>Fully waterproof, with taped seams, a peaked hood and two zipped chest pockets. Packs into its own pocket and weighs 340 g.</p>
+    <div class="big" style="font-size:18px">Sizes</div>
+    <p>Available from XS to XXL. Not sure? <a href="#sizes">Click here</a>.</p>
+    <p><span class="fake-link" onclick="location.hash = 'reviews'">Read the reviews</span></p>
+  </div>
+</body>
+</html>

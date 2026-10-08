@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>34-1 Search Result Preview</title>
+  <style>
+    .stage { inline-size: min(760px, 100%); flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 14px; }
+    .form { display: grid; gap: 10px; }
+    .field { display: grid; gap: 4px; }
+    .field label { font-weight: 600; font-size: 14px; }
+    .field input, .field textarea { font: inherit; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+    .field textarea { resize: vertical; min-block-size: 64px; }
+    .meter { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+    .meter meter { inline-size: 160px; }
+    .result { font-family: Arial, Helvetica, sans-serif; max-inline-size: 600px; }
+    .site { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+    .site .icon { inline-size: 26px; block-size: 26px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: grid; place-items: center; font-size: 13px; }
+    .site .name { color: var(--fg); }
+    .site .url { color: var(--muted); font-size: 12px; }
+    .result .title { display: block; margin: 6px 0 2px; font-size: 20px; line-height: 1.3; color: #1a0dab; white-space: nowrap; overflow: hidden; }
+    .result .desc { margin: 0; font-size: 14px; line-height: 1.58; color: #474747; }
+    @media (prefers-color-scheme: dark) {
+      .result .title { color: #99c3ff; }
+      .result .desc { color: #bdc1c6; }
+    }
+    ul.notes { margin: 0; padding-inline-start: 20px; font-size: 14px; }
+    pre.code { font-size: 12px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div id="form" class="form">
+      <div class="field">
+        <label for="title">Title</label>
+        <input id="title" type="text" value="Ridge Loop: a 14 km hike above the lake | Trailhead">
+        <div class="meter"><meter id="title-meter" min="0" max="700" low="280" high="600" optimum="450"></meter><output id="title-width" for="title"></output></div>
+      </div>
+      <div class="field">
+        <label for="desc">Meta description</label>
+        <textarea id="desc">A 14 km circuit from the north car park up to Eagle Ridge and back along the lake. Allow five to six hours. Map, parking and bus times.</textarea>
+        <div class="meter"><meter id="desc-meter" min="0" max="1100" low="400" high="920" optimum="700"></meter><output id="desc-width" for="desc"></output></div>
+      </div>
+      <div class="field">
+        <label for="url">URL</label>
+        <input id="url" type="url" value="https://trailhead.example/walks/ridge-loop">
+      </div>
+    </div>
+
+    <section class="panel" aria-labelledby="preview-h">
+      <h2 class="label" id="preview-h">Search result preview (approximate)</h2>
+      <div class="result">
+        <div class="site"><span class="icon" aria-hidden="true">T</span><span><span class="name" id="p-site"></span><br><span class="url" id="p-url"></span></span></div>
+        <span class="title" id="p-title"></span>
+        <p class="desc" id="p-desc"></p>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="notes-h">
+      <h2 class="label" id="notes-h">Checks</h2>
+      <ul class="notes" id="notes"></ul>
+    </section>
+    <pre class="code" id="markup"></pre>
+  </div>
+  <script>
+    // Widths are measured in pixels, the way result pages cut text, not in characters
+    const ctx = document.createElement('canvas').getContext('2d');
+    const width = (text, font) => { ctx.font = font; return Math.round(ctx.measureText(text).width); };
+    const TITLE_FONT = '20px Arial', DESC_FONT = '14px Arial', TITLE_MAX = 600, DESC_MAX = 920;
+
+    function cut(text, font, max) {
+      if (width(text, font) <= max) return text;
+      let out = text;
+      while (out && width(`${out} …`, font) > max) out = out.slice(0, out.lastIndexOf(' ') > 0 ? out.lastIndexOf(' ') : -1);
+      return `${out} …`;
+    }
+
+    function update() {
+      const title = document.getElementById('title').value.trim();
+      const desc = document.getElementById('desc').value.trim();
+      const raw = document.getElementById('url').value.trim();
+      let url;
+      try { url = new URL(raw); } catch { url = null; }
+
+      const tw = width(title, TITLE_FONT), dw = width(desc, DESC_FONT);
+      document.getElementById('title-meter').value = tw;
+      document.getElementById('title-width').textContent = `${tw} px of about ${TITLE_MAX} · ${title.length} characters`;
+      document.getElementById('desc-meter').value = dw;
+      document.getElementById('desc-width').textContent = `${dw} px of about ${DESC_MAX} (two lines) · ${desc.length} characters`;
+
+      document.getElementById('p-site').textContent = url ? url.hostname.replace(/^www\./, '') : 'example.com';
+      document.getElementById('p-url').textContent = url ? `${url.origin} › ${url.pathname.split('/').filter(Boolean).join(' › ')}` : raw;
+      document.getElementById('p-title').textContent = cut(title || '(no title)', TITLE_FONT, TITLE_MAX);
+      document.getElementById('p-desc').textContent = desc ? cut(desc, DESC_FONT, DESC_MAX) : 'Without a description the search engine picks a passage from the page.';
+
+      const notes = [];
+      if (!title) notes.push(['bad', 'There is no title. Every page needs a unique <title>.']);
+      else if (tw > TITLE_MAX) notes.push(['bad', 'The title is wider than a result line and will be cut. Put the important words first.']);
+      else if (title.length < 15) notes.push(['bad', 'The title is very short. Say what the page is about, not just the site name.']);
+      else notes.push(['good', 'The title fits on one line.']);
+      if (!desc) notes.push(['bad', 'There is no meta description. Search engines will choose a snippet from the page text.']);
+      else if (dw > DESC_MAX) notes.push(['bad', 'The description is longer than about two lines and will be cut.']);
+      else if (desc.length < 50) notes.push(['bad', 'The description is short. Summarize what a visitor will find.']);
+      else notes.push(['good', 'The description fits in about two lines.']);
+      if (!url || url.protocol !== 'https:') notes.push(['bad', 'Use a full https:// URL for the canonical address.']);
+      else if (url.search) notes.push(['bad', 'The URL has query parameters. The canonical URL usually should not.']);
+      else notes.push(['good', 'The URL is short, readable and uses https.']);
+      document.getElementById('notes').replaceChildren(...notes.map(([kind, text]) => {
+        const li = document.createElement('li');
+        li.className = kind;
+        li.textContent = text;
+        return li;
+      }));
+
+      const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+      document.getElementById('markup').textContent =
+        `<title>${esc(title)}</title>\n<meta name="description" content="${esc(desc)}">\n<link rel="canonical" href="${esc(raw)}">`;
+    }
+    document.getElementById('form').addEventListener('input', update);
+    update();
+  </script>
+</body>
+</html>
