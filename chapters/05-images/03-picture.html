@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>5-3 picture: Art Direction and Formats</title>
+  <style>
+    .stage { width: min(820px, 100%); }
+    .stage figure { flex: 1 1 300px; }
+    .stage img { display: block; width: 100%; height: auto; border-radius: 8px; }
+    .stage figcaption { font: 12px var(--mono); }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <figure>
+      <picture>
+        <source media="(max-width: 600px)" srcset="img/landscape-square.jpg" width="800" height="800">
+        <img src="img/landscape-800.jpg" width="800" height="533" alt="Mountains at sunset">
+      </picture>
+      <figcaption>Art direction: square crop below 600px · <span class="current"></span></figcaption>
+    </figure>
+    <figure>
+      <picture>
+        <source type="image/avif" srcset="img/format.avif">
+        <source type="image/webp" srcset="img/format.webp">
+        <img src="img/format.jpg" width="800" height="533" alt="Mountains at sunset, labeled with the file format">
+      </picture>
+      <figcaption>Format fallback: AVIF → WebP → JPEG · <span class="current"></span></figcaption>
+    </figure>
+  </div>
+  <script>
+    // Show which file each <picture> ended up loading
+    document.querySelectorAll('figure').forEach((fig) => {
+      const img = fig.querySelector('img');
+      const show = () => { fig.querySelector('.current').textContent = img.currentSrc.split('/').pop(); };
+      img.addEventListener('load', show);
+      if (img.complete) show();
+    });
+  </script>
+</body>
+</html>

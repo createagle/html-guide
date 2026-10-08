@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>5-1 How srcset Picks an Image</title>
+  <style>
+    .stage { width: min(880px, 100%); align-items: stretch; }
+    .stage .panel { flex: 1 1 320px; display: flex; flex-direction: column; gap: 10px; }
+    .controls { max-width: 880px; }
+    select { max-width: 100%; }
+    .math { font: 13px/1.7 var(--mono); }
+    .math b { color: var(--accent); }
+    ol.cands { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+    ol.cands li { display: flex; align-items: center; gap: 8px; font: 13px var(--mono); }
+    ol.cands .bar { height: 10px; border-radius: 5px; background: var(--border); }
+    ol.cands li.pick { color: var(--accent); font-weight: 600; }
+    ol.cands li.pick .bar { background: var(--accent); }
+    .preview img, .real img { display: block; width: 100%; height: auto; border-radius: 8px; }
+    .real p { margin: 0; font: 13px var(--mono); overflow-wrap: anywhere; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <span class="control"><label for="vw">Viewport</label> <input type="range" id="vw" min="320" max="1600" step="10" value="1024"> <output id="vw-out" for="vw"></output></span>
+    <label class="control">Device pixel ratio
+      <select id="dpr"><option>1</option><option selected>2</option><option>3</option></select>
+    </label>
+    <label class="control">sizes
+      <select id="sizes">
+        <option>100vw</option>
+        <option selected>(min-width: 900px) 50vw, 100vw</option>
+        <option>(min-width: 900px) 400px, 90vw</option>
+      </select>
+    </label>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="sim-label">
+      <h2 class="label" id="sim-label">Simulated choice</h2>
+      <p class="math" id="math"></p>
+      <ol class="cands" id="cands"></ol>
+      <div class="preview"><img id="preview" src="img/landscape-800.jpg" alt="The candidate the simulation picked" width="800" height="533"></div>
+    </section>
+    <section class="panel real" aria-labelledby="real-label">
+      <h2 class="label" id="real-label">What your browser picked</h2>
+      <img id="real"
+           src="img/landscape-800.jpg"
+           srcset="img/landscape-480.jpg 480w, img/landscape-800.jpg 800w, img/landscape-1200.jpg 1200w, img/landscape-1600.jpg 1600w"
+           sizes="(min-width: 900px) 50vw, 100vw"
+           width="1600" height="1067"
+           alt="Mountains at sunset, labeled with the width of the chosen file">
+      <p id="current"></p>
+    </section>
+  </div>
+  <script>
+    const widths = [480, 800, 1200, 1600];
+    const $ = (id) => document.getElementById(id);
+
+    // Evaluate a sizes attribute for a given viewport: first matching condition wins
+    function slotWidth(sizes, vw) {
+      for (const part of sizes.split(',').map((s) => s.trim())) {
+        const m = part.match(/^\((min|max)-width:\s*(\d+)px\)\s+(.+)$/);
+        if (m) {
+          const ok = m[1] === 'min' ? vw >= +m[2] : vw <= +m[2];
+          if (ok) return length(m[3], vw);
+        } else {
+          return length(part, vw);
+        }
+      }
+    }
+    function length(value, vw) {
+      return value.endsWith('vw') ? (parseFloat(value) / 100) * vw : parseFloat(value);
+    }
+
+    function update() {
+      const vw = +$('vw').value, dpr = +$('dpr').value, sizes = $('sizes').value;
+      $('vw-out').value = vw + 'px';
+      const slot = slotWidth(sizes, vw);
+      const need = slot * dpr;
+      // Smallest candidate that covers the need; otherwise the largest one
+      const pick = widths.find((w) => w >= need) ?? widths.at(-1);
+      $('math').innerHTML = `slot = <b>${Math.round(slot)}px</b> (from sizes)<br>needed = ${Math.round(slot)} × ${dpr} = <b>${Math.round(need)}px</b><br>pick = <b>${pick}w</b>`;
+      $('cands').replaceChildren(...widths.map((w) => {
+        const li = document.createElement('li');
+        li.className = w === pick ? 'pick' : '';
+        li.innerHTML = `<span class="bar" style="width:${w / 16}px"></span>${w}w`;
+        return li;
+      }));
+      $('preview').src = `img/landscape-${pick}.jpg`;
+    }
+    function showReal() {
+      $('current').textContent = 'currentSrc: ' + $('real').currentSrc.split('/').pop() +
+        ` · viewport ${innerWidth}px · DPR ${devicePixelRatio}`;
+    }
+    ['vw', 'dpr', 'sizes'].forEach((id) => $(id).addEventListener('input', update));
+    $('real').addEventListener('load', showReal);
+    addEventListener('resize', showReal);
+    if ($('real').complete) showReal();
+    update();
+  </script>
+</body>
+</html>

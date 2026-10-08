@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>5-2 width and height Prevent Layout Shift</title>
+  <style>
+    .stage { width: min(820px, 100%); }
+    .stage .panel { flex: 1 1 300px; }
+    .panel img { display: block; width: 100%; height: auto; border-radius: 8px; background: var(--surface); }
+    .panel p { margin: 12px 0 0; }
+    .shift { font: 600 13px var(--mono); }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <button type="button" id="load">Load images (1.5 s delay)</button>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="no-dims">
+      <h2 class="label" id="no-dims">&lt;img&gt; without width and height</h2>
+      <img class="slow" src="img/photo.jpg" alt="Mountains at sunset">
+      <p class="text">This paragraph sits right below the image.</p>
+      <p class="shift bad" aria-live="polite"></p>
+    </section>
+    <section class="panel" aria-labelledby="dims">
+      <h2 class="label" id="dims">&lt;img width="1200" height="800"&gt;</h2>
+      <img class="slow" src="img/photo.jpg" width="1200" height="800" alt="Mountains at sunset">
+      <p class="text">This paragraph sits right below the image.</p>
+      <p class="shift good" aria-live="polite"></p>
+    </section>
+  </div>
+  <script>
+    const panels = [...document.querySelectorAll('.panel')];
+    function load() {
+      panels.forEach((panel) => {
+        const img = panel.querySelector('img');
+        const text = panel.querySelector('.text');
+        const out = panel.querySelector('.shift');
+        img.removeAttribute('src');
+        out.textContent = 'Loading…';
+        const before = text.offsetTop;
+        // Pretend the network is slow, then load (a fresh query string skips the cache)
+        setTimeout(() => {
+          img.addEventListener('load', () => {
+            out.textContent = `Text moved by ${text.offsetTop - before}px`;
+          }, { once: true });
+          img.src = 'img/photo.jpg?' + Date.now();
+        }, 1500);
+      });
+    }
+    document.getElementById('load').addEventListener('click', load);
+    load();
+  </script>
+</body>
+</html>

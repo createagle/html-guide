@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 5-2 · Finished</title>
+  <style>
+    .grid { display: grid; gap: 16px; width: min(1100px, 100%); }
+    @media (min-width: 900px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+    .grid img { display: block; width: 100%; height: auto; border-radius: 8px; }
+    .grid p { font: 12px var(--mono); color: var(--muted); }
+  </style>
+</head>
+<body class="demo">
+  <div class="grid">
+    <figure><img src="../img/landscape-800.jpg"
+         srcset="../img/landscape-480.jpg 480w, ../img/landscape-800.jpg 800w, ../img/landscape-1200.jpg 1200w, ../img/landscape-1600.jpg 1600w"
+         sizes="(min-width: 900px) 33vw, 100vw"
+         width="1600" height="1067" alt="Ridge at sunset"><p></p></figure>
+    <figure><img src="../img/landscape-800.jpg"
+         srcset="../img/landscape-480.jpg 480w, ../img/landscape-800.jpg 800w, ../img/landscape-1200.jpg 1200w, ../img/landscape-1600.jpg 1600w"
+         sizes="(min-width: 900px) 33vw, 100vw"
+         width="1600" height="1067" alt="Ridge at sunset"><p></p></figure>
+    <figure><img src="../img/landscape-800.jpg"
+         srcset="../img/landscape-480.jpg 480w, ../img/landscape-800.jpg 800w, ../img/landscape-1200.jpg 1200w, ../img/landscape-1600.jpg 1600w"
+         sizes="(min-width: 900px) 33vw, 100vw"
+         width="1600" height="1067" alt="Ridge at sunset"><p></p></figure>
+  </div>
+  <script>
+    // Print the file each image ended up using
+    document.querySelectorAll('.grid img').forEach((img) => {
+      const show = () => { img.nextElementSibling.textContent = img.currentSrc.split('/').pop(); };
+      img.addEventListener('load', show);
+      if (img.complete) show();
+    });
+  </script>
+</body>
+</html>
