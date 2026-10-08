@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>11-1 Heading Outline Extractor</title>
+  <style>
+    .stage { width: min(960px, 100%); align-items: stretch; }
+    .stage > .panel { flex: 1 1 400px; display: grid; gap: 10px; align-content: start; }
+    textarea { width: 100%; min-height: 360px; font: 13px/1.5 var(--mono); }
+    #outline { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+    #outline li { padding: 3px 0 3px calc(var(--lvl) * 18px - 18px); display: flex; gap: 8px; align-items: baseline; }
+    #outline code { font-size: 12px; color: var(--muted); flex: none; }
+    #outline .skip { color: var(--bad); }
+    #outline .empty { color: var(--bad); font-style: italic; }
+    #issues { margin: 0; padding-left: 20px; font-size: 13px; color: var(--bad); }
+    #issues.ok { color: var(--good); list-style: none; padding: 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">Sample
+      <select id="sample">
+        <option value="good">A well-structured article</option>
+        <option value="bad">Headings chosen by font size</option>
+        <option value="sections">Old “h1 in every section” style</option>
+      </select>
+    </label>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="src-label">
+      <h2 class="label" id="src-label">HTML (edit freely)</h2>
+      <textarea id="src" spellcheck="false" aria-labelledby="src-label"></textarea>
+    </section>
+    <section class="panel" aria-labelledby="out-label">
+      <h2 class="label" id="out-label">Outline a screen reader announces</h2>
+      <ol id="outline"></ol>
+      <h3 class="label">Issues</h3>
+      <ul id="issues" aria-live="polite"></ul>
+    </section>
+  </div>
+  <script>
+    const samples = {
+      good: `<h1>Packing for a two-day walk</h1>
+<p>What to bring, and what to leave at home.</p>
+<h2>The essentials</h2>
+<h3>Water</h3>
+<h3>Warm layers</h3>
+<h2>Nice to have</h2>
+<h3>A flask</h3>
+<aside>
+  <h2>Related guides</h2>
+</aside>
+<h2>Comments</h2>`,
+      bad: `<h1>Trail Notes</h1>
+<h1>Packing for a two-day walk</h1>
+<h4>By Mei Lin · 6 October</h4>
+<h2>The essentials</h2>
+<h5>Water</h5>
+<p><b>Warm layers</b></p>
+<h2></h2>
+<h3>Comments</h3>`,
+      sections: `<h1>Packing for a two-day walk</h1>
+<section>
+  <h1>The essentials</h1>
+  <section>
+    <h1>Water</h1>
+  </section>
+</section>
+<section>
+  <h1>Nice to have</h1>
+</section>`
+    };
+    const src = document.getElementById('src');
+    function render() {
+      // Parse the text as a fragment; headings keep their own level, sections do not change it
+      const doc = new DOMParser().parseFromString(src.value, 'text/html');
+      const heads = [...doc.querySelectorAll('h1, h2, h3, h4, h5, h6, [role=heading]')];
+      const issues = [];
+      let prev = 0, h1s = 0;
+      const items = heads.map((h) => {
+        const lvl = h.getAttribute('role') === 'heading' ? Number(h.getAttribute('aria-level') || 2) : Number(h.localName[1]);
+        const text = h.textContent.trim();
+        const li = document.createElement('li');
+        li.style.setProperty('--lvl', lvl);
+        const tag = Object.assign(document.createElement('code'), { textContent: `h${lvl}` });
+        const label = Object.assign(document.createElement('span'), { textContent: text || '(empty heading)' });
+        if (!text) { label.className = 'empty'; issues.push(`An empty h${lvl}: screen readers announce “heading level ${lvl}” and nothing else.`); }
+        if (prev && lvl > prev + 1) { tag.className = 'skip'; issues.push(`“${text}” jumps from h${prev} to h${lvl}: a level is skipped.`); }
+        if (lvl === 1) h1s += 1;
+        prev = lvl;
+        li.append(tag, label);
+        return li;
+      });
+      if (h1s > 1) issues.push(`${h1s} h1 headings: usually one h1 names the page, everything else sits below it.`);
+      if (heads.length && heads[0].localName !== 'h1') issues.push('The first heading is not an h1.');
+      const fakes = [...doc.querySelectorAll('p > b:only-child, p > strong:only-child')].filter((b) => b.parentElement.textContent.trim() === b.textContent.trim());
+      fakes.forEach((b) => issues.push(`“${b.textContent.trim()}” looks like a heading but is a bold paragraph, so it is not in the outline.`));
+      if (doc.querySelector('section h1, article h1') && h1s > 1) issues.push('Nesting h1 inside section does not lower its level: browsers never implemented the old outline algorithm.');
+      document.getElementById('outline').replaceChildren(...items);
+      const list = document.getElementById('issues');
+      list.className = issues.length ? '' : 'ok';
+      list.replaceChildren(...(issues.length ? issues : ['No issues found.']).map((t) => Object.assign(document.createElement('li'), { textContent: t })));
+    }
+    document.getElementById('sample').addEventListener('change', (e) => { src.value = samples[e.target.value]; render(); });
+    src.addEventListener('input', render);
+    src.value = samples.good;
+    render();
+  </script>
+</body>
+</html>

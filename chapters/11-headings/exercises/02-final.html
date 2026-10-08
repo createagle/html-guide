@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 11-2 · Final</title>
+  <style>
+    .page { display: grid; grid-template-columns: 1fr 200px; gap: 16px; width: min(720px, 100%); }
+    .widget-title { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 6px; }
+    .widget { margin-bottom: 16px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="page">
+    <main class="panel">
+      <hgroup>
+        <h1>Weekend in the Hills</h1>
+        <p>A two-day walk along the northern ridge</p>
+      </hgroup>
+      <p>We reached the ridge just before sunset.</p>
+      <h2>Day one</h2>
+      <p>The path climbs steadily through pine woods.</p>
+      <h2>Day two</h2>
+      <p>A long, easy descent to the lake.</p>
+    </main>
+    <aside class="panel">
+      <section class="widget" aria-labelledby="popular"><h2 class="widget-title" id="popular">Popular</h2><ul><li><a href="#top">Three easy walks</a></li><li><a href="#top">Packing list</a></li></ul></section>
+      <section class="widget" aria-labelledby="newsletter"><h2 class="widget-title" id="newsletter">Newsletter</h2><p>One email a month.</p></section>
+    </aside>
+  </div>
+</body>
+</html>

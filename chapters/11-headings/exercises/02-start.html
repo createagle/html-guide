@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 11-2 · Starter</title>
+  <style>
+    .page { display: grid; grid-template-columns: 1fr 200px; gap: 16px; width: min(720px, 100%); }
+    .widget-title { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 6px; }
+    .widget { margin-bottom: 16px; }
+  </style>
+</head>
+<body class="demo">
+  <!-- The sidebar titles are divs and the subtitle is part of the h1. Give the sidebar real headings at the right level and turn the subtitle into an hgroup. -->
+  <div class="page">
+    <main class="panel">
+      <h1>Weekend in the Hills: a two-day ridge walk along the northern ridge</h1>
+      <p>We reached the ridge just before sunset.</p>
+      <h2>Day one</h2>
+      <p>The path climbs steadily through pine woods.</p>
+      <h2>Day two</h2>
+      <p>A long, easy descent to the lake.</p>
+    </main>
+    <aside class="panel">
+      <div class="widget"><div class="widget-title">Popular</div><ul><li><a href="#top">Three easy walks</a></li><li><a href="#top">Packing list</a></li></ul></div>
+      <div class="widget"><div class="widget-title">Newsletter</div><p>One email a month.</p></div>
+    </aside>
+  </div>
+</body>
+</html>

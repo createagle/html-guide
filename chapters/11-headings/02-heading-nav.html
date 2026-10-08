@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>11-2 Navigating by Headings</title>
+  <style>
+    .stage { width: min(900px, 100%); align-items: stretch; }
+    #page { flex: 1 1 480px; max-height: 420px; overflow: auto; font-size: 14px; }
+    #page h1, #page h2, #page h3 { margin: 18px 0 6px; }
+    #page p { margin: 0 0 8px; color: var(--muted); }
+    #page .current { outline: 3px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+    #page .fake { font-weight: 700; color: var(--fg); }
+    #side { flex: 0 1 300px; display: grid; gap: 10px; align-content: start; }
+    #speech { font: 15px/1.5 var(--mono); min-height: 3em; margin: 0; }
+    .keys { display: flex; flex-wrap: wrap; gap: 6px; }
+    #count { font-size: 13px; color: var(--muted); margin: 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="fakes"> Use bold paragraphs instead of h2/h3</label>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="page-label" id="page" tabindex="0">
+      <h2 class="label" id="page-label">A long help page</h2>
+      <div id="content"></div>
+    </section>
+    <section class="panel" id="side" aria-labelledby="sr-label">
+      <h2 class="label" id="sr-label">Screen reader (simulated)</h2>
+      <p id="speech" aria-live="polite">Press a key below.</p>
+      <div class="keys">
+        <button type="button" data-key="H">H: next heading</button>
+        <button type="button" data-key="shift+H">Shift+H: previous</button>
+        <button type="button" data-key="2">2: next h2</button>
+        <button type="button" data-key="3">3: next h3</button>
+      </div>
+      <p id="count"></p>
+    </section>
+  </div>
+  <script>
+    const sections = [
+      ['Getting started', ['Create an account', 'Choose a plan']],
+      ['Billing', ['Change your card', 'Download invoices', 'Refunds']],
+      ['Privacy', ['Export your data', 'Delete your account']],
+      ['Contact us', []]
+    ];
+    const filler = 'This paragraph stands in for several lines of help text that a sighted reader would skim past.';
+    function build(fake) {
+      const h = (lvl, text) => fake && lvl > 1 ? `<p class="fake">${text}</p>` : `<h${lvl}>${text}</h${lvl}>`;
+      let html = h(1, 'Help centre') + `<p>${filler}</p>`;
+      for (const [title, subs] of sections) {
+        html += h(2, title) + `<p>${filler}</p>`;
+        for (const s of subs) html += h(3, s) + `<p>${filler}</p><p>${filler}</p>`;
+      }
+      document.getElementById('content').innerHTML = html;
+      const n = document.querySelectorAll('#content :is(h1,h2,h3)').length;
+      document.getElementById('count').textContent = `${n} heading${n === 1 ? "" : "s"} in the list. Without them, a screen reader user hears ${document.querySelectorAll('#content p').length} paragraphs one by one.`;
+      pos = -1;
+    }
+    let pos = -1;
+    function move(key) {
+      const heads = [...document.querySelectorAll('#content :is(h1,h2,h3)')];
+      const match = (el) => key === 'H' || key === 'shift+H' || el.localName === 'h' + key;
+      let i = pos;
+      const step = key === 'shift+H' ? -1 : 1;
+      do { i += step; } while (i >= 0 && i < heads.length && !match(heads[i]));
+      const speech = document.getElementById('speech');
+      document.querySelector('#content .current')?.classList.remove('current');
+      if (i < 0 || i >= heads.length) { speech.textContent = key.startsWith('shift') ? 'No previous heading.' : `No next ${key === 'H' ? 'heading' : 'heading at level ' + key}.`; return; }
+      pos = i;
+      const el = heads[i];
+      el.classList.add('current');
+      el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      speech.textContent = `“${el.textContent}”, heading level ${el.localName[1]}`;
+    }
+    document.querySelector('.keys').addEventListener('click', (e) => { if (e.target.dataset.key) move(e.target.dataset.key); });
+    document.getElementById('fakes').addEventListener('change', (e) => { build(e.target.checked); document.getElementById('speech').textContent = 'Press a key below.'; });
+    build(false);
+  </script>
+</body>
+</html>
