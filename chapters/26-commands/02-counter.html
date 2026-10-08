@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>26-2 Counters With Custom Commands</title>
+  <style>
+    .stage { width: min(760px, 100%); align-items: stretch; }
+    .tickets { flex: 1 1 300px; display: grid; gap: 12px; align-content: start; }
+    .side { flex: 1 1 300px; }
+    .ticket { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+    .ticket h2 { margin: 0; font-size: 16px; }
+    .ticket .count { font: 600 22px/1 var(--mono); min-inline-size: 2ch; text-align: end; }
+    .ticket .buttons { grid-column: 1 / -1; display: flex; gap: 6px; flex-wrap: wrap; }
+    .buttons button { padding: 5px 12px; font-size: 15px; min-inline-size: 44px; }
+    #log { margin: 0; padding-left: 30px; font: 12px/1.7 var(--mono); max-block-size: 260px; overflow: auto; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="tickets">
+      <section class="ticket" aria-labelledby="adults-label">
+        <h2 id="adults-label">Adults</h2>
+        <output id="adults" class="count" data-min="0" data-max="9" aria-labelledby="adults-label">1</output>
+        <div class="buttons">
+          <button type="button" commandfor="adults" command="--decrement" aria-label="One fewer adult">−</button>
+          <button type="button" commandfor="adults" command="--increment" aria-label="One more adult">+</button>
+          <button type="button" commandfor="adults" command="--reset">Reset</button>
+        </div>
+      </section>
+      <section class="ticket" aria-labelledby="kids-label">
+        <h2 id="kids-label">Children</h2>
+        <output id="kids" class="count" data-min="0" data-max="9" aria-labelledby="kids-label">0</output>
+        <div class="buttons">
+          <button type="button" commandfor="kids" command="--decrement" aria-label="One fewer child">−</button>
+          <button type="button" commandfor="kids" command="--increment" aria-label="One more child">+</button>
+          <button type="button" commandfor="kids" command="--increment" value="3">+3</button>
+          <button type="button" commandfor="kids" command="--reset">Reset</button>
+        </div>
+      </section>
+    </div>
+    <section class="panel side" aria-labelledby="l-label">
+      <h2 class="label" id="l-label">command events</h2>
+      <ol id="log"></ol>
+    </section>
+  </div>
+  <script>
+    // One handler serves every counter: the event says which command, and which button sent it
+    function onCommand(e) {
+      const counter = e.target;
+      const step = Number(e.source.value) || 1;
+      const min = Number(counter.dataset.min);
+      const max = Number(counter.dataset.max);
+      let n = Number(counter.value);
+      if (e.command === '--increment') n = Math.min(max, n + step);
+      else if (e.command === '--decrement') n = Math.max(min, n - step);
+      else if (e.command === '--reset') n = Number(counter.defaultValue);
+      else return;
+      counter.value = n;
+      report(e, n);
+    }
+    for (const counter of document.querySelectorAll('.count')) {
+      counter.addEventListener('command', onCommand);
+    }
+
+    const log = document.getElementById('log');
+    function report(e, n) {
+      const li = document.createElement('li');
+      li.textContent = `#${e.target.id} ${e.command} from "${e.source.textContent}" → ${n}`;
+      log.append(li);
+      log.scrollTop = log.scrollHeight;
+    }
+  </script>
+</body>
+</html>

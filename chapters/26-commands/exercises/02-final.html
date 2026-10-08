@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 26-2 · Final</title>
+  <style>
+    .cart { width: min(440px, 100%); border: 1px solid var(--border); border-radius: 12px; padding: 6px 16px 12px; }
+    .item { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .item label { font-weight: 600; }
+    .item .price { color: var(--muted); font-size: 14px; }
+    .stepper { grid-row: span 2; display: flex; align-items: center; gap: 4px; }
+    .stepper button { inline-size: 36px; block-size: 36px; font-size: 18px; padding: 0; }
+    .stepper input { inline-size: 3.5em; text-align: center; font-size: 16px; padding: 5px 4px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .total { display: flex; justify-content: space-between; padding-top: 10px; font-size: 18px; }
+    .total output { font-weight: 700; font-family: var(--mono); }
+  </style>
+</head>
+<body class="demo">
+  <section class="cart" id="cart" aria-label="Cart">
+    <div class="item">
+      <label for="qty-1">Notebook</label>
+      <div class="stepper">
+        <button type="button" commandfor="qty-1" command="--step-down" aria-label="Fewer notebooks">−</button>
+        <input id="qty-1" type="number" min="0" max="20" value="1" data-price="4.50">
+        <button type="button" commandfor="qty-1" command="--step-up" aria-label="More notebooks">+</button>
+      </div>
+      <span class="price">$4.50 each</span>
+    </div>
+    <div class="item">
+      <label for="qty-2">Pen set</label>
+      <div class="stepper">
+        <button type="button" commandfor="qty-2" command="--step-down" aria-label="Fewer pen sets">−</button>
+        <input id="qty-2" type="number" min="0" max="20" value="2" data-price="7.00">
+        <button type="button" commandfor="qty-2" command="--step-up" aria-label="More pen sets">+</button>
+      </div>
+      <span class="price">$7.00 each</span>
+    </div>
+    <p class="total">Total <output id="total" for="qty-1 qty-2">$18.50</output></p>
+  </section>
+  <script>
+    const cart = document.getElementById('cart');
+    const total = document.getElementById('total');
+    function updateTotal() {
+      let sum = 0;
+      for (const input of cart.querySelectorAll('input[type="number"]')) {
+        sum += Number(input.value) * Number(input.dataset.price);
+      }
+      total.value = '$' + sum.toFixed(2);
+    }
+    cart.addEventListener('input', updateTotal);
+
+    // One handler for every stepper. stepUp() and stepDown() respect min, max and step.
+    function onStep(e) {
+      const input = e.target;
+      if (e.command === '--step-up') input.stepUp();
+      else if (e.command === '--step-down') input.stepDown();
+      else return;
+      // Changing the value from script fires no input event, so send one
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    for (const input of cart.querySelectorAll('input[type="number"]')) {
+      input.addEventListener('command', onStep);
+    }
+  </script>
+</body>
+</html>

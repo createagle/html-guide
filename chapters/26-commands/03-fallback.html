@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>26-3 Feature Detection and a Fallback</title>
+  <style>
+    .stage { width: min(780px, 100%); align-items: stretch; }
+    .page { flex: 1 1 320px; display: grid; gap: 12px; align-content: start; }
+    .side { flex: 1 1 300px; }
+    button { padding: 7px 14px; font-size: 15px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .inbox { border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
+    .inbox h2 { margin: 0 0 6px; font-size: 16px; }
+    .inbox ul { margin: 0; padding: 0; list-style: none; }
+    .inbox li { padding: 4px 0; font-size: 14px; }
+    .inbox li.unread { font-weight: 600; }
+    .inbox li.unread::before { content: "● "; color: var(--accent); }
+
+    dialog { border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; background: var(--bg); color: var(--fg); inline-size: min(360px, 90vw); }
+    dialog h2 { margin: 0 0 8px; font-size: 18px; }
+    dialog p { margin: 0 0 14px; }
+    dialog::backdrop { background: rgb(0 0 0 / .45); }
+    #menu { margin: 0; border: 1px solid var(--border); border-radius: 10px; padding: 4px; background: var(--bg); color: var(--fg); box-shadow: 0 8px 24px rgb(0 0 0 / .18);
+      position-area: block-end span-inline-end; margin-block-start: 6px; }
+    #menu button { display: block; inline-size: 100%; text-align: start; border: 0; background: none; color: inherit; font-size: 14px; padding: 7px 10px; border-radius: 6px; }
+    #menu button:hover, #menu button:focus-visible { background: var(--surface); }
+    #log { margin: 0; padding-left: 30px; font: 12px/1.7 var(--mono); max-block-size: 220px; overflow: auto; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="force"> Pretend this browser has no commands</label>
+    <output id="support"></output>
+  </div>
+  <div class="stage">
+    <div class="page">
+      <div class="row">
+        <button type="button" commandfor="menu" command="toggle-popover">Inbox ▾</button>
+        <button type="button" commandfor="about" command="show-modal">About…</button>
+      </div>
+      <section class="inbox" aria-labelledby="inbox-title">
+        <h2 id="inbox-title">Inbox</h2>
+        <ul id="messages">
+          <li class="unread">Your order has shipped</li>
+          <li class="unread">New comment on “Popovers”</li>
+          <li>Weekly report</li>
+        </ul>
+      </section>
+    </div>
+    <section class="panel side" aria-labelledby="l-label">
+      <h2 class="label" id="l-label">Who handled the click</h2>
+      <ol id="log"></ol>
+    </section>
+  </div>
+
+  <div id="menu" popover>
+    <button type="button" commandfor="messages" command="--mark-read">Mark all as read</button>
+    <button type="button" commandfor="messages" command="--mark-unread">Mark all as unread</button>
+  </div>
+
+  <dialog id="about" aria-labelledby="about-title">
+    <h2 id="about-title">About this demo</h2>
+    <p>The same markup runs on native commands or on the fallback below.</p>
+    <div class="row"><button type="button" commandfor="about" command="close" autofocus>Close</button></div>
+  </dialog>
+
+  <script>
+    const force = document.getElementById('force');
+    const native = () => 'command' in HTMLButtonElement.prototype && !force.checked;
+    const support = document.getElementById('support');
+    const showSupport = () => { support.textContent = native() ? 'Native commands' : 'Fallback script'; };
+    force.addEventListener('change', showSupport);
+    showSupport();
+
+    // Fallback: read the attributes, fire a command event, then do the built-in action
+    const BUILT_IN = {
+      'show-modal': (t) => { if (!t.open) t.showModal(); },
+      'close': (t, b) => { if (t.open) t.close(b.value); },
+      'request-close': (t, b) => { if (t.open) (t.requestClose ? t.requestClose(b.value) : t.close(b.value)); },
+      'toggle-popover': (t, b) => t.togglePopover({ source: b }),
+      'show-popover': (t, b) => { if (!t.matches(':popover-open')) t.showPopover({ source: b }); },
+      'hide-popover': (t) => { if (t.matches(':popover-open')) t.hidePopover(); },
+    };
+    document.addEventListener('click', (e) => {
+      if (native()) return;
+      const button = e.target.closest('button[commandfor][command]');
+      if (!button || button.disabled) return;
+      const target = document.getElementById(button.getAttribute('commandfor'));
+      let command = button.getAttribute('command');
+      if (!command.startsWith('--')) command = command.toLowerCase();
+      if (!target || !(command.startsWith('--') || command in BUILT_IN)) return;
+      e.preventDefault(); // In a supporting browser this also stops the native command
+      const event = new Event('command', { cancelable: true });
+      Object.assign(event, { command, source: button });
+      if (target.dispatchEvent(event)) BUILT_IN[command]?.(target, button);
+    }, true);
+
+    // The page's own code only listens for command events, whoever fires them
+    const messages = document.getElementById('messages');
+    messages.addEventListener('command', (e) => {
+      if (e.command === '--mark-read' || e.command === '--mark-unread') {
+        for (const li of messages.children) li.classList.toggle('unread', e.command === '--mark-unread');
+        document.getElementById('menu').hidePopover();
+      }
+    });
+
+    const log = document.getElementById('log');
+    document.addEventListener('command', (e) => {
+      const li = document.createElement('li');
+      li.textContent = `${e.command} → #${e.target.id} (${window.CommandEvent && e instanceof CommandEvent ? 'native' : 'fallback'})`;
+      log.append(li);
+      log.scrollTop = log.scrollHeight;
+    }, true);
+  </script>
+</body>
+</html>

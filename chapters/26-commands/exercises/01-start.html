@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 26-1 · Starter</title>
+  <style>
+    .card { width: min(420px, 100%); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+    .card h2 { margin: 0 0 4px; font-size: 20px; }
+    .card p { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    button { padding: 7px 14px; font-size: 15px; }
+    #list { margin: 0; border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; background: var(--bg); color: var(--fg); box-shadow: 0 8px 24px rgb(0 0 0 / .18);
+      position-area: block-end span-inline-end; margin-block-start: 6px; }
+    #list h3 { margin: 0 0 4px; font-size: 14px; }
+    #list ul { margin: 0; padding-inline-start: 18px; font-size: 14px; line-height: 1.7; }
+    #cook { border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; background: var(--bg); color: var(--fg); inline-size: min(460px, 92vw); }
+    #cook::backdrop { background: rgb(0 0 0 / .55); }
+    #cook h2 { margin: 0 0 10px; }
+    #cook ol { margin: 0 0 16px; padding-inline-start: 22px; font-size: 18px; line-height: 1.6; }
+  </style>
+</head>
+<body class="demo">
+  <!-- Four listeners just to open and close things. Replace them with command and commandfor. -->
+  <article class="card">
+    <h2>Lemon pasta</h2>
+    <p>20 minutes · serves 2</p>
+    <div class="row">
+      <button type="button" id="list-btn" aria-expanded="false">Shopping list ▾</button>
+      <button type="button" id="cook-btn">Start cooking</button>
+    </div>
+  </article>
+
+  <div id="list" popover>
+    <h3>Shopping list</h3>
+    <ul>
+      <li>200 g spaghetti</li>
+      <li>1 lemon</li>
+      <li>40 g parmesan</li>
+      <li>Black pepper</li>
+    </ul>
+  </div>
+
+  <dialog id="cook" aria-labelledby="cook-title">
+    <h2 id="cook-title">Cooking mode</h2>
+    <ol>
+      <li>Boil the pasta in salted water.</li>
+      <li>Zest and juice the lemon.</li>
+      <li>Toss the pasta with lemon, cheese and a splash of pasta water.</li>
+    </ol>
+    <div class="row">
+      <button type="button" id="done-btn" autofocus>Done</button>
+    </div>
+  </dialog>
+  <script>
+    const list = document.getElementById('list');
+    const listBtn = document.getElementById('list-btn');
+    const cook = document.getElementById('cook');
+    listBtn.addEventListener('click', () => list.togglePopover({ source: listBtn }));
+    list.addEventListener('toggle', (e) => listBtn.setAttribute('aria-expanded', e.newState === 'open'));
+    document.getElementById('cook-btn').addEventListener('click', () => cook.showModal());
+    document.getElementById('done-btn').addEventListener('click', () => cook.close());
+  </script>
+</body>
+</html>
