@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>21-1 What the Browser Sends</title>
+  <style>
+    .stage { width: min(980px, 100%); align-items: stretch; }
+    form { flex: 1 1 340px; display: grid; gap: 10px; align-content: start; }
+    .side { flex: 1 1 420px; }
+    .field { display: grid; gap: 3px; }
+    .field > label, fieldset legend { font-weight: 600; font-size: 14px; }
+    .field input:not([type=checkbox]):not([type=file]), .field select { font-size: 15px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .field input:disabled { opacity: .55; }
+    .field input:read-only { background: var(--surface); }
+    fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+    fieldset legend { padding: 0; margin-bottom: 4px; }
+    .check { display: flex; gap: 6px; align-items: center; font-size: 14px; }
+    .note { font-size: 12px; color: var(--muted); font-weight: 400; }
+    button { justify-self: start; padding: 7px 16px; font-size: 15px; }
+    pre.code { min-height: 280px; font-size: 12.5px; }
+    #explain { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">method
+      <select id="method"><option>get</option><option selected>post</option></select>
+    </label>
+    <label class="control">enctype
+      <select id="enctype">
+        <option selected>application/x-www-form-urlencoded</option>
+        <option>multipart/form-data</option>
+        <option>text/plain</option>
+      </select>
+    </label>
+  </div>
+  <div class="stage">
+    <form id="form" action="https://example.com/signup?ref=ad#welcome" method="post">
+      <div class="field"><label for="name">Name</label><input type="text" id="name" name="name" value="Ada Lovelace" autocomplete="name"></div>
+      <div class="field"><label for="email">Email</label><input type="email" id="email" name="email" value="ada@example.com" autocomplete="email"></div>
+      <fieldset>
+        <legend>Topics</legend>
+        <label class="check"><input type="checkbox" name="topic" value="html" checked> HTML</label>
+        <label class="check"><input type="checkbox" name="topic" value="css" checked> CSS</label>
+        <label class="check"><input type="checkbox" name="topic" value="js"> JavaScript</label>
+      </fieldset>
+      <label class="check"><input type="checkbox" name="news"> Send me the newsletter</label>
+      <div class="field"><label for="account">Account ID <span class="note">readonly</span></label><input type="text" id="account" name="account" value="A-1042" readonly></div>
+      <div class="field"><label for="promo">Promo code <span class="note">disabled</span></label><input type="text" id="promo" name="promo" value="SPRING" disabled></div>
+      <div class="field"><label for="nick">Nickname <span class="note">no name attribute</span></label><input type="text" id="nick" value="Countess"></div>
+      <div class="field"><label for="avatar">Avatar</label><input type="file" id="avatar" name="avatar" accept="image/*"></div>
+      <button type="submit" id="send" name="intent" value="signup">Sign up</button>
+    </form>
+    <section class="panel side" aria-labelledby="req-label">
+      <h2 class="label" id="req-label">The request this form would send</h2>
+      <pre class="code" id="request"></pre>
+      <p id="explain"></p>
+    </section>
+  </div>
+  <script>
+    const form = document.getElementById('form');
+    const send = document.getElementById('send');
+    const out = document.getElementById('request');
+    const explain = document.getElementById('explain');
+    const methodSel = document.getElementById('method');
+    const enctypeSel = document.getElementById('enctype');
+
+    // Files become just their name in urlencoded and text/plain bodies, and in GET URLs
+    const asText = (v) => (typeof v === 'string' ? v : v.name);
+
+    async function render() {
+      form.method = methodSel.value;
+      form.enctype = enctypeSel.value;
+      // The same entry list the browser builds on submit, including the clicked button
+      const data = new FormData(form, send);
+      const url = new URL(form.action);
+      let text;
+
+      if (form.method === 'get') {
+        const params = new URLSearchParams();
+        for (const [k, v] of data) params.append(k, asText(v));
+        url.search = params; // replaces ?ref=ad; the #fragment stays
+        text = `GET ${url.pathname}${url.search} HTTP/1.1\nHost: ${url.host}`;
+        explain.textContent = 'GET puts the data in the URL and has no body, so enctype is ignored. The action’s own query string is replaced; the fragment is kept for the next page: ' + url.href;
+      } else if (form.enctype === 'multipart/form-data') {
+        // Let the browser encode it, with file contents swapped for a short note
+        const shown = new FormData();
+        for (const [k, v] of data) {
+          shown.append(k, typeof v === 'string' ? v : new File([`(${v.size} bytes of file data)`], v.name, { type: v.type || 'application/octet-stream' }));
+        }
+        const req = new Request(url, { method: 'POST', body: shown });
+        text = `POST ${url.pathname}${url.search} HTTP/1.1\nHost: ${url.host}\nContent-Type: ${req.headers.get('content-type')}\n\n${(await req.text()).replaceAll('\r\n', '\n')}`;
+        explain.textContent = 'Each entry is a separate part. Only multipart sends the contents of files.';
+      } else if (form.enctype === 'text/plain') {
+        const body = [...data].map(([k, v]) => `${k}=${asText(v)}`).join('\n');
+        text = `POST ${url.pathname}${url.search} HTTP/1.1\nHost: ${url.host}\nContent-Type: text/plain\n\n${body}`;
+        explain.textContent = 'Nothing is escaped, so a value containing = or a line break is ambiguous. Meant for humans, not for servers.';
+      } else {
+        const params = new URLSearchParams();
+        for (const [k, v] of data) params.append(k, asText(v));
+        text = `POST ${url.pathname}${url.search} HTTP/1.1\nHost: ${url.host}\nContent-Type: application/x-www-form-urlencoded\n\n${params}`;
+        explain.textContent = 'The default. Same format as a query string: spaces become +, other special characters are percent-encoded. A file is sent as its name only.';
+      }
+      out.textContent = text;
+    }
+
+    form.addEventListener('input', render);
+    form.addEventListener('change', render);
+    methodSel.addEventListener('change', render);
+    enctypeSel.addEventListener('change', render);
+    form.addEventListener('submit', (e) => { e.preventDefault(); render(); });
+    render();
+  </script>
+</body>
+</html>

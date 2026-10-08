@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 21-2 · Starter</title>
+  <style>
+    .stage { width: min(860px, 100%); align-items: stretch; }
+    form { flex: 1 1 320px; display: grid; gap: 12px; align-content: start; }
+    .side { flex: 1 1 320px; }
+    .field { display: grid; gap: 3px; }
+    .field label, legend { font-weight: 600; font-size: 14px; }
+    .field input { font-size: 15px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+    legend { padding: 0; margin-bottom: 4px; }
+    .check { display: flex; gap: 6px; align-items: center; font-size: 14px; }
+    .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    button { padding: 7px 16px; font-size: 15px; }
+    button[aria-disabled="true"] { opacity: .6; cursor: progress; }
+    #msg { margin: 0; font-size: 14px; }
+    #log { margin: 0; padding-left: 22px; font: 12px/1.6 var(--mono); }
+  </style>
+</head>
+<body class="demo">
+  <!-- Topics never reach the server, Enter reloads the page, a failed request still says "Subscribed", and a double click subscribes twice. -->
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="fail"> Make the server fail</label>
+  </div>
+  <div class="stage">
+    <form id="form">
+      <div class="field"><label for="email">Email</label><input type="email" id="email" autocomplete="email" required></div>
+      <fieldset>
+        <legend>Topics</legend>
+        <label class="check"><input type="checkbox" value="html" checked> HTML</label>
+        <label class="check"><input type="checkbox" value="css"> CSS</label>
+        <label class="check"><input type="checkbox" value="a11y"> Accessibility</label>
+      </fieldset>
+      <div class="row">
+        <button type="button" id="go">Subscribe</button>
+        <p id="msg"></p>
+      </div>
+    </form>
+    <section class="panel side" aria-labelledby="log-label">
+      <h2 class="label" id="log-label">Network (simulated)</h2>
+      <ol id="log"></ol>
+    </section>
+  </div>
+  <script>
+    // Stand-in for fetch(): there is no server behind this page. Leave this function as it is.
+    const log = document.getElementById('log');
+    function note(text) { const li = document.createElement('li'); li.textContent = text; log.append(li); }
+    async function fakeFetch(url, init) {
+      const body = typeof init.body === 'string' ? init.body : [...init.body].map(([k, v]) => `${k}=${v}`).join('&');
+      note(`${init.method.toUpperCase()} ${new URL(url).pathname}  ${body}`);
+      await new Promise((r) => setTimeout(r, 1200));
+      if (document.getElementById('fail').checked) { note('← 500 Internal Server Error'); return new Response('Oops', { status: 500 }); }
+      note('← 200 OK');
+      return new Response('Subscribed', { status: 200 });
+    }
+
+    document.getElementById('go').addEventListener('click', async () => {
+      const email = document.getElementById('email').value;
+      await fakeFetch('https://example.com/subscribe', { method: 'POST', body: JSON.stringify({ email }) });
+      document.getElementById('form').reset();
+      document.getElementById('msg').textContent = 'Subscribed!';
+    });
+  </script>
+</body>
+</html>

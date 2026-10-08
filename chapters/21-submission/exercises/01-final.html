@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 21-1 · Final</title>
+  <style>
+    .stage { width: min(820px, 100%); align-items: stretch; }
+    form { flex: 1 1 320px; display: grid; gap: 10px; align-content: start; }
+    .side { flex: 1 1 320px; }
+    .field { display: grid; gap: 3px; }
+    .field label { font-weight: 600; font-size: 14px; }
+    .field input, .field select { font-size: 15px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+    .buttons button { padding: 7px 14px; font-size: 15px; }
+    pre.code { min-height: 160px; font-size: 12.5px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <form id="form" action="https://example.com/cart" method="post">
+      <div class="field"><label for="qty">Quantity</label><input type="number" id="qty" name="qty" value="1" min="1" required></div>
+      <div class="field"><label for="address">Delivery address</label><input type="text" id="address" name="address" autocomplete="address-line1" required></div>
+      <div class="buttons">
+        <!-- The first submit button is the default one: Enter in a field "clicks" it -->
+        <button type="submit" name="intent" value="order">Place order</button>
+        <button type="submit" name="intent" value="save" formaction="https://example.com/saved" formnovalidate>Save for later</button>
+      </div>
+    </form>
+    <section class="panel side" aria-labelledby="sent-label">
+      <h2 class="label" id="sent-label">Would send</h2>
+      <pre class="code" id="sent" aria-live="polite">Nothing yet.</pre>
+    </section>
+  </div>
+  <script>
+    const form = document.getElementById('form');
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault(); // nothing is really sent in this exercise
+      const btn = e.submitter;
+      const action = btn.hasAttribute('formaction') ? btn.formAction : form.action;
+      const lines = [...new FormData(form, btn)].map(([k, v]) => `${k}=${v}`);
+      document.getElementById('sent').textContent = `${form.method.toUpperCase()} ${action}\n\n${lines.join('\n')}`;
+    });
+  </script>
+</body>
+</html>

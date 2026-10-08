@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>21-2 One Form, Several Buttons</title>
+  <style>
+    .stage { width: min(980px, 100%); align-items: stretch; }
+    form { flex: 1 1 380px; display: grid; gap: 10px; align-content: start; }
+    .side { flex: 1 1 380px; }
+    .field { display: grid; gap: 3px; }
+    .field label { font-weight: 600; font-size: 14px; }
+    .field input, .field textarea { font-size: 15px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .field textarea { min-height: 6lh; resize: vertical; }
+    .field :user-invalid { border-color: var(--bad); }
+    .buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+    .buttons button { padding: 7px 14px; font-size: 15px; }
+    .buttons .primary { font-weight: 600; }
+    .buttons .danger { color: var(--bad); }
+    .hint { margin: 0; font-size: 13px; color: var(--muted); }
+    pre.code { min-height: 260px; font-size: 12.5px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <form id="form" action="https://example.com/posts/42" method="post">
+      <div class="field"><label for="title">Title</label><input type="text" id="title" name="title" required></div>
+      <div class="field"><label for="body">Text</label><textarea id="body" name="body" required minlength="20"></textarea></div>
+      <div class="buttons">
+        <button type="submit" class="primary" name="intent" value="publish">Publish</button>
+        <button type="submit" name="intent" value="draft" formnovalidate>Save draft</button>
+        <button type="submit" formaction="https://example.com/preview" formmethod="get" formtarget="_blank" formnovalidate>Preview</button>
+        <button type="submit" class="danger" name="intent" value="delete" formaction="https://example.com/posts/42/delete" formnovalidate>Delete</button>
+      </div>
+      <p class="hint">Also try pressing Enter in the Title field.</p>
+    </form>
+    <section class="panel side" aria-labelledby="log-label">
+      <h2 class="label" id="log-label">Last submit event</h2>
+      <pre class="code" id="log" aria-live="polite">Nothing submitted yet.</pre>
+    </section>
+  </div>
+  <script>
+    const form = document.getElementById('form');
+    const log = document.getElementById('log');
+
+    // A button's formaction/formmethod/formtarget override the form's, but only when present.
+    // (button.formAction returns the page URL when the attribute is missing, so check first.)
+    function effective(btn) {
+      const has = (a) => btn && btn.hasAttribute(a);
+      return {
+        action: has('formaction') ? btn.formAction : form.action,
+        method: has('formmethod') ? btn.formMethod : form.method,
+        target: has('formtarget') ? btn.formTarget : (form.target || '_self'),
+        validated: !(has('formnovalidate') || form.noValidate),
+      };
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault(); // this demo only reports; a real form would now send the request
+      const btn = e.submitter;
+      const how = effective(btn);
+      const data = new FormData(form, btn);
+      log.textContent = [
+        `submitter    <button>${btn.textContent}</button>`,
+        `name=value   ${btn.name ? `${btn.name}=${btn.value}` : '(no name, not sent)'}`,
+        `method       ${how.method.toUpperCase()}`,
+        `action       ${how.action}`,
+        `target       ${how.target}`,
+        `validated    ${how.validated}`,
+        '',
+        'new FormData(form, e.submitter):',
+        ...[...data].map(([k, v]) => `  ${k} = ${JSON.stringify(v)}`),
+      ].join('\n');
+    });
+  </script>
+</body>
+</html>

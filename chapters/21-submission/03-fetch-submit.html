@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>21-3 Submitting Without a Reload</title>
+  <style>
+    .stage { width: min(960px, 100%); align-items: stretch; }
+    .main { flex: 1 1 400px; display: grid; gap: 14px; align-content: start; }
+    .main > .label { margin: 0 0 -6px; }
+    .side { flex: 1 1 320px; }
+    #comments { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+    #comments li { border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; }
+    #comments b { font-size: 14px; }
+    #comments p { margin: 2px 0 0; white-space: pre-wrap; }
+    #comments li.new { border-color: var(--good); }
+    form { display: grid; gap: 10px; }
+    .field { display: grid; gap: 3px; }
+    .field label { font-weight: 600; font-size: 14px; }
+    .field input, .field textarea { font-size: 15px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .field textarea { min-height: 4lh; resize: vertical; }
+    .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    button { padding: 7px 16px; font-size: 15px; }
+    button[aria-disabled="true"] { opacity: .6; cursor: progress; }
+    #status { margin: 0; font-size: 14px; }
+    #log { margin: 0; padding-left: 22px; font: 12px/1.6 var(--mono); }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="fail"> Make the server fail</label>
+    <label class="control"><input type="checkbox" id="slow" checked> Slow network</label>
+  </div>
+  <div class="stage">
+    <div class="main">
+      <h2 class="label">Comments</h2>
+      <ul id="comments">
+        <li><b>Grace</b><p>The submitter trick is so handy.</p></li>
+      </ul>
+      <!-- Works without JavaScript: a normal POST to the server, which redirects back -->
+      <form id="form" action="https://example.com/posts/42/comments" method="post">
+        <div class="field"><label for="author">Name</label><input type="text" id="author" name="author" autocomplete="name" required></div>
+        <div class="field"><label for="text">Comment</label><textarea id="text" name="text" required></textarea></div>
+        <div class="row">
+          <button type="submit" id="post">Post comment</button>
+          <p id="status" role="status"></p>
+        </div>
+      </form>
+    </div>
+    <section class="panel side" aria-labelledby="log-label">
+      <h2 class="label" id="log-label">Network (simulated)</h2>
+      <ol id="log"></ol>
+    </section>
+  </div>
+  <script>
+    const form = document.getElementById('form');
+    const button = document.getElementById('post');
+    const status = document.getElementById('status');
+    const comments = document.getElementById('comments');
+    const log = document.getElementById('log');
+
+    function note(text) {
+      const li = document.createElement('li');
+      li.textContent = text;
+      log.append(li);
+    }
+
+    // Stand-in for fetch(): there is no server behind this page.
+    // It answers with real Response objects, so the code below is what you would write with fetch.
+    async function fakeFetch(url, init) {
+      note(`${init.method.toUpperCase()} ${new URL(url).pathname}  (${[...init.body.keys()].join(', ')})`);
+      await new Promise((r) => setTimeout(r, document.getElementById('slow').checked ? 1500 : 200));
+      if (document.getElementById('fail').checked) {
+        note('← 503 Service Unavailable');
+        return new Response('Service Unavailable', { status: 503 });
+      }
+      note('← 201 Created');
+      return Response.json({ author: init.body.get('author'), text: init.body.get('text') }, { status: 201 });
+    }
+
+    let sending = false;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (sending) return; // a second click while waiting must not post twice
+      sending = true;
+      button.setAttribute('aria-disabled', 'true');
+      button.textContent = 'Posting…';
+      status.className = '';
+      status.textContent = '';
+
+      try {
+        // The same URL, method and fields the form would send without JavaScript
+        const res = await fakeFetch(form.action, { method: form.method, body: new FormData(form, e.submitter) });
+        if (!res.ok) throw new Error(`The server answered ${res.status}.`);
+        const comment = await res.json();
+
+        const li = document.createElement('li');
+        li.className = 'new';
+        const b = document.createElement('b');
+        b.textContent = comment.author;
+        const p = document.createElement('p');
+        p.textContent = comment.text;
+        li.append(b, p);
+        comments.append(li);
+
+        form.elements.text.value = ''; // keep the name for the next comment
+        status.className = 'good';
+        status.textContent = 'Comment posted.';
+      } catch (err) {
+        // Keep everything the user typed, say what happened, let them try again
+        status.className = 'bad';
+        status.textContent = `Your comment was not posted. ${err.message} Please try again.`;
+      } finally {
+        sending = false;
+        button.removeAttribute('aria-disabled');
+        button.textContent = 'Post comment';
+      }
+    });
+  </script>
+</body>
+</html>
