@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 18-1 · Final</title>
+  <style>
+    form { width: min(460px, 100%); display: grid; gap: 12px; }
+    .field { display: grid; gap: 4px; }
+    .field > label { font-weight: 600; font-size: 14px; }
+    .field input, .field select, .field textarea { font: inherit; font-size: 15px; padding: 6px 8px; border: 2px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .hint { font-size: 12px; color: var(--muted); margin: 0; }
+    .buttons { display: flex; gap: 8px; }
+    button { padding: 7px 14px; font-size: 14px; }
+    .error { font-size: 12px; color: var(--bad); margin: 0; display: none; }
+    :is(input, select, textarea):user-invalid { border-color: var(--bad); }
+    .field:has(:user-invalid) .error { display: block; }
+  </style>
+</head>
+<body class="demo">
+  <form action="https://httpbin.org/post" method="post">
+    <div class="field">
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" autocomplete="name" required>
+      <p class="error">Enter your name.</p>
+    </div>
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" autocomplete="email" required>
+      <p class="error">Enter an email address like name@example.com.</p>
+    </div>
+    <div class="field">
+      <label for="order">Order number</label>
+      <input type="text" id="order" name="order" required pattern="NR-\d{5}" aria-describedby="order-hint">
+      <p class="hint" id="order-hint">Looks like NR-12345</p>
+      <p class="error">Enter the order number as NR followed by a dash and 5 digits.</p>
+    </div>
+    <div class="field">
+      <label for="topic">Topic</label>
+      <select id="topic" name="topic" required>
+        <option value="">Choose a topic</option>
+        <option>Delivery</option><option>Returns</option><option>Something else</option>
+      </select>
+      <p class="error">Choose a topic.</p>
+    </div>
+    <div class="field">
+      <label for="message">Message</label>
+      <textarea id="message" name="message" rows="4" required minlength="20" maxlength="500" aria-describedby="message-hint"></textarea>
+      <p class="hint" id="message-hint">20 to 500 characters</p>
+      <p class="error">Write at least 20 characters.</p>
+    </div>
+    <div class="field">
+      <label><input type="checkbox" name="consent" required> You may contact me about this request</label>
+      <p class="error">We need your permission to reply.</p>
+    </div>
+    <div class="buttons"><button type="submit">Send</button></div>
+  </form>
+</body>
+</html>

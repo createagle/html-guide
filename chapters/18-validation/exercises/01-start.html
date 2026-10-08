@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 18-1 · Starter</title>
+  <style>
+    form { width: min(460px, 100%); display: grid; gap: 12px; }
+    .field { display: grid; gap: 4px; }
+    .field > label { font-weight: 600; font-size: 14px; }
+    .field input, .field select, .field textarea { font: inherit; font-size: 15px; padding: 6px 8px; border: 2px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .hint { font-size: 12px; color: var(--muted); margin: 0; }
+    .buttons { display: flex; gap: 8px; }
+    button { padding: 7px 14px; font-size: 14px; }
+
+  </style>
+</head>
+<body class="demo">
+  <!-- Nothing stops this form being sent empty or half filled. Add HTML constraints and helpful error styling. -->
+  <form action="https://httpbin.org/post" method="post">
+    <div class="field"><label for="name">Name</label><input type="text" id="name" name="name" autocomplete="name"></div>
+    <div class="field"><label for="email">Email</label><input type="text" id="email" name="email" autocomplete="email"></div>
+    <div class="field">
+      <label for="order">Order number</label>
+      <input type="text" id="order" name="order" aria-describedby="order-hint">
+      <p class="hint" id="order-hint">Looks like NR-12345</p>
+    </div>
+    <div class="field">
+      <label for="topic">Topic</label>
+      <select id="topic" name="topic">
+        <option value="">Choose a topic</option>
+        <option>Delivery</option><option>Returns</option><option>Something else</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="message">Message</label>
+      <textarea id="message" name="message" rows="4" aria-describedby="message-hint"></textarea>
+      <p class="hint" id="message-hint">20 to 500 characters</p>
+    </div>
+    <div class="field"><label><input type="checkbox" name="consent"> You may contact me about this request</label></div>
+    <div class="buttons"><button type="submit">Send</button></div>
+  </form>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>18-3 A pattern Tester</title>
+  <style>
+    .stage { width: min(880px, 100%); align-items: stretch; }
+    .left { flex: 1 1 360px; display: grid; gap: 10px; align-content: start; }
+    .right { flex: 1 1 360px; }
+    .left label { font-size: 13px; font-weight: 600; display: grid; gap: 4px; }
+    #pattern { font: 15px var(--mono); padding: 6px 8px; }
+    textarea { font: 14px/1.6 var(--mono); padding: 6px 8px; min-height: 160px; resize: vertical; }
+    #compiled { font-size: 12px; }
+    #status { margin: 0; font-size: 13px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 6px; border-bottom: 1px solid var(--border); }
+    td:first-child { font-family: var(--mono); white-space: pre; }
+    .controls { justify-content: flex-start; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="left">
+      <div class="controls">
+        <label class="control">Example
+          <select id="preset">
+            <option value="\d{3}">Exactly three digits</option>
+            <option value="[\w-]+">A word with dashes (broken)</option>
+            <option value="[\w\-]+">A word with dashes (fixed)</option>
+            <option value="cat|dog">cat or dog</option>
+            <option value="[A-Z]{2}\d{2} ?\d{4}">A ticket code</option>
+            <option value="\p{L}+">Letters in any script</option>
+          </select>
+        </label>
+      </div>
+      <label>pattern <input id="pattern" type="text" spellcheck="false"></label>
+      <pre class="code" id="compiled"></pre>
+      <p id="status" role="status"></p>
+      <label>Test values, one per line <textarea id="tests" spellcheck="false"></textarea></label>
+    </div>
+    <section class="panel right" aria-labelledby="res-label">
+      <h2 class="label" id="res-label">What the browser decides</h2>
+      <table>
+        <thead><tr><th scope="col">Value</th><th scope="col">patternMismatch</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </section>
+  </div>
+  <script>
+    const samples = {
+      '\\d{3}': '123\n1234\n12a\n',
+      '[\\w-]+': 'north-ridge\nnorth ridge\n!!!',
+      '[\\w\\-]+': 'north-ridge\nnorth ridge\n!!!',
+      'cat|dog': 'cat\ndog\ncatdog\nconcatenate',
+      '[A-Z]{2}\\d{2} ?\\d{4}': 'NR26 0714\nNR260714\nnr26 0714',
+      '\\p{L}+': 'Ridge\n山脊\nКряж\nridge 2',
+    };
+    const pattern = document.getElementById('pattern');
+    const tests = document.getElementById('tests');
+    const status = document.getElementById('status');
+    function run() {
+      const p = pattern.value;
+      // The browser wraps the pattern like this and compiles it with the v flag
+      document.getElementById('compiled').textContent = `new RegExp('^(?:${p})$', 'v')`;
+      let ok = true;
+      try { new RegExp(`^(?:${p})$`, 'v'); } catch (e) { ok = false; }
+      let legacy = true;
+      try { new RegExp(`^(?:${p})$`, 'u'); } catch (e) { legacy = false; }
+      status.className = ok ? 'good' : 'bad';
+      status.textContent = ok ? 'Valid pattern.' : `Not a valid v-flag regular expression, so the browser ignores the pattern entirely${legacy ? ' (it would have worked under the older u flag; escape the - inside [ ])' : ''}.`;
+      // Test each value on a real input so the result is exactly what the browser does
+      const probe = document.createElement('input');
+      probe.pattern = p;
+      document.getElementById('rows').innerHTML = tests.value.split('\n').map((v) => {
+        probe.value = v;
+        const bad = probe.validity.patternMismatch;
+        const shown = v === '' ? '(empty)' : v.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+        return `<tr><td>${shown}</td><td class="${bad || !ok ? 'bad' : 'good'}">${bad ? 'true: invalid' : v === '' ? 'false: empty values skip pattern' : ok ? 'false: matches' : 'false: pattern ignored'}</td></tr>`;
+      }).join('');
+    }
+    document.getElementById('preset').addEventListener('change', (e) => { pattern.value = e.target.value; tests.value = samples[e.target.value]; run(); });
+    pattern.addEventListener('input', run);
+    tests.addEventListener('input', run);
+    pattern.value = '\\d{3}';
+    tests.value = samples['\\d{3}'];
+    run();
+  </script>
+</body>
+</html>

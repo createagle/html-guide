@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>18-1 A Sign-up Form with HTML Validation</title>
+  <style>
+    .stage { width: min(900px, 100%); align-items: stretch; }
+    form { flex: 1 1 420px; display: grid; gap: 12px; }
+    .side { flex: 1 1 300px; display: grid; gap: 12px; align-content: start; }
+    .field { display: grid; gap: 4px; }
+    .field > label, legend { font-weight: 600; font-size: 14px; }
+    .field input { font-size: 15px; padding: 6px 8px; border: 2px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .hint { font-size: 12px; color: var(--muted); margin: 0; }
+    .error { font-size: 12px; color: var(--bad); margin: 0; display: none; }
+    fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 4px; }
+    .choices { display: flex; gap: 14px; font-size: 14px; }
+    .buttons { display: flex; gap: 8px; }
+    .buttons button { padding: 7px 14px; font-size: 14px; }
+
+    /* Show errors only after the user has interacted with the field */
+    form.user input:user-invalid { border-color: var(--bad); }
+    form.user input:user-valid { border-color: var(--good); }
+    form.user .field:has(input:user-invalid) .error { display: block; }
+    /* The naive version: errors appear before anyone has typed */
+    form.eager input:invalid { border-color: var(--bad); }
+    form.eager input:valid { border-color: var(--good); }
+    form.eager .field:has(input:invalid) .error { display: block; }
+
+    #result { font: 12px/1.6 var(--mono); white-space: pre-wrap; margin: 0; min-height: 4em; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <form id="form" class="user" action="#">
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" required minlength="3" maxlength="20" pattern="[a-z0-9_]+" autocomplete="username" aria-describedby="username-hint">
+        <p class="hint" id="username-hint">3 to 20 characters: lowercase letters, digits and _</p>
+        <p class="error">Pick a username of 3 to 20 lowercase letters, digits or _.</p>
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" required autocomplete="email">
+        <p class="error">Enter an email address like name@example.com.</p>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required minlength="8" autocomplete="new-password" aria-describedby="password-hint">
+        <p class="hint" id="password-hint">At least 8 characters</p>
+        <p class="error">Use at least 8 characters.</p>
+      </div>
+      <div class="field">
+        <label for="age">Age</label>
+        <input id="age" name="age" type="number" required min="16" max="120">
+        <p class="error">You need to be 16 or over.</p>
+      </div>
+      <div class="field">
+        <label for="site">Website (optional)</label>
+        <input id="site" name="site" type="url" placeholder="https://">
+        <p class="error">Include https:// at the start.</p>
+      </div>
+      <fieldset class="field">
+        <legend>Plan</legend>
+        <div class="choices">
+          <label><input type="radio" name="plan" value="free" required> Free</label>
+          <label><input type="radio" name="plan" value="pro"> Pro</label>
+        </div>
+        <p class="error">Choose a plan.</p>
+      </fieldset>
+      <div class="field">
+        <label><input type="checkbox" name="terms" required> I accept the terms</label>
+        <p class="error">You need to accept the terms.</p>
+      </div>
+      <div class="buttons">
+        <button type="submit">Create account</button>
+        <button type="submit" formnovalidate name="intent" value="draft">Save draft</button>
+      </div>
+    </form>
+    <div class="side">
+      <section class="panel" aria-labelledby="opts-label">
+        <h2 class="label" id="opts-label">Try</h2>
+        <label class="control"><input type="checkbox" id="eager"> Style with :invalid instead of :user-invalid</label>
+        <label class="control"><input type="checkbox" id="novalidate"> Add novalidate to the form</label>
+      </section>
+      <section class="panel" aria-labelledby="result-label">
+        <h2 class="label" id="result-label">Last submission</h2>
+        <pre id="result">Nothing submitted yet.</pre>
+      </section>
+    </div>
+  </div>
+  <script>
+    const form = document.getElementById('form');
+    document.getElementById('eager').addEventListener('change', (e) => { form.className = e.target.checked ? 'eager' : 'user'; });
+    document.getElementById('novalidate').addEventListener('change', (e) => { form.noValidate = e.target.checked; });
+    // The browser only fires submit once every constraint passes (unless novalidate or formnovalidate)
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const data = [...new FormData(form)].filter(([k]) => k !== 'password').map(([k, v]) => `${k} = "${v}"`);
+      const how = e.submitter.formNoValidate ? 'Save draft (formnovalidate: no checks)' : form.noValidate ? 'Create account (novalidate: no checks)' : 'Create account (all constraints passed)';
+      document.getElementById('result').textContent = `${how}\n${data.join('\n') || '(no fields filled)'}`;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 18-2 · Starter</title>
+  <style>
+    form { width: min(460px, 100%); display: grid; gap: 12px; }
+    .field { display: grid; gap: 4px; }
+    .field > label { font-weight: 600; font-size: 14px; }
+    .field input, .field select, .field textarea { font: inherit; font-size: 15px; padding: 6px 8px; border: 2px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .hint { font-size: 12px; color: var(--muted); margin: 0; }
+    .buttons { display: flex; gap: 8px; }
+    button { padding: 7px 14px; font-size: 14px; }
+    input:invalid { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 8%, var(--bg)); }
+    input:invalid + .error { display: block; }
+    .error { font-size: 12px; color: var(--bad); margin: 0; display: none; }
+  </style>
+</head>
+<body class="demo">
+  <!-- Three complaints: the form is red before anyone types, Save draft refuses to save a half-filled form,
+       and the trip slug accepts spaces and symbols. -->
+  <form action="https://httpbin.org/post" method="post">
+    <div class="field">
+      <label for="title">Trip title</label>
+      <input type="text" id="title" name="title" required>
+      <p class="error">Give the trip a title.</p>
+    </div>
+    <div class="field">
+      <label for="slug">Web address</label>
+      <input type="text" id="slug" name="slug" required pattern="[\w-]+" aria-describedby="slug-hint">
+      <p class="error">Use only letters, digits, _ and -.</p>
+      <p class="hint" id="slug-hint">Letters, digits, _ and -, for example north-ridge</p>
+    </div>
+    <div class="field">
+      <label for="date">Start date</label>
+      <input type="date" id="date" name="date" required>
+      <p class="error">Choose a start date.</p>
+    </div>
+    <div class="buttons">
+      <button type="submit">Publish</button>
+      <button type="submit" name="intent" value="draft">Save draft</button>
+    </div>
+  </form>
+</body>
+</html>

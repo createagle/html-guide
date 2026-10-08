@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>18-2 Which Validation Pseudo-classes Match</title>
+  <style>
+    .stage { width: min(920px, 100%); display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    form { display: grid; gap: 10px; }
+    .row { display: grid; grid-template-columns: minmax(200px, 280px) 1fr; gap: 12px; align-items: center; border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+    .row label { display: grid; gap: 4px; font-size: 13px; font-weight: 600; }
+    .row label code { font-weight: 400; color: var(--muted); font-size: 11px; }
+    .row input { font-size: 15px; padding: 5px 8px; }
+    .chips { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { font: 12px var(--mono); padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); opacity: .45; }
+    .chip.on { opacity: 1; color: var(--fg); border-color: var(--accent); background: var(--surface); }
+    .chip.on.bad { border-color: var(--bad); color: var(--bad); }
+    .chip.on.good { border-color: var(--good); color: var(--good); }
+    .buttons { display: flex; gap: 8px; align-items: center; }
+    #form-state { font: 12px var(--mono); color: var(--muted); }
+    @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <form id="form" action="#">
+      <div class="row">
+        <label for="f1">Name <code>required</code></label>
+        <input id="f1" type="text" required>
+        <div class="chips" data-for="f1"></div>
+      </div>
+      <div class="row">
+        <label for="f2">Email <code>type="email"</code></label>
+        <input id="f2" type="email">
+        <div class="chips" data-for="f2"></div>
+      </div>
+      <div class="row">
+        <label for="f3">Guests <code>type="number" min="1" max="10" value="12"</code></label>
+        <input id="f3" type="number" min="1" max="10" value="12">
+        <div class="chips" data-for="f3"></div>
+      </div>
+      <div class="row">
+        <label for="f4">Code <code>pattern="[A-Z]{3}" placeholder="ABC"</code></label>
+        <input id="f4" type="text" pattern="[A-Z]{3}" placeholder="ABC">
+        <div class="chips" data-for="f4"></div>
+      </div>
+      <div class="buttons">
+        <button type="submit">Submit</button>
+        <button type="reset">Reset</button>
+        <span id="form-state"></span>
+      </div>
+    </form>
+  </div>
+  <script>
+    const classes = [
+      [':required', ''], [':optional', ''],
+      [':valid', 'good'], [':invalid', 'bad'],
+      [':user-valid', 'good'], [':user-invalid', 'bad'],
+      [':in-range', 'good'], [':out-of-range', 'bad'],
+      [':placeholder-shown', ''], [':focus', ''],
+    ];
+    const form = document.getElementById('form');
+    document.querySelectorAll('.chips').forEach((box) => {
+      box.innerHTML = classes.map(([c, tone]) => `<span class="chip ${tone}" data-c="${c}">${c}</span>`).join('');
+    });
+    function update() {
+      document.querySelectorAll('.chips').forEach((box) => {
+        const input = document.getElementById(box.dataset.for);
+        box.querySelectorAll('.chip').forEach((chip) => chip.classList.toggle('on', input.matches(chip.dataset.c)));
+      });
+      document.getElementById('form-state').textContent = `form:${form.matches(':invalid') ? 'invalid' : 'valid'}`;
+    }
+    ['input', 'change', 'focusin', 'focusout'].forEach((t) => form.addEventListener(t, () => requestAnimationFrame(update)));
+    // A submit attempt marks every field as interacted with, so :user-invalid applies to all of them
+    form.addEventListener('invalid', () => requestAnimationFrame(update), true);
+    form.addEventListener('submit', (e) => { e.preventDefault(); requestAnimationFrame(update); });
+    form.addEventListener('reset', () => setTimeout(update, 0));
+    update();
+  </script>
+</body>
+</html>
