@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>4-3 target and rel</title>
+  <style>
+    .panel { width: min(520px, 100%); }
+    ul { padding-left: 0; list-style: none; display: grid; gap: 10px; margin: 0; }
+    code { color: var(--muted); }
+  </style>
+</head>
+<body class="demo">
+  <div class="panel">
+    <p class="label">Each link opens the same page in a new tab. The new page reports what it can see.</p>
+    <ul>
+      <li><a href="03-opener-child.html?case=blank" target="_blank">New tab</a> <code>target="_blank"</code></li>
+      <li><a href="03-opener-child.html?case=opener" target="_blank" rel="opener">New tab with opener</a> <code>target="_blank" rel="opener"</code></li>
+      <li><a href="03-opener-child.html?case=noreferrer" target="_blank" rel="noreferrer">New tab, no referrer</a> <code>target="_blank" rel="noreferrer"</code></li>
+      <li><a href="03-opener-child.html?case=same">Same tab</a> <code>no target</code></li>
+    </ul>
+  </div>
+</body>
+</html>

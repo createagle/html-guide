@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>4-3 Opened Page</title>
+</head>
+<body class="demo">
+  <div class="panel">
+    <p class="label">What this page can see</p>
+    <pre class="code" id="report"></pre>
+    <p><a href="03-opener.html">Back to the links</a></p>
+  </div>
+  <script>
+    const lines = [
+      'window.opener:   ' + (window.opener ? 'available — this page could navigate the previous tab' : 'null'),
+      'document.referrer: ' + (document.referrer || '(empty)'),
+    ];
+    document.getElementById('report').textContent = lines.join('\n');
+  </script>
+</body>
+</html>

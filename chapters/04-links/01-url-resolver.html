@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>4-1 Relative URL Resolver</title>
+  <style>
+    .panel { width: min(640px, 100%); display: grid; gap: 12px; }
+    .field { display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
+    .field input { font: 14px var(--mono); padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); }
+    .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+    .presets button { font: 12px var(--mono); padding: 3px 8px; border: 1px solid var(--border); border-radius: 999px; background: none; color: var(--fg); cursor: pointer; }
+    .presets button:hover, .presets button:focus-visible { border-color: var(--accent); color: var(--accent); }
+    #result { font: 600 15px var(--mono); overflow-wrap: anywhere; }
+    table { border-collapse: collapse; font: 13px var(--mono); }
+    th { text-align: left; font: 12px system-ui, sans-serif; color: var(--muted); padding: 3px 12px 3px 0; }
+    td { padding: 3px 0; overflow-wrap: anywhere; }
+    .changed { color: var(--accent); font-weight: 600; }
+  </style>
+</head>
+<body class="demo">
+  <div class="panel">
+    <label class="field">Base URL (the page the link is on)
+      <input type="text" id="base" value="https://example.com/docs/guide/intro.html?lang=en#top" spellcheck="false">
+    </label>
+    <label class="field">href
+      <input type="text" id="href" value="../api/" spellcheck="false">
+    </label>
+    <div class="presets" id="presets" role="group" aria-label="Example hrefs">
+      <button type="button">setup.html</button>
+      <button type="button">./setup.html</button>
+      <button type="button">../api/</button>
+      <button type="button">../../../../x</button>
+      <button type="button">/about</button>
+      <button type="button">//cdn.example.net/app.js</button>
+      <button type="button">?lang=zh</button>
+      <button type="button">#install</button>
+      <button type="button">https://example.org/</button>
+      <button type="button">mailto:hi@example.com</button>
+    </div>
+    <p class="label">Resolved URL</p>
+    <output id="result" for="base href"></output>
+    <table>
+      <tbody id="parts"></tbody>
+    </table>
+  </div>
+  <script>
+    const base = document.getElementById('base');
+    const href = document.getElementById('href');
+    const parts = document.getElementById('parts');
+    const result = document.getElementById('result');
+    const keys = ['protocol', 'host', 'pathname', 'search', 'hash'];
+
+    function update() {
+      parts.replaceChildren();
+      let b, u;
+      try { b = new URL(base.value); } catch { result.textContent = 'Invalid base URL'; return; }
+      // The same algorithm the browser runs for <a href> on a page at the base URL
+      try { u = new URL(href.value, b); } catch { result.textContent = 'Invalid URL'; return; }
+      result.textContent = u.href;
+      for (const k of keys) {
+        const tr = parts.insertRow();
+        const th = document.createElement('th');
+        th.scope = 'row';
+        th.textContent = k;
+        tr.append(th);
+        const td = tr.insertCell();
+        td.textContent = u[k] || '(empty)';
+        // Highlight what changed compared with the base URL
+        if (u[k] !== b[k]) td.className = 'changed';
+      }
+    }
+    document.getElementById('presets').addEventListener('click', (e) => {
+      if (e.target.matches('button')) { href.value = e.target.textContent; update(); }
+    });
+    base.addEventListener('input', update);
+    href.addEventListener('input', update);
+    update();
+  </script>
+</body>
+</html>
