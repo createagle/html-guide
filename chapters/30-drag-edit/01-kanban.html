@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>30-1 A Sortable Kanban Board</title>
+  <style>
+    .stage { width: min(860px, 100%); flex-direction: column; align-items: stretch; gap: 10px; }
+    .board { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; align-items: start; }
+    .column { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px; }
+    .column h2 { margin: 2px 4px 8px; font-size: 14px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+    .count { font-family: var(--mono); }
+    .cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; min-block-size: 120px; align-content: start; border-radius: 8px; }
+    .cards.over { outline: 2px dashed var(--accent); outline-offset: 2px; }
+    .card { display: flex; align-items: center; gap: 6px; padding: 8px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; cursor: grab; }
+    .card .text { flex: 1; font-size: 14px; }
+    .card.dragging { opacity: .4; }
+    .moves button { min-inline-size: 26px; padding: 0 6px; font-size: 12px; line-height: 24px; }
+    .marker { block-size: 4px; border-radius: 2px; background: var(--accent); }
+    #status { margin: 0; font-size: 14px; color: var(--muted); min-block-size: 1.4em; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="board">
+      <section class="column" aria-labelledby="h-todo">
+        <h2 id="h-todo">To do <span class="count"></span></h2>
+        <ul class="cards" data-column="To do">
+          <li class="card" draggable="true" id="card-1">
+            <span class="text">Sketch the board layout</span>
+            <span class="moves"><button type="button" data-move="-1">◀</button><button type="button" data-move="1">▶</button></span>
+          </li>
+          <li class="card" draggable="true" id="card-2">
+            <span class="text">Write the drop handler</span>
+            <span class="moves"><button type="button" data-move="-1">◀</button><button type="button" data-move="1">▶</button></span>
+          </li>
+          <li class="card" draggable="true" id="card-3">
+            <span class="text">Test with a keyboard</span>
+            <span class="moves"><button type="button" data-move="-1">◀</button><button type="button" data-move="1">▶</button></span>
+          </li>
+        </ul>
+      </section>
+      <section class="column" aria-labelledby="h-doing">
+        <h2 id="h-doing">Doing <span class="count"></span></h2>
+        <ul class="cards" data-column="Doing">
+          <li class="card" draggable="true" id="card-4">
+            <span class="text">Draft chapter 30</span>
+            <span class="moves"><button type="button" data-move="-1">◀</button><button type="button" data-move="1">▶</button></span>
+          </li>
+        </ul>
+      </section>
+      <section class="column" aria-labelledby="h-done">
+        <h2 id="h-done">Done <span class="count"></span></h2>
+        <ul class="cards" data-column="Done">
+          <li class="card" draggable="true" id="card-5">
+            <span class="text">Pick column names</span>
+            <span class="moves"><button type="button" data-move="-1">◀</button><button type="button" data-move="1">▶</button></span>
+          </li>
+        </ul>
+      </section>
+    </div>
+    <p id="status" role="status"></p>
+  </div>
+  <script>
+    const board = document.querySelector('.board');
+    const lists = [...document.querySelectorAll('.cards')];
+    const status = document.getElementById('status');
+    const marker = document.createElement('li');
+    marker.className = 'marker';
+    marker.setAttribute('aria-hidden', 'true');
+    let dragged = null;
+
+    function update() {
+      for (const list of lists) {
+        list.closest('.column').querySelector('.count').textContent = list.children.length;
+        const i = lists.indexOf(list);
+        for (const card of list.children) {
+          const text = card.querySelector('.text').textContent;
+          const [prev, next] = card.querySelectorAll('[data-move]');
+          prev.disabled = i === 0;
+          next.disabled = i === lists.length - 1;
+          prev.setAttribute('aria-label', i > 0 ? `Move “${text}” to ${lists[i - 1].dataset.column}` : 'Move left');
+          next.setAttribute('aria-label', i < lists.length - 1 ? `Move “${text}” to ${lists[i + 1].dataset.column}` : 'Move right');
+        }
+      }
+    }
+    function announce(card) {
+      status.textContent = `Moved “${card.querySelector('.text').textContent}” to ${card.parentElement.dataset.column}.`;
+    }
+
+    // Mouse and touch: native drag and drop
+    board.addEventListener('dragstart', (e) => {
+      const card = e.target.closest('.card');
+      if (!card) return;
+      dragged = card;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', card.querySelector('.text').textContent);
+      // Style the original after the browser has taken its drag image
+      requestAnimationFrame(() => card.classList.add('dragging'));
+    });
+    board.addEventListener('dragend', () => {
+      dragged?.classList.remove('dragging');
+      dragged = null;
+      marker.remove();
+      for (const list of lists) list.classList.remove('over');
+    });
+
+    // The card the dragged one should land before, from the pointer's height
+    function cardAfter(list, y) {
+      return [...list.querySelectorAll('.card:not(.dragging)')]
+        .find((card) => { const r = card.getBoundingClientRect(); return y < r.top + r.height / 2; }) ?? null;
+    }
+
+    for (const list of lists) {
+      list.addEventListener('dragover', (e) => {
+        if (!dragged) return; // Ignore files, links and text dragged in from elsewhere
+        e.preventDefault();   // Without this, the list is not a drop target
+        e.dataTransfer.dropEffect = 'move';
+        for (const l of lists) l.classList.toggle('over', l === list);
+        list.insertBefore(marker, cardAfter(list, e.clientY));
+      });
+      list.addEventListener('drop', (e) => {
+        if (!dragged) return;
+        e.preventDefault();
+        marker.replaceWith(dragged);
+        announce(dragged);
+        update();
+      });
+    }
+
+    // Keyboard and switch users: the same moves with buttons
+    board.addEventListener('click', (e) => {
+      const button = e.target.closest('[data-move]');
+      if (!button) return;
+      const card = button.closest('.card');
+      const target = lists[lists.indexOf(card.parentElement) + Number(button.dataset.move)];
+      target.append(card);
+      update();
+      announce(card);
+      const same = card.querySelector(`[data-move="${button.dataset.move}"]`);
+      (same.disabled ? card.querySelector('[data-move]:not(:disabled)') : same).focus();
+    });
+
+    update();
+  </script>
+</body>
+</html>

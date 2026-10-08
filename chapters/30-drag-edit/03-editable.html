@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>30-3 contenteditable and plaintext-only</title>
+  <style>
+    .stage { width: min(860px, 100%); display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+    .editor { display: grid; gap: 8px; }
+    .editor h2 { margin: 0; font-size: 15px; }
+    .editor h2 code { font-size: 13px; }
+    [contenteditable] { min-block-size: 110px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); line-height: 1.5; }
+    [contenteditable]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .sample { color: var(--bad); font-size: 1.2em; }
+    pre.code { font-size: 12px; margin: 0; min-block-size: 70px; white-space: pre-wrap; word-break: break-all; }
+    ol.log { margin: 0; padding-left: 28px; font: 12px/1.6 var(--mono); max-block-size: 120px; overflow: auto; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <section class="editor" aria-labelledby="rich-h">
+      <h2 id="rich-h"><code>contenteditable="true"</code></h2>
+      <div id="rich" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="rich-h">Press <b>Ctrl+B</b> or Enter here. Copy <span class="sample">this red text</span> and paste it into both boxes.</div>
+      <section class="panel" aria-labelledby="rich-dom"><h3 class="label" id="rich-dom">innerHTML</h3><pre class="code" id="rich-html"></pre></section>
+      <section class="panel" aria-labelledby="rich-ev"><h3 class="label" id="rich-ev">beforeinput inputType</h3><ol class="log" id="rich-log"></ol></section>
+    </section>
+    <section class="editor" aria-labelledby="plain-h">
+      <h2 id="plain-h"><code>contenteditable="plaintext-only"</code></h2>
+      <!-- [html-validate-disable-next attribute-allowed-values: plaintext-only is newer than the validator] -->
+      <div id="plain" contenteditable="plaintext-only" role="textbox" aria-multiline="true" aria-labelledby="plain-h">Press Ctrl+B or Enter here, then paste the red text.</div>
+      <section class="panel" aria-labelledby="plain-dom"><h3 class="label" id="plain-dom">innerHTML</h3><pre class="code" id="plain-html"></pre></section>
+      <section class="panel" aria-labelledby="plain-ev"><h3 class="label" id="plain-ev">beforeinput inputType</h3><ol class="log" id="plain-log"></ol></section>
+    </section>
+  </div>
+  <script>
+    for (const id of ['rich', 'plain']) {
+      const editor = document.getElementById(id);
+      const html = document.getElementById(`${id}-html`);
+      const log = document.getElementById(`${id}-log`);
+      const show = () => { html.textContent = editor.innerHTML; };
+      editor.addEventListener('beforeinput', (e) => {
+        const li = document.createElement('li');
+        li.textContent = e.inputType;
+        log.append(li);
+        log.scrollTop = log.scrollHeight;
+      });
+      editor.addEventListener('input', show);
+      show();
+    }
+  </script>
+</body>
+</html>

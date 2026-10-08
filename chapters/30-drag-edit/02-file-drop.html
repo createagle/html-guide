@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>30-2 Dropping Files Into a Page</title>
+  <style>
+    .stage { width: min(760px, 100%); align-items: stretch; }
+    .left { flex: 1 1 340px; display: grid; gap: 12px; align-content: start; }
+    .side { flex: 1 1 260px; }
+    .zone { display: grid; place-items: center; gap: 4px; min-block-size: 150px; padding: 16px; border: 2px dashed var(--border); border-radius: 14px; text-align: center; cursor: pointer; }
+    .zone strong { font-size: 17px; }
+    .zone .link { color: var(--accent); text-decoration: underline; }
+    .zone.over { border-color: var(--accent); background: var(--surface); }
+    .zone:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .visually-hidden { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    #files-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+    #files-list li { display: grid; grid-template-columns: 44px 1fr; gap: 2px 10px; align-items: center; padding: 6px; border: 1px solid var(--border); border-radius: 8px; }
+    #files-list img, #files-list .icon { grid-row: span 2; inline-size: 44px; block-size: 44px; object-fit: cover; border-radius: 6px; background: var(--surface); display: grid; place-items: center; font: 600 11px var(--mono); color: var(--muted); }
+    #files-list .name { font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
+    #files-list .meta { font: 12px var(--mono); color: var(--muted); }
+    pre.code { font-size: 12.5px; margin: 0; white-space: pre-wrap; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="left">
+      <label class="zone" id="zone">
+        <strong>Drop files here</strong>
+        <span>or <span class="link">choose files</span></span>
+        <input type="file" id="picker" multiple class="visually-hidden">
+      </label>
+      <ul id="files-list"></ul>
+    </div>
+    <section class="panel side" aria-labelledby="t-label">
+      <h2 class="label" id="t-label">dataTransfer while dragging</h2>
+      <pre class="code" id="types">Drag a file over the box.</pre>
+    </section>
+  </div>
+  <script>
+    const zone = document.getElementById('zone');
+    const picker = document.getElementById('picker');
+    const list = document.getElementById('files-list');
+    const types = document.getElementById('types');
+
+    // Dropping a file anywhere else would make the browser open it and leave the page
+    for (const type of ['dragover', 'drop']) {
+      document.addEventListener(type, (e) => {
+        if (e.dataTransfer.types.includes('Files')) e.preventDefault();
+      });
+    }
+
+    zone.addEventListener('dragover', (e) => {
+      if (!e.dataTransfer.types.includes('Files')) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      zone.classList.add('over');
+      // During dragover the files' contents are protected: only types and items are readable
+      types.textContent = `types: ${JSON.stringify([...e.dataTransfer.types])}\n` +
+        `items: ${[...e.dataTransfer.items].map((i) => `${i.kind} ${i.type || '(unknown type)'}`).join(', ')}\n` +
+        `files.length: ${e.dataTransfer.files.length}`;
+    });
+    zone.addEventListener('dragleave', (e) => {
+      if (!zone.contains(e.relatedTarget)) zone.classList.remove('over');
+    });
+    zone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      zone.classList.remove('over');
+      types.textContent = `drop: files.length is now ${e.dataTransfer.files.length}`;
+      show(e.dataTransfer.files);
+    });
+    picker.addEventListener('change', () => show(picker.files));
+
+    const size = (n) => n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1048576).toFixed(1)} MB`;
+
+    function show(files) {
+      for (const file of files) {
+        const li = document.createElement('li');
+        let thumb;
+        if (file.type.startsWith('image/')) {
+          thumb = document.createElement('img');
+          thumb.alt = '';
+          thumb.src = URL.createObjectURL(file);
+          thumb.addEventListener('load', () => URL.revokeObjectURL(thumb.src), { once: true });
+        } else {
+          thumb = document.createElement('span');
+          thumb.className = 'icon';
+          thumb.textContent = file.name.split('.').pop().slice(0, 4).toUpperCase();
+        }
+        const name = document.createElement('span');
+        name.className = 'name';
+        name.textContent = file.name;
+        const meta = document.createElement('span');
+        meta.className = 'meta';
+        meta.textContent = `${file.type || 'unknown type'} · ${size(file.size)}`;
+        li.append(thumb, name, meta);
+        list.append(li);
+      }
+    }
+  </script>
+</body>
+</html>

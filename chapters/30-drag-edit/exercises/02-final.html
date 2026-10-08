@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 30-2 · Final</title>
+  <style>
+    .composer { width: min(460px, 100%); display: grid; gap: 8px; }
+    .composer label, .composer .label-text { font-weight: 600; font-size: 14px; }
+    .row { display: flex; justify-content: space-between; align-items: center; }
+    .row output, .row .count { font: 13px var(--mono); color: var(--muted); }
+    #posts { list-style: none; margin: 14px 0 0; padding: 0; width: min(460px, 100%); display: grid; gap: 8px; }
+    #posts li { border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; white-space: pre-wrap; }
+    textarea { field-sizing: content; min-block-size: 3lh; max-block-size: 12lh; font: inherit; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); resize: vertical; }
+  </style>
+</head>
+<body class="demo">
+  <form class="composer" id="composer">
+    <label for="comment">Your comment</label>
+    <textarea id="comment" name="comment" maxlength="280" required aria-describedby="count"></textarea>
+    <div class="row">
+      <output id="count" for="comment">0 / 280</output>
+      <button type="submit">Post</button>
+    </div>
+  </form>
+  <ul id="posts"></ul>
+  <script>
+    const form = document.getElementById('composer');
+    const comment = document.getElementById('comment');
+    const count = document.getElementById('count');
+    const showCount = () => { count.value = `${comment.value.length} / 280`; };
+    comment.addEventListener('input', showCount);
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const li = document.createElement('li');
+      li.textContent = comment.value;
+      document.getElementById('posts').prepend(li);
+      form.reset();
+      showCount();
+    });
+  </script>
+</body>
+</html>
