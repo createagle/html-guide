@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>1-1 Three Layers: HTML, CSS, JavaScript</title>
+  <!-- Demo chrome: always on -->
+  <style>
+    .frame { width: min(420px, 100%); border: 1px dashed var(--border); border-radius: 12px; padding: 16px; }
+  </style>
+  <!-- The CSS layer: the checkbox turns this one element on and off -->
+  <style id="css-layer">
+    .recipe { font-family: Georgia, "Times New Roman", serif; }
+    .recipe h1 { margin: 0 0 4px; font-size: 1.6rem; color: var(--accent); }
+    .recipe .meta { margin: 0 0 16px; color: var(--muted); font: 13px system-ui, sans-serif; }
+    .recipe h2 { font: 600 12px system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    .recipe ul, .recipe ol { padding-left: 1.2em; }
+    .recipe li { margin: 4px 0; }
+    .recipe li::marker { color: var(--accent); }
+    .recipe .servings { display: flex; align-items: center; gap: 8px; font: 14px system-ui, sans-serif; }
+    .recipe .servings button { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--accent); background: none; color: var(--accent); cursor: pointer; }
+    .recipe data { font-weight: 600; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="use-css" checked> CSS</label>
+    <label class="control"><input type="checkbox" id="use-js" checked> JavaScript</label>
+  </div>
+  <div class="stage">
+    <div class="frame">
+      <article class="recipe">
+        <h1>Tomato &amp; Egg Stir-fry</h1>
+        <p class="meta">10 minutes · Serves <output id="count">2</output></p>
+        <p class="servings" id="servings">
+          <button type="button" data-step="-1" aria-label="Fewer servings">−</button>
+          <span>Servings</span>
+          <button type="button" data-step="1" aria-label="More servings">+</button>
+        </p>
+        <h2>Ingredients</h2>
+        <ul>
+          <li><data value="2">2</data> eggs</li>
+          <li><data value="2">2</data> tomatoes</li>
+          <li><data value="1">1</data> tsp sugar</li>
+        </ul>
+        <h2>Steps</h2>
+        <ol>
+          <li>Scramble the eggs and set them aside.</li>
+          <li>Cook the tomatoes until soft, then add the sugar.</li>
+          <li>Fold the eggs back in and serve.</li>
+        </ol>
+      </article>
+    </div>
+  </div>
+  <script>
+    const servings = document.getElementById('servings');
+    const count = document.getElementById('count');
+    let people = 2;
+
+    // The JavaScript layer: scale every amount for the chosen number of servings
+    servings.addEventListener('click', (event) => {
+      const step = Number(event.target.dataset.step || 0);
+      people = Math.min(8, Math.max(1, people + step));
+      count.value = people;
+      document.querySelectorAll('.recipe data').forEach((amount) => {
+        amount.textContent = (amount.value / 2) * people;
+      });
+    });
+
+    document.getElementById('use-css').addEventListener('change', (event) => {
+      document.getElementById('css-layer').disabled = !event.target.checked;
+    });
+    // Without JavaScript the buttons would do nothing, so the page hides them
+    document.getElementById('use-js').addEventListener('change', (event) => {
+      servings.hidden = !event.target.checked;
+    });
+  </script>
+</body>
+</html>

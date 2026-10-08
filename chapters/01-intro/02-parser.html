@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>1-2 How the Parser Repairs Broken HTML</title>
+  <style>
+    .stage { align-items: stretch; width: min(880px, 100%); }
+    .stage .panel { flex: 1 1 300px; display: flex; flex-direction: column; gap: 8px; }
+    textarea { width: 100%; min-height: 180px; resize: vertical; font: 13px/1.55 var(--mono); padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); }
+    #tree { flex: 1; min-height: 180px; }
+    .tag { color: var(--accent); }
+    .attr { color: var(--muted); }
+    .text { color: var(--good); }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">Example
+      <select id="preset">
+        <option value="&lt;title&gt;Hi&lt;/title&gt;&#10;&lt;p&gt;Hello">No html, head or body</option>
+        <option value="&lt;p&gt;One&#10;&lt;p&gt;Two&#10;&lt;p&gt;Three">Unclosed p</option>
+        <option value="&lt;p&gt;Hello &lt;div&gt;World&lt;/div&gt;&lt;/p&gt;">div inside p</option>
+        <option value="&lt;b&gt;Bold &lt;i&gt;both&lt;/b&gt; italic?&lt;/i&gt;">Misnested b and i</option>
+        <option value="&lt;table&gt;&lt;tr&gt;&lt;td&gt;A&lt;/td&gt;&lt;/tr&gt;Oops&lt;/table&gt;">Text inside table</option>
+        <option value="&lt;ul&gt;&#10;  &lt;li&gt;Tea&#10;  &lt;li&gt;Coffee&#10;&lt;/ul&gt;">Unclosed li</option>
+      </select>
+    </label>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="src-label">
+      <h2 class="label" id="src-label"><label for="source">Your HTML</label></h2>
+      <textarea id="source" spellcheck="false"></textarea>
+    </section>
+    <section class="panel" aria-labelledby="dom-label">
+      <h2 class="label" id="dom-label">DOM the browser builds</h2>
+      <pre class="code" id="tree" aria-live="polite"></pre>
+    </section>
+  </div>
+  <script>
+    const source = document.getElementById('source');
+    const tree = document.getElementById('tree');
+    const preset = document.getElementById('preset');
+
+    function line(depth, html) {
+      return '  '.repeat(depth) + html + '\n';
+    }
+    function escape(text) {
+      return text.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    }
+    function dump(node, depth) {
+      let out = '';
+      for (const child of node.childNodes) {
+        if (child.nodeType === Node.ELEMENT_NODE) {
+          const attrs = [...child.attributes].map((a) => ` <span class="attr">${a.name}="${escape(a.value)}"</span>`).join('');
+          out += line(depth, `<span class="tag">${child.localName}</span>${attrs}`);
+          out += dump(child, depth + 1);
+        } else if (child.nodeType === Node.TEXT_NODE && child.data.trim()) {
+          out += line(depth, `<span class="text">"${escape(child.data.trim())}"</span>`);
+        } else if (child.nodeType === Node.COMMENT_NODE) {
+          out += line(depth, `<span class="attr">&lt;!--${escape(child.data)}--&gt;</span>`);
+        }
+      }
+      return out;
+    }
+    function render() {
+      // DOMParser runs the same HTML parser as page loading, error recovery included
+      const doc = new DOMParser().parseFromString(source.value, 'text/html');
+      tree.innerHTML = dump(doc, 0);
+    }
+    preset.addEventListener('change', () => { source.value = preset.value; render(); });
+    source.addEventListener('input', render);
+    source.value = preset.value;
+    render();
+  </script>
+</body>
+</html>
