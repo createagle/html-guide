@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 22-1 · Final</title>
+  <style>
+    form { width: min(420px, 100%); display: grid; gap: 12px; }
+    button { justify-self: start; padding: 7px 16px; font-size: 15px; }
+    #sent { margin: 0; font: 13px var(--mono); white-space: pre-wrap; }
+    fieldset { border: 0; padding: 0; margin: 0; }
+    legend { font-weight: 600; padding: 0; margin-bottom: 4px; }
+    .visually-hidden { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+    .stars { --on: #f59e0b; --off: #a8a29e; display: flex; }
+    /* The radios stay in the page (focusable, submitted), just invisible */
+    .stars input { position: absolute; opacity: 0; inline-size: 1px; block-size: 1px; margin: 0; }
+    .stars label { color: var(--off); cursor: pointer; padding: 2px; border-radius: 4px; }
+    .stars svg { display: block; inline-size: 32px; block-size: 32px; fill: currentColor; }
+    /* The checked star and every star before it */
+    .stars input:checked + label,
+    .stars label:has(~ input:checked) { color: var(--on); }
+    /* Hover preview: light up to the star under the pointer */
+    .stars:hover label { color: var(--on); }
+    .stars label:hover ~ label { color: var(--off); }
+    .stars input:focus-visible + label { outline: 2px solid var(--accent); }
+    @media (forced-colors: active) {
+      .stars input:checked + label, .stars label:has(~ input:checked) { color: Highlight; }
+    }
+  </style>
+</head>
+<body class="demo">
+  <form id="form">
+    <fieldset>
+      <legend>Rate this recipe</legend>
+      <div class="stars">
+        <input type="radio" id="r1" name="stars" value="1" required><label for="r1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><span class="visually-hidden">1 star</span></label>
+        <input type="radio" id="r2" name="stars" value="2"><label for="r2"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><span class="visually-hidden">2 stars</span></label>
+        <input type="radio" id="r3" name="stars" value="3"><label for="r3"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><span class="visually-hidden">3 stars</span></label>
+        <input type="radio" id="r4" name="stars" value="4"><label for="r4"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><span class="visually-hidden">4 stars</span></label>
+        <input type="radio" id="r5" name="stars" value="5"><label for="r5"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><span class="visually-hidden">5 stars</span></label>
+      </div>
+    </fieldset>
+    <button type="submit">Rate</button>
+    <p id="sent" role="status"></p>
+  </form>
+  <script>
+    document.getElementById('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const entries = [...new FormData(e.target)].map(([k, v]) => `${k}=${v}`);
+      document.getElementById('sent').textContent = 'Would send: ' + (entries.join('&') || '(nothing)');
+    });
+  </script>
+</body>
+</html>

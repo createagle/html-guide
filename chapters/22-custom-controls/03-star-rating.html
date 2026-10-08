@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>22-3 A Form-Associated Star Rating</title>
+  <style>
+    .stage { width: min(880px, 100%); align-items: stretch; }
+    form { flex: 1 1 340px; display: grid; gap: 12px; align-content: start; }
+    .side { flex: 1 1 320px; }
+    fieldset { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px 14px; margin: 0; display: grid; gap: 12px; }
+    legend { font-weight: 600; padding: 0 4px; }
+    .field { display: grid; gap: 4px; justify-items: start; }
+    .field label { font-weight: 600; font-size: 14px; }
+    textarea { inline-size: 100%; min-block-size: 4lh; font-size: 15px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .row { display: flex; gap: 8px; }
+    .row button { padding: 7px 16px; font-size: 15px; }
+    /* A custom state the element sets for itself */
+    star-rating:state(rated) + .hint { visibility: hidden; }
+    .hint { margin: 0; font-size: 13px; color: var(--muted); }
+    pre.code { font-size: 12.5px; min-block-size: 220px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="disable"> Disable the fieldset</label>
+  </div>
+  <div class="stage">
+    <form id="form">
+      <fieldset id="fs">
+        <legend>Your review</legend>
+        <div class="field">
+          <label for="rating">Rating</label>
+          <star-rating id="rating" name="rating" required></star-rating>
+          <p class="hint">Click a star, or focus the stars and use the arrow keys.</p>
+        </div>
+        <div class="field">
+          <label for="text">Comments</label>
+          <textarea id="text" name="text"></textarea>
+        </div>
+      </fieldset>
+      <div class="row">
+        <button type="submit">Send review</button>
+        <button type="reset">Reset</button>
+      </div>
+    </form>
+    <section class="panel side" aria-labelledby="r-label">
+      <h2 class="label" id="r-label">What the form sees</h2>
+      <pre class="code" id="read" aria-live="polite"></pre>
+    </section>
+  </div>
+
+  <script>
+    class StarRating extends HTMLElement {
+      static formAssociated = true; // lets the element take part in forms
+      static observedAttributes = ['value', 'max', 'required'];
+
+      #internals = this.attachInternals();
+      #value = 0;
+      #disabled = false;
+      #stars;
+
+      constructor() {
+        super();
+        this.#internals.role = 'slider'; // default semantics, like a native element's
+        this.#internals.ariaValueMin = '0';
+        const root = this.attachShadow({ mode: 'open' });
+        root.innerHTML = `
+          <style>
+            :host { display: inline-block; border-radius: 6px; cursor: pointer; color: #a8a29e; }
+            .stars { display: flex; gap: 2px; }
+            :host(:focus-visible) { outline: 2px solid var(--accent, #2563eb); outline-offset: 3px; }
+            :host(:disabled) { opacity: .5; cursor: not-allowed; }
+            svg { inline-size: 30px; block-size: 30px; display: block; fill: currentColor; }
+            .on { color: #f59e0b; }
+            :host(:not(:disabled)) .stars:hover span { color: #f59e0b; }
+            :host(:not(:disabled)) .stars span:hover ~ span { color: #a8a29e; }
+            @media (forced-colors: active) { .on, .stars:hover span { color: Highlight; } }
+          </style>
+          <div class="stars" part="stars"></div>`;
+        this.#stars = root.querySelector('.stars');
+        this.#stars.addEventListener('click', (e) => {
+          const star = e.target.closest('[data-value]');
+          if (star && !this.#disabled) this.#set(Number(star.dataset.value), true);
+        });
+        this.addEventListener('keydown', (e) => this.#onKey(e));
+      }
+
+      connectedCallback() {
+        if (!this.hasAttribute('tabindex')) this.tabIndex = this.#disabled ? -1 : 0;
+        this.#render();
+        this.#set(this.#default, false);
+      }
+      attributeChangedCallback() {
+        if (!this.#stars) return;
+        this.#render();
+        this.#set(this.#value || this.#default, false);
+      }
+
+      get max() { return Number(this.getAttribute('max')) || 5; }
+      get #default() { return Number(this.getAttribute('value')) || 0; }
+
+      // The same API a native control has
+      get value() { return String(this.#value); }
+      set value(v) { this.#set(Number(v), false); }
+      get name() { return this.getAttribute('name'); }
+      get form() { return this.#internals.form; }
+      get labels() { return this.#internals.labels; }
+      get validity() { return this.#internals.validity; }
+      get validationMessage() { return this.#internals.validationMessage; }
+      get willValidate() { return this.#internals.willValidate; }
+      checkValidity() { return this.#internals.checkValidity(); }
+      reportValidity() { return this.#internals.reportValidity(); }
+
+      // Called by the form
+      formResetCallback() { this.#set(this.#default, false); }
+      formDisabledCallback(disabled) {
+        this.#disabled = disabled;
+        this.tabIndex = disabled ? -1 : 0;
+      }
+      formStateRestoreCallback(state) { this.#set(Number(state), false); }
+
+      #render() {
+        const star = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>';
+        this.#stars.innerHTML = Array.from({ length: this.max }, (_, i) => `<span data-value="${i + 1}">${star}</span>`).join('');
+        this.#internals.ariaValueMax = String(this.max);
+      }
+
+      #set(v, byUser) {
+        v = Math.min(this.max, Math.max(0, Math.round(v) || 0));
+        const changed = v !== this.#value;
+        this.#value = v;
+        // What gets submitted: nothing at all when there is no rating, like an unchecked checkbox
+        this.#internals.setFormValue(v ? String(v) : null, String(v));
+        if (this.hasAttribute('required') && !v) {
+          this.#internals.setValidity({ valueMissing: true }, 'Please choose a rating.', this.#stars.firstElementChild);
+        } else {
+          this.#internals.setValidity({});
+        }
+        this.#internals.ariaValueNow = String(v);
+        this.#internals.ariaValueText = v ? `${v} of ${this.max} stars` : 'No rating';
+        if (v) this.#internals.states.add('rated'); else this.#internals.states.delete('rated');
+        [...this.#stars.children].forEach((s, i) => s.classList.toggle('on', i < v));
+        if (byUser && changed) {
+          this.dispatchEvent(new Event('input', { bubbles: true }));
+          this.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+
+      #onKey(e) {
+        if (this.#disabled) return;
+        const keys = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 };
+        let v = null;
+        if (e.key in keys) v = this.#value + keys[e.key];
+        else if (e.key === 'Home') v = 0;
+        else if (e.key === 'End') v = this.max;
+        else if (/^[0-9]$/.test(e.key)) v = Number(e.key);
+        if (v === null) return;
+        e.preventDefault();
+        this.#set(v, true);
+      }
+    }
+    customElements.define('star-rating', StarRating);
+
+    // The page below uses the element exactly like a native control
+    const form = document.getElementById('form');
+    const rating = document.getElementById('rating');
+    const read = document.getElementById('read');
+    function show(extra = '') {
+      read.textContent = [
+        `rating.value             ${rating.value}`,
+        `rating.validity.valid    ${rating.validity.valid}`,
+        `rating.validationMessage ${JSON.stringify(rating.validationMessage)}`,
+        `rating.matches(':disabled')      ${rating.matches(':disabled')}`,
+        `rating.matches(':state(rated)')  ${rating.matches(':state(rated)')}`,
+        `rating.labels[0].textContent     ${JSON.stringify(rating.labels[0].textContent)}`,
+      ].join('\n') + extra;
+    }
+    form.addEventListener('input', () => show());
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const entries = [...new FormData(form)].map(([k, v]) => `${k}=${JSON.stringify(v)}`);
+      show(`\n\nSubmitted:\n  ${entries.join('\n  ') || '(nothing)'}`);
+    });
+    form.addEventListener('reset', () => setTimeout(() => show(' \n\n(form reset)')));
+    document.getElementById('disable').addEventListener('change', (e) => {
+      document.getElementById('fs').disabled = e.target.checked;
+      show();
+    });
+    show();
+  </script>
+</body>
+</html>

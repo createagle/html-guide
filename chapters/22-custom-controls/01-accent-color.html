@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>22-1 accent-color and appearance</title>
+  <style>
+    .stage { width: min(900px, 100%); align-items: stretch; }
+    .panel { flex: 1 1 260px; display: grid; gap: 12px; align-content: start; }
+    .row { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+    /* accent-color is inherited; set it on the container (the shared stylesheet sets it on inputs, so reset that here) */
+    #themed { accent-color: var(--pick, auto); }
+    #themed :is(input, progress) { accent-color: inherit; }
+    #default :is(input, progress) { accent-color: auto; }
+    input[type=range], progress { width: 100%; }
+
+    /* Level 2: start from a blank control, keep the native element */
+    .switch {
+      appearance: none;
+      margin: 0;
+      inline-size: 44px; block-size: 24px;
+      border-radius: 12px;
+      background: var(--border);
+      position: relative;
+      cursor: pointer;
+      transition: background .15s;
+      flex: none;
+    }
+    .switch::before {
+      content: "";
+      position: absolute; inset-block-start: 3px; inset-inline-start: 3px;
+      inline-size: 18px; block-size: 18px; border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 2px rgb(0 0 0 / .3);
+      transition: translate .15s;
+    }
+    .switch:checked { background: var(--pick, var(--accent)); }
+    .switch:checked::before { translate: 20px 0; }
+    .switch:focus-visible { outline: 2px solid var(--pick, var(--accent)); outline-offset: 2px; }
+    .switch:disabled { opacity: .5; cursor: not-allowed; }
+    @media (forced-colors: active) {
+      .switch { border: 1px solid CanvasText; }
+      .switch::before { background: CanvasText; }
+      .switch:checked { background: Highlight; }
+    }
+    .note { margin: 0; font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">accent-color <input type="color" id="pick" value="#e11d48"></label>
+    <label class="control"><input type="checkbox" id="on" checked> apply</label>
+  </div>
+  <div class="stage">
+    <section class="panel" id="default" aria-labelledby="d-label">
+      <h2 class="label" id="d-label">Browser default</h2>
+      <label class="row"><input type="checkbox" checked> Checkbox</label>
+      <label class="row"><input type="radio" name="d" checked> Radio</label>
+      <label class="row">Range <input type="range" value="60"></label>
+      <div class="row"><label for="dp">Progress</label> <progress id="dp" value="0.6"></progress></div>
+    </section>
+    <section class="panel" id="themed" aria-labelledby="t-label">
+      <h2 class="label" id="t-label">With accent-color</h2>
+      <label class="row"><input type="checkbox" checked> Checkbox</label>
+      <label class="row"><input type="radio" name="t" checked> Radio</label>
+      <label class="row">Range <input type="range" value="60"></label>
+      <div class="row"><label for="tp">Progress</label> <progress id="tp" value="0.6"></progress></div>
+      <p class="note">The browser picks a white or dark check mark so it stays readable on your color.</p>
+    </section>
+    <section class="panel" aria-labelledby="s-label">
+      <h2 class="label" id="s-label">appearance: none</h2>
+      <label class="row"><input type="checkbox" class="switch" role="switch" checked> Notifications</label>
+      <label class="row"><input type="checkbox" class="switch" role="switch"> Dark mode</label>
+      <label class="row"><input type="checkbox" class="switch" role="switch" disabled> Beta features</label>
+      <p class="note">Still a real checkbox: Space toggles it, the label is clickable, it submits with the form.</p>
+    </section>
+  </div>
+  <script>
+    const pick = document.getElementById('pick');
+    const on = document.getElementById('on');
+    function apply() {
+      if (on.checked) document.documentElement.style.setProperty('--pick', pick.value);
+      else document.documentElement.style.removeProperty('--pick');
+    }
+    pick.addEventListener('input', apply);
+    on.addEventListener('change', apply);
+    apply();
+  </script>
+</body>
+</html>

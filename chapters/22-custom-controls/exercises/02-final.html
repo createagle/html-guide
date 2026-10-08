@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 22-2 · Final</title>
+  <style>
+    form { width: min(420px, 100%); display: grid; gap: 12px; }
+    button { justify-self: start; padding: 7px 16px; font-size: 15px; }
+    #sent { margin: 0; font: 13px var(--mono); white-space: pre-wrap; }
+    .field { display: grid; gap: 4px; justify-items: start; }
+    .field > label { font-weight: 600; font-size: 14px; }
+    .field input { font-size: 15px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .row { display: flex; gap: 8px; }
+    fieldset { border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px 14px; margin: 0; display: grid; gap: 12px; }
+    legend { font-weight: 600; padding: 0 4px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="disable"> Disable the fieldset</label>
+  </div>
+  <form id="form">
+    <fieldset id="fs">
+      <legend>New team</legend>
+      <div class="field"><label for="name">Team name</label><input type="text" id="name" name="team" value="Otters" required></div>
+      <div class="field"><label for="color">Team color</label><swatch-picker id="color" name="color" required></swatch-picker></div>
+    </fieldset>
+    <div class="row"><button type="submit">Create team</button><button type="reset">Reset</button></div>
+    <p id="sent" role="status"></p>
+  </form>
+  <script>
+    class SwatchPicker extends HTMLElement {
+      static formAssociated = true;
+      #internals = this.attachInternals();
+      #value = '';
+      constructor() {
+        super();
+        // delegatesFocus: focusing the element (label click, reportValidity) focuses the first swatch
+        const root = this.attachShadow({ mode: 'open', delegatesFocus: true });
+        this.#internals.role = 'group';
+        const colors = { red: '#dc2626', amber: '#d97706', green: '#16a34a', blue: '#2563eb', violet: '#7c3aed' };
+        root.innerHTML = `
+          <style>
+            :host { display: inline-flex; gap: 6px; }
+            :host(:disabled) { opacity: .5; }
+            button { inline-size: 32px; block-size: 32px; border-radius: 50%; border: 2px solid transparent; outline-offset: 2px; cursor: pointer; }
+            button:disabled { cursor: not-allowed; }
+            button[aria-pressed="true"] { border-color: var(--fg, #000); box-shadow: inset 0 0 0 2px var(--bg, #fff); }
+          </style>
+          ${Object.entries(colors).map(([name, hex]) => `<button type="button" style="background:${hex}" aria-label="${name}" aria-pressed="false" data-value="${name}"></button>`).join('')}`;
+        root.addEventListener('click', (e) => {
+          const b = e.target.closest('button');
+          if (!b) return;
+          this.value = b.dataset.value;
+          this.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      }
+      connectedCallback() { this.value = this.getAttribute('value') || ''; }
+
+      get value() { return this.#value; }
+      set value(v) {
+        this.#value = v;
+        for (const b of this.shadowRoot.querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.value === v));
+        this.#internals.setFormValue(v || null); // null: not submitted, like an unchecked checkbox
+        if (this.hasAttribute('required') && !v) {
+          this.#internals.setValidity({ valueMissing: true }, 'Please pick a color.', this.shadowRoot.querySelector('button'));
+        } else {
+          this.#internals.setValidity({});
+        }
+      }
+      get form() { return this.#internals.form; }
+      get name() { return this.getAttribute('name'); }
+      get validity() { return this.#internals.validity; }
+      get validationMessage() { return this.#internals.validationMessage; }
+      checkValidity() { return this.#internals.checkValidity(); }
+      reportValidity() { return this.#internals.reportValidity(); }
+
+      formResetCallback() { this.value = this.getAttribute('value') || ''; }
+      formDisabledCallback(disabled) {
+        for (const b of this.shadowRoot.querySelectorAll('button')) b.disabled = disabled;
+      }
+      formStateRestoreCallback(state) { this.value = state; }
+    }
+    customElements.define('swatch-picker', SwatchPicker);
+
+    document.getElementById('disable').addEventListener('change', (e) => { document.getElementById('fs').disabled = e.target.checked; });
+  </script>
+  <script>
+    document.getElementById('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const entries = [...new FormData(e.target)].map(([k, v]) => `${k}=${v}`);
+      document.getElementById('sent').textContent = 'Would send: ' + (entries.join('&') || '(nothing)');
+    });
+  </script>
+</body>
+</html>

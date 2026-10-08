@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 22-2 · Starter</title>
+  <style>
+    form { width: min(420px, 100%); display: grid; gap: 12px; }
+    button { justify-self: start; padding: 7px 16px; font-size: 15px; }
+    #sent { margin: 0; font: 13px var(--mono); white-space: pre-wrap; }
+    .field { display: grid; gap: 4px; justify-items: start; }
+    .field > label { font-weight: 600; font-size: 14px; }
+    .field input { font-size: 15px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .row { display: flex; gap: 8px; }
+    fieldset { border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px 14px; margin: 0; display: grid; gap: 12px; }
+    legend { font-weight: 600; padding: 0 4px; }
+  </style>
+</head>
+<body class="demo">
+  <!-- The color is never submitted, "required" is ignored, Reset and the disabled fieldset do not affect it, and its label does nothing. -->
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="disable"> Disable the fieldset</label>
+  </div>
+  <form id="form">
+    <fieldset id="fs">
+      <legend>New team</legend>
+      <div class="field"><label for="name">Team name</label><input type="text" id="name" name="team" value="Otters" required></div>
+      <div class="field"><label for="color">Team color</label><swatch-picker id="color" name="color" required></swatch-picker></div>
+    </fieldset>
+    <div class="row"><button type="submit">Create team</button><button type="reset">Reset</button></div>
+    <p id="sent" role="status"></p>
+  </form>
+  <script>
+    // A color swatch picker. It looks fine, but the form does not know it exists.
+    class SwatchPicker extends HTMLElement {
+      #value = '';
+      constructor() {
+        super();
+        const root = this.attachShadow({ mode: 'open' });
+        const colors = { red: '#dc2626', amber: '#d97706', green: '#16a34a', blue: '#2563eb', violet: '#7c3aed' };
+        root.innerHTML = `
+          <style>
+            :host { display: inline-flex; gap: 6px; }
+            button { inline-size: 32px; block-size: 32px; border-radius: 50%; border: 2px solid transparent; outline-offset: 2px; cursor: pointer; }
+            button[aria-pressed="true"] { border-color: var(--fg, #000); box-shadow: inset 0 0 0 2px var(--bg, #fff); }
+          </style>
+          ${Object.entries(colors).map(([name, hex]) => `<button type="button" style="background:${hex}" aria-label="${name}" aria-pressed="false" data-value="${name}"></button>`).join('')}`;
+        root.addEventListener('click', (e) => {
+          const b = e.target.closest('button');
+          if (b) this.value = b.dataset.value;
+        });
+      }
+      get value() { return this.#value; }
+      set value(v) {
+        this.#value = v;
+        for (const b of this.shadowRoot.querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.value === v));
+      }
+    }
+    customElements.define('swatch-picker', SwatchPicker);
+
+    document.getElementById('disable').addEventListener('change', (e) => { document.getElementById('fs').disabled = e.target.checked; });
+  </script>
+  <script>
+    document.getElementById('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const entries = [...new FormData(e.target)].map(([k, v]) => `${k}=${v}`);
+      document.getElementById('sent').textContent = 'Would send: ' + (entries.join('&') || '(nothing)');
+    });
+  </script>
+</body>
+</html>

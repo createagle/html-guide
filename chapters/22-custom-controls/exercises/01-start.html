@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 22-1 · Starter</title>
+  <style>
+    form { width: min(420px, 100%); display: grid; gap: 12px; }
+    button { justify-self: start; padding: 7px 16px; font-size: 15px; }
+    #sent { margin: 0; font: 13px var(--mono); white-space: pre-wrap; }
+    fieldset { border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px 14px; margin: 0; }
+    legend { font-weight: 600; padding: 0 4px; }
+  </style>
+</head>
+<body class="demo">
+  <!-- Make these radio buttons look like five stars, with CSS only. They must still work with the keyboard and submit the same value. -->
+  <form id="form">
+    <fieldset>
+      <legend>Rate this recipe</legend>
+      <input type="radio" id="r1" name="stars" value="1" required><label for="r1">1 star</label>
+      <input type="radio" id="r2" name="stars" value="2"><label for="r2">2 stars</label>
+      <input type="radio" id="r3" name="stars" value="3"><label for="r3">3 stars</label>
+      <input type="radio" id="r4" name="stars" value="4"><label for="r4">4 stars</label>
+      <input type="radio" id="r5" name="stars" value="5"><label for="r5">5 stars</label>
+    </fieldset>
+    <button type="submit">Rate</button>
+    <p id="sent" role="status"></p>
+  </form>
+  <script>
+    document.getElementById('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const entries = [...new FormData(e.target)].map(([k, v]) => `${k}=${v}`);
+      document.getElementById('sent').textContent = 'Would send: ' + (entries.join('&') || '(nothing)');
+    });
+  </script>
+</body>
+</html>

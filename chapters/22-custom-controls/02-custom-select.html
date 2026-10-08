@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>22-2 A Select With Icons</title>
+  <style>
+    .stage { width: min(760px, 100%); align-items: stretch; }
+    form { flex: 1 1 300px; display: grid; gap: 6px; align-content: start; }
+    form label { font-weight: 600; font-size: 14px; }
+    .side { flex: 1 1 260px; }
+    #support { font-size: 13px; margin: 0 0 8px; }
+    .icon { inline-size: 18px; block-size: 18px; flex: none; }
+    .open { color: #16a34a; } .progress { color: #d97706; } .done { color: #2563eb; } .blocked { color: #dc2626; }
+    select { font-size: 15px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+    button[type=submit] { justify-self: start; margin-top: 8px; padding: 7px 16px; font-size: 15px; }
+
+    /* Opt in to the customizable select: the button and the picker become styleable */
+    .custom select, .custom ::picker(select) { appearance: base-select; }
+    .custom select { inline-size: 100%; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .custom select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .custom selectedcontent { display: flex; align-items: center; gap: 8px; }
+    .custom select::picker-icon { transition: rotate .2s; }
+    .custom select:open::picker-icon { rotate: 180deg; }
+    .custom ::picker(select) {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 4px;
+      margin-block-start: 4px;
+      background: var(--bg);
+      box-shadow: 0 8px 24px rgb(0 0 0 / .15);
+    }
+    .custom option { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 6px; }
+    .custom option:hover, .custom option:focus-visible { background: var(--surface); outline: none; }
+    .custom option:checked { font-weight: 600; }
+    .custom option::checkmark { order: 1; margin-inline-start: auto; content: "✓"; color: var(--accent); }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="toggle" checked> <code>appearance: base-select</code></label>
+  </div>
+  <div class="stage">
+    <form id="form" class="custom">
+      <label for="status">Status</label>
+      <!-- [html-validate-disable-block element-permitted-content, element-name, no-implicit-button-type: the validator predates the customizable select] -->
+      <select id="status" name="status">
+        <button><selectedcontent></selectedcontent></button>
+        <option value="open"><svg class="icon open" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="2.5"/></svg>Open</option>
+        <option value="progress" selected><svg class="icon progress" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M10 3a7 7 0 0 1 0 14z" fill="currentColor"/></svg>In progress</option>
+        <option value="done"><svg class="icon done" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="currentColor"/><path d="M6 10.5l2.5 2.5L14 7.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Done</option>
+        <option value="blocked"><svg class="icon blocked" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="currentColor"/><path d="M7 7l6 6M13 7l-6 6" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>Blocked</option>
+      </select>
+      <button type="submit">Save</button>
+    </form>
+    <section class="panel side" aria-labelledby="r-label">
+      <h2 class="label" id="r-label">Still a real select</h2>
+      <p id="support"></p>
+      <pre class="code" id="read" aria-live="polite"></pre>
+    </section>
+  </div>
+  <script>
+    const form = document.getElementById('form');
+    const select = document.getElementById('status');
+    const read = document.getElementById('read');
+    const ok = CSS.supports('appearance', 'base-select');
+    const support = document.getElementById('support');
+    support.className = ok ? 'good' : 'bad';
+    support.textContent = ok
+      ? 'This browser supports the customizable select.'
+      : 'This browser shows a classic select: the icons are dropped, the options and values still work.';
+
+    function show(extra = '') {
+      read.textContent = `select.value          ${select.value}\nselect.selectedIndex  ${select.selectedIndex}\noption text           ${select.selectedOptions[0].textContent.trim()}${extra}`;
+    }
+    select.addEventListener('change', () => show());
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      show(`\n\nnew FormData(form):\n  ${[...new FormData(form)].map(([k, v]) => `${k}=${v}`).join('\n  ')}`);
+    });
+    document.getElementById('toggle').addEventListener('change', (e) => form.classList.toggle('custom', e.target.checked));
+    show();
+  </script>
+</body>
+</html>
