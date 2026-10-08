@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 19-1 · Final</title>
+  <style>
+    form { width: min(420px, 100%); display: grid; gap: 12px; }
+    .field { display: grid; gap: 4px; }
+    .field label { font-weight: 600; font-size: 14px; }
+    .field input { font-size: 15px; padding: 6px 8px; border: 2px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    button { justify-self: start; padding: 8px 16px; font-size: 15px; }
+    #done { margin: 0; color: var(--good); font-weight: 600; }
+    .field input:user-invalid { border-color: var(--bad); }
+  </style>
+</head>
+<body class="demo">
+  <form id="form">
+    <div class="field"><label for="pw">New password</label><input id="pw" name="pw" type="password" required minlength="8" autocomplete="new-password"></div>
+    <div class="field"><label for="pw2">Repeat password</label><input id="pw2" name="pw2" type="password" required autocomplete="new-password"></div>
+    <button type="submit">Change password</button>
+    <p id="done" role="status"></p>
+  </form>
+  <script>
+    const pw = document.getElementById('pw');
+    const pw2 = document.getElementById('pw2');
+    // Re-check whenever either password changes; an empty string clears the error
+    function match() {
+      pw2.setCustomValidity(pw2.value && pw2.value !== pw.value ? 'The passwords do not match.' : '');
+    }
+    pw.addEventListener('input', match);
+    pw2.addEventListener('input', match);
+    document.getElementById('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      document.getElementById('done').textContent = 'Password changed (nothing is sent in this demo).';
+    });
+  </script>
+</body>
+</html>

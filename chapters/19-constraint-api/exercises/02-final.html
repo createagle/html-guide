@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 19-2 · Final</title>
+  <style>
+    form { width: min(420px, 100%); display: grid; gap: 12px; }
+    .field { display: grid; gap: 4px; }
+    .field label { font-weight: 600; font-size: 14px; }
+    .field input { font-size: 15px; padding: 6px 8px; border: 2px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    button { justify-self: start; padding: 8px 16px; font-size: 15px; }
+    #done { margin: 0; color: var(--good); font-weight: 600; }
+    .field input[aria-invalid="true"] { border-color: var(--bad); }
+    .error { font-size: 13px; font-weight: 600; color: var(--bad); margin: 0; }
+    .error:empty { display: none; }
+  </style>
+</head>
+<body class="demo">
+  <form id="form" novalidate>
+    <div class="field">
+      <label for="name">Name</label>
+      <p class="error" id="name-error"></p>
+      <input id="name" name="name" type="text" required autocomplete="name" aria-describedby="name-error">
+    </div>
+    <div class="field">
+      <label for="email">Email</label>
+      <p class="error" id="email-error"></p>
+      <input id="email" name="email" type="email" required autocomplete="email" aria-describedby="email-error">
+    </div>
+    <div class="field">
+      <label for="age">Age</label>
+      <p class="error" id="age-error"></p>
+      <input id="age" name="age" type="number" required min="18" max="99" aria-describedby="age-error">
+    </div>
+    <button type="submit">Join the club</button>
+    <p id="done" role="status"></p>
+  </form>
+  <script>
+    const form = document.getElementById('form');
+    const messages = {
+      name: { valueMissing: 'Enter your name' },
+      email: { valueMissing: 'Enter your email address', typeMismatch: 'Enter an email address like name@example.com' },
+      age: { valueMissing: 'Enter your age', badInput: 'Enter your age as a number', rangeUnderflow: 'You must be 18 or over to join', rangeOverflow: 'Enter an age of 99 or under', stepMismatch: 'Enter your age in whole years' },
+    };
+
+    function show(input) {
+      const v = input.validity;
+      // Pick the first flag that is set and that we have words for
+      const flag = Object.keys(messages[input.id]).find((f) => v[f]);
+      const text = v.valid ? '' : (flag ? messages[input.id][flag] : input.validationMessage);
+      document.getElementById(input.id + '-error').textContent = text && 'Error: ' + text;
+      input.setAttribute('aria-invalid', String(!v.valid));
+      return v.valid;
+    }
+
+    // novalidate turns off the bubbles, but checkValidity() and validity still work
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const fields = [...form.querySelectorAll('input, select, textarea')].filter((el) => el.willValidate);
+      const firstBad = fields.filter((el) => !show(el))[0];
+      if (firstBad) { firstBad.focus(); return; }
+      document.getElementById('done').textContent = 'Welcome! (nothing is sent in this demo)';
+    });
+    // After a field has shown an error, update it as the user fixes it
+    form.addEventListener('input', (e) => { if (e.target.getAttribute('aria-invalid') === 'true') show(e.target); });
+  </script>
+</body>
+</html>

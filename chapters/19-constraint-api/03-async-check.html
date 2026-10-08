@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>19-3 Checking a Username with the Server</title>
+  <style>
+    .stage { width: min(860px, 100%); align-items: stretch; }
+    form { flex: 1 1 360px; display: grid; gap: 12px; align-content: start; }
+    .side { flex: 1 1 300px; }
+    .field { display: grid; gap: 4px; }
+    .field label { font-weight: 600; font-size: 14px; }
+    .field input { font-size: 15px; padding: 6px 8px; border: 2px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .field input:user-invalid { border-color: var(--bad); }
+    #status { font-size: 13px; margin: 0; min-height: 1.5em; }
+    .pending { color: var(--muted); }
+    button { justify-self: start; padding: 8px 16px; font-size: 15px; }
+    #log { margin: 0; padding-left: 26px; font: 12px/1.6 var(--mono); max-height: 260px; overflow: auto; }
+    .hint { font-size: 12px; color: var(--muted); margin: 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <form id="form">
+      <div class="field">
+        <label for="username">Username</label>
+        <p class="hint" id="hint">Taken in this demo: ana, ben, ridge, admin</p>
+        <input id="username" name="username" type="text" required minlength="3" pattern="[a-z0-9_]+" autocomplete="username" aria-describedby="hint status">
+        <p id="status" aria-live="polite"></p>
+      </div>
+      <button type="submit">Continue</button>
+    </form>
+    <section class="panel side" aria-labelledby="log-label">
+      <h2 class="label" id="log-label">Requests to the fake server</h2>
+      <ol id="log"></ol>
+    </section>
+  </div>
+  <script>
+    const input = document.getElementById('username');
+    const status = document.getElementById('status');
+    const log = document.getElementById('log');
+    const taken = new Set(['ana', 'ben', 'ridge', 'admin']);
+
+    // Stand-in for fetch('/api/username?name=…'): answers after a random delay
+    function askServer(name, signal) {
+      return new Promise((resolve, reject) => {
+        const ms = 300 + Math.random() * 900;
+        const t = setTimeout(() => resolve(!taken.has(name)), ms);
+        signal.addEventListener('abort', () => { clearTimeout(t); reject(new DOMException('aborted', 'AbortError')); });
+      });
+    }
+    function note(text) {
+      const li = document.createElement('li');
+      li.textContent = text;
+      log.append(li);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    let controller = null;
+    let timer = null;
+
+    function setStatus(text, cls) { status.textContent = text; status.className = cls || ''; }
+
+    async function check() {
+      const name = input.value;
+      if (controller) controller.abort(); // an older request must never overwrite a newer answer
+      controller = new AbortController();
+      // While waiting, the field is invalid so the form can't be sent with an unchecked name
+      input.setCustomValidity('Still checking whether this username is free');
+      setStatus('Checking…', 'pending');
+      note(`ask: is "${name}" free?`);
+      try {
+        const free = await askServer(name, controller.signal);
+        note(`answer for "${name}": ${free ? 'free' : 'taken'}`);
+        input.setCustomValidity(free ? '' : `“${name}” is taken. Try another username.`);
+        setStatus(free ? `“${name}” is available.` : input.validationMessage, free ? 'good' : 'bad');
+      } catch (err) {
+        if (err.name === 'AbortError') note(`cancelled the request for "${name}"`);
+      }
+    }
+
+    input.addEventListener('input', () => {
+      clearTimeout(timer);
+      input.setCustomValidity('');
+      // Only ask the server once the built-in rules pass, and wait for a pause in typing
+      if (!input.validity.valid) { if (controller) controller.abort(); setStatus(''); return; }
+      timer = setTimeout(check, 400);
+    });
+
+    document.getElementById('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      setStatus(`Submitted “${input.value}” (nothing is sent in this demo).`, 'good');
+    });
+  </script>
+</body>
+</html>

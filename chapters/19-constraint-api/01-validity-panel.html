@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>19-1 A Live ValidityState Panel</title>
+  <style>
+    .stage { width: min(920px, 100%); align-items: stretch; }
+    .left { flex: 1 1 380px; display: grid; gap: 12px; align-content: start; }
+    .right { flex: 1 1 340px; display: grid; gap: 12px; align-content: start; }
+    fieldset { border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px 12px; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px 12px; font-size: 13px; }
+    legend { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); padding: 0 4px; }
+    fieldset label { display: grid; gap: 2px; font-family: var(--mono); font-size: 12px; }
+    fieldset input, fieldset select { font-size: 13px; padding: 3px 5px; min-width: 0; }
+    .target { display: grid; gap: 6px; }
+    .target label { font-weight: 600; font-size: 14px; }
+    #field { font-size: 16px; padding: 6px 8px; }
+    #markup { font-size: 12px; }
+    .buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+    .buttons button { font: 12px var(--mono); }
+    table { width: 100%; border-collapse: collapse; font: 12px var(--mono); }
+    td { padding: 4px 6px; border-bottom: 1px solid var(--border); }
+    td:last-child { text-align: right; }
+    tr.on td { color: var(--bad); font-weight: 600; }
+    tr.valid.on td { color: var(--good); }
+    #msg { font: 12px/1.5 var(--mono); margin: 0; min-height: 3em; white-space: pre-wrap; }
+    #log { margin: 0; padding-left: 26px; font: 12px/1.6 var(--mono); max-height: 120px; overflow: auto; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="left">
+      <fieldset id="config">
+        <legend>Constraints on the field</legend>
+        <label>type
+          <select data-attr="type"><option>text</option><option>email</option><option>url</option><option selected>number</option><option>date</option></select>
+        </label>
+        <label><span><input type="checkbox" data-attr="required" checked> required</span></label>
+        <label>minlength <input type="number" data-attr="minlength" min="0" value=""></label>
+        <label>maxlength <input type="number" data-attr="maxlength" min="0" value=""></label>
+        <label>pattern <input type="text" data-attr="pattern" value=""></label>
+        <label>min <input type="text" data-attr="min" value="1"></label>
+        <label>max <input type="text" data-attr="max" value="10"></label>
+        <label>step <input type="text" data-attr="step" value="1"></label>
+      </fieldset>
+      <div class="target">
+        <label for="field">The field under test</label>
+        <input id="field" name="field" type="number">
+        <pre class="code" id="markup"></pre>
+        <div class="buttons">
+          <button type="button" id="check">checkValidity()</button>
+          <button type="button" id="report">reportValidity()</button>
+          <button type="button" id="custom">setCustomValidity('Taken')</button>
+          <button type="button" id="clear">setCustomValidity('')</button>
+        </div>
+      </div>
+    </div>
+    <div class="right">
+      <section class="panel" aria-labelledby="v-label">
+        <h2 class="label" id="v-label">field.validity</h2>
+        <table><tbody id="flags"></tbody></table>
+      </section>
+      <section class="panel" aria-labelledby="m-label">
+        <h2 class="label" id="m-label">field.validationMessage</h2>
+        <pre id="msg"></pre>
+      </section>
+      <section class="panel" aria-labelledby="l-label">
+        <h2 class="label" id="l-label">Calls and events</h2>
+        <ol id="log"></ol>
+      </section>
+    </div>
+  </div>
+  <script>
+    const field = document.getElementById('field');
+    const flags = ['valueMissing', 'typeMismatch', 'patternMismatch', 'tooLong', 'tooShort', 'rangeUnderflow', 'rangeOverflow', 'stepMismatch', 'badInput', 'customError', 'valid'];
+    document.getElementById('flags').innerHTML = flags.map((f) => `<tr class="${f === 'valid' ? 'valid' : ''}" id="row-${f}"><td>${f}</td><td id="v-${f}"></td></tr>`).join('');
+
+    function log(text) {
+      const li = document.createElement('li');
+      li.textContent = text;
+      const list = document.getElementById('log');
+      list.append(li);
+      list.scrollTop = list.scrollHeight;
+    }
+
+    function show() {
+      for (const f of flags) {
+        const on = field.validity[f];
+        document.getElementById('v-' + f).textContent = on;
+        document.getElementById('row-' + f).classList.toggle('on', on);
+      }
+      document.getElementById('msg').textContent = field.validationMessage || '(empty string)';
+    }
+
+    function configure() {
+      document.querySelectorAll('#config [data-attr]').forEach((c) => {
+        const name = c.dataset.attr;
+        if (c.type === 'checkbox') field.toggleAttribute(name, c.checked);
+        else if (c.value === '') field.removeAttribute(name);
+        else field.setAttribute(name, c.value);
+      });
+      const attrs = [...field.attributes].filter((a) => !['id', 'name'].includes(a.name)).map((a) => a.value === '' ? a.name : `${a.name}="${a.value}"`);
+      document.getElementById('markup').textContent = `<input ${attrs.join(' ')}>`;
+      show();
+    }
+
+    field.addEventListener('input', show);
+    // invalid fires on the field itself and does not bubble
+    field.addEventListener('invalid', () => log('invalid event fired on the field'));
+    document.getElementById('check').addEventListener('click', () => { log(`checkValidity() returned ${field.checkValidity()}`); show(); });
+    document.getElementById('report').addEventListener('click', () => { log(`reportValidity() returned ${field.reportValidity()}`); show(); });
+    document.getElementById('custom').addEventListener('click', () => { field.setCustomValidity('Taken'); log("setCustomValidity('Taken')"); show(); });
+    document.getElementById('clear').addEventListener('click', () => { field.setCustomValidity(''); log("setCustomValidity('')"); show(); });
+    document.getElementById('config').addEventListener('input', configure);
+    document.getElementById('config').addEventListener('change', configure);
+    configure();
+  </script>
+</body>
+</html>
