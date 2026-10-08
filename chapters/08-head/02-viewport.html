@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>8-2 With and Without a Viewport Tag</title>
+  <style>
+    .stage { gap: 32px; }
+    .phone { width: 300px; height: 540px; border: 10px solid #555; border-radius: 28px; overflow: hidden; background: #fff; position: relative; }
+    .phone iframe { border: 0; display: block; transform-origin: 0 0; }
+    .note { font-size: 13px; color: var(--muted); max-width: 300px; }
+  </style>
+</head>
+<body class="demo">
+  <p class="note" style="max-width:640px;text-align:center">A simulation of a 280-pixel-wide phone screen. Desktop browsers ignore the viewport tag, so each frame is sized the way a phone browser would size it.</p>
+  <div class="stage">
+    <figure>
+      <div class="phone"><iframe id="without" title="Page without a viewport tag" width="980" height="1820"></iframe></div>
+      <figcaption>No viewport tag: laid out 980px wide, then shrunk</figcaption>
+    </figure>
+    <figure>
+      <div class="phone"><iframe id="with" title="Page with a viewport tag" width="280" height="520"></iframe></div>
+      <figcaption>width=device-width: laid out at the real width</figcaption>
+    </figure>
+  </div>
+  <script>
+    // The same responsive article in both frames
+    const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Article</title>
+      <style>
+        body { font: 16px/1.5 system-ui, sans-serif; margin: 0; color: #222; }
+        header { background: #1e3a8a; color: #fff; padding: 12px 16px; font-weight: 600; }
+        main { padding: 16px; display: grid; grid-template-columns: 1fr; gap: 16px; }
+        @media (min-width: 700px) { main { grid-template-columns: 2fr 1fr; } }
+        aside { background: #eef2ff; padding: 12px; border-radius: 8px; }
+        button { font: inherit; padding: 10px 16px; }
+      </style></head><body>
+      <header>Trail Notes</header>
+      <main><article><h1>Weekend in the Hills</h1>
+      <p>We reached the ridge just before sunset. The path was steep but well marked, and the view from the top was worth every step.</p>
+      <p>Bring water, a warm layer and a head torch: the light goes quickly once the sun drops behind the far hills.</p>
+      <button type="button">Save this trip</button></article>
+      <aside>Related: Three easy walks near the city</aside></main></body></html>`;
+    const without = document.getElementById('without');
+    without.srcdoc = page;
+    without.style.transform = `scale(${280 / 980})`;
+    document.getElementById('with').srcdoc = page;
+  </script>
+</body>
+</html>

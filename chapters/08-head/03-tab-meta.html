@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <link rel="icon" id="icon" href="data:,">
+  <title>8-3 Title, Icon and Color Scheme</title>
+  <style>
+    .stage { width: min(820px, 100%); align-items: stretch; }
+    .stage > .panel { flex: 1 1 340px; display: grid; gap: 12px; align-content: start; }
+    .controls input[type=text] { width: 16em; }
+    .frames { display: flex; gap: 12px; flex-wrap: wrap; }
+    .frames figure { flex: 1 1 150px; }
+    .frames iframe { width: 100%; height: 170px; border: 1px solid var(--border); border-radius: 8px; }
+    .tab { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid var(--border); border-bottom: 0; border-radius: 10px 10px 0 0; background: var(--surface); font-size: 13px; max-width: 240px; }
+    .tab span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tab img { width: 16px; height: 16px; flex: none; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">title <input type="text" id="title" value="Trail Notes – Weekend in the Hills"></label>
+    <label class="control">icon colour <input type="color" id="color" value="#2563eb"></label>
+    <label class="control">icon letter <input type="text" id="letter" value="T" maxlength="2" style="width:3em"></label>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="tab-label">
+      <h2 class="label" id="tab-label">This browser tab</h2>
+      <p class="note">Edit the controls and look at the real tab above this page. A small mock of it:</p>
+      <div><span class="tab"><img id="mock-icon" src="data:," alt=""><span id="mock-title"></span></span></div>
+      <pre class="code" id="code"></pre>
+    </section>
+    <section class="panel" aria-labelledby="cs-label">
+      <h2 class="label" id="cs-label">meta name="color-scheme"</h2>
+      <p class="note">Two unstyled pages. Switch your system to dark mode: only the right one turns dark, controls included.</p>
+      <div class="frames">
+        <figure><iframe id="plain" title="Page without color-scheme"></iframe><figcaption>no tag</figcaption></figure>
+        <figure><iframe id="dual" title="Page with color-scheme light dark"></iframe><figcaption>content="light dark"</figcaption></figure>
+      </div>
+    </section>
+  </div>
+  <script>
+    const body = `<body><p>Plain page, no CSS.</p><input type="text" aria-label="Sample text field" value="Text field"> <button type="button">Button</button><p><label><input type="checkbox" checked> Checkbox</label></p></body>`;
+    document.getElementById('plain').srcdoc = `<!doctype html><title>Plain</title>${body}`;
+    document.getElementById('dual').srcdoc = `<!doctype html><meta name="color-scheme" content="light dark"><title>Dual</title>${body}`;
+
+    // Draw the favicon as an SVG and hand it to <link rel="icon">
+    function iconURL(color, letter) {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${color}"/><text x="16" y="22.5" font-family="system-ui,sans-serif" font-size="18" font-weight="700" fill="#fff" text-anchor="middle">${letter.replace(/[<&]/g, '')}</text></svg>`;
+      return 'data:image/svg+xml,' + encodeURIComponent(svg);
+    }
+    function update() {
+      const title = document.getElementById('title').value;
+      const url = iconURL(document.getElementById('color').value, document.getElementById('letter').value);
+      document.title = title;
+      document.getElementById('icon').href = url;
+      document.getElementById('mock-icon').src = url;
+      document.getElementById('mock-title').textContent = title || location.href;
+      document.getElementById('code').textContent = `<title>${title}</title>\n<link rel="icon" href="/icon.svg" type="image/svg+xml">`;
+    }
+    document.querySelector('.controls').addEventListener('input', update);
+    update();
+  </script>
+</body>
+</html>

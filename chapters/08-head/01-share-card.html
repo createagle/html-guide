@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>8-1 Share Card Preview</title>
+  <style>
+    .stage { width: min(900px, 100%); align-items: stretch; }
+    .stage > .panel { flex: 1 1 360px; display: grid; gap: 12px; align-content: start; }
+    .form { display: grid; gap: 10px; font-size: 14px; }
+    .form label { display: grid; gap: 4px; }
+    .form input, .form textarea, .form select { width: 100%; }
+    .count { font-size: 12px; color: var(--muted); }
+    .count.over { color: var(--bad); }
+    .card { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface); max-width: 420px; }
+    .card img { display: block; width: 100%; aspect-ratio: 1200 / 630; object-fit: cover; background: var(--border); }
+    .card .text { padding: 10px 12px; display: grid; gap: 2px; }
+    .domain { font-size: 12px; color: var(--muted); text-transform: lowercase; }
+    .card strong { font-size: 15px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card p { margin: 0; font-size: 13px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .compact { display: grid; grid-template-columns: 96px 1fr; }
+    .compact img { aspect-ratio: 1; height: 100%; }
+    #warnings { margin: 0; padding-left: 20px; font-size: 13px; color: var(--bad); }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <section class="panel" aria-labelledby="in-label">
+      <h2 class="label" id="in-label">Page metadata</h2>
+      <div id="meta" class="form">
+        <label>og:title <input type="text" name="title" value="Weekend in the Hills: a two-day ridge walk"></label>
+        <span class="count" id="title-count"></span>
+        <label>og:description <textarea name="description" rows="3">Route, gear list and the best spot to watch the sunset, from two days on the northern ridge.</textarea></label>
+        <span class="count" id="desc-count"></span>
+        <label>og:image
+          <select name="image">
+            <option value="../05-images/img/landscape-1200.jpg">landscape-1200.jpg (1200 × 800)</option>
+            <option value="../05-images/img/landscape-square.jpg">landscape-square.jpg (square)</option>
+            <option value="">(none)</option>
+          </select>
+        </label>
+        <label>og:url <input type="url" name="url" value="https://example.com/trips/weekend-hills"></label>
+        <label>og:site_name <input type="text" name="site" value="Trail Notes"></label>
+      </div>
+      <ul id="warnings" aria-live="polite"></ul>
+    </section>
+    <section class="panel" aria-labelledby="out-label">
+      <h2 class="label" id="out-label">Large card</h2>
+      <div class="card" id="large"><img src="../05-images/img/landscape-1200.jpg" alt=""><div class="text"><span class="domain"></span><strong></strong><p></p></div></div>
+      <h2 class="label">Compact card</h2>
+      <div class="card compact" id="compact"><img src="../05-images/img/landscape-1200.jpg" alt=""><div class="text"><span class="domain"></span><strong></strong><p></p></div></div>
+      <h2 class="label">Tags in &lt;head&gt;</h2>
+      <pre class="code" id="code"></pre>
+    </section>
+  </div>
+  <script>
+    const form = document.getElementById('meta');
+    const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    function render() {
+      const f = Object.fromEntries([...form.querySelectorAll('[name]')].map((el) => [el.name, el.value]));
+      // Share crawlers need an absolute image URL, so resolve the relative path against this page
+      const image = f.image ? new URL(f.image, location.href).href : '';
+      let domain = '';
+      try { domain = new URL(f.url).hostname; } catch { domain = '(invalid url)'; }
+      for (const card of [document.getElementById('large'), document.getElementById('compact')]) {
+        const img = card.querySelector('img');
+        img.hidden = !image;
+        if (image) img.src = image;
+        card.classList.toggle('noimg', !image);
+        card.querySelector('.domain').textContent = domain;
+        card.querySelector('strong').textContent = f.title;
+        card.querySelector('p').textContent = f.description;
+      }
+      const tc = document.getElementById('title-count'), dc = document.getElementById('desc-count');
+      tc.textContent = `${f.title.length} characters · roughly 60 fit before cards cut it off`;
+      tc.classList.toggle('over', f.title.length > 60);
+      dc.textContent = `${f.description.length} characters · roughly 160 fit`;
+      dc.classList.toggle('over', f.description.length > 160);
+      const warn = [];
+      if (!f.title.trim()) warn.push('Missing og:title: apps fall back to <title> or the bare URL.');
+      if (!image) warn.push('No og:image: most apps show a text-only card or a generic icon.');
+      if (f.image.includes('square')) warn.push('A square image is cropped to about 1.91 : 1 in large cards.');
+      document.getElementById('warnings').replaceChildren(...warn.map((w) => Object.assign(document.createElement('li'), { textContent: w })));
+      const tags = [
+        ['og:type', 'article'], ['og:title', f.title], ['og:description', f.description],
+        ['og:url', f.url], ['og:site_name', f.site], ...(image ? [['og:image', image]] : [])
+      ].map(([p, v]) => `<meta property="${p}" content="${esc(v)}">`);
+      tags.push(`<meta name="twitter:card" content="${image ? 'summary_large_image' : 'summary'}">`);
+      document.getElementById('code').textContent = tags.join('\n');
+    }
+    form.addEventListener('input', render);
+    render();
+  </script>
+</body>
+</html>
