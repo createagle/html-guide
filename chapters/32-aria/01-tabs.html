@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>32-1 Keyboard Accessible Tabs</title>
+  <style>
+    .stage { width: min(640px, 100%); flex-direction: column; align-items: stretch; gap: 14px; }
+    [role="tablist"] { display: flex; gap: 4px; border-block-end: 1px solid var(--border); }
+    [role="tab"] { padding: 8px 16px; border: 1px solid transparent; border-block-end: 0; border-radius: 8px 8px 0 0; background: none; color: var(--muted); cursor: pointer; margin-block-end: -1px; }
+    [role="tab"][aria-selected="true"] { border-color: var(--border); background: var(--bg); color: var(--fg); font-weight: 600; box-shadow: inset 0 3px 0 var(--accent); }
+    [role="tab"]:focus-visible, [role="tabpanel"]:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+    [role="tabpanel"] { padding: 4px 4px 0; min-block-size: 130px; }
+    [role="tabpanel"] h2 { font-size: 17px; margin: 0 0 6px; }
+    [role="tabpanel"] p { margin: 0 0 8px; }
+    [role="tabpanel"] ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+    caption { text-align: start; }
+    table { border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: start; padding: 4px 14px 4px 0; border-block-end: 1px solid var(--border); }
+    pre.code { font-size: 12px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="manual"> Manual activation (arrows move focus, Enter or Space selects)</label>
+  </div>
+  <div class="stage">
+    <div class="tabs">
+      <div role="tablist" aria-label="Trip planner" id="tablist">
+        <button type="button" role="tab" id="tab-route" aria-selected="true" aria-controls="panel-route">Route</button>
+        <button type="button" role="tab" id="tab-weather" aria-selected="false" aria-controls="panel-weather" tabindex="-1">Weather</button>
+        <button type="button" role="tab" id="tab-gear" aria-selected="false" aria-controls="panel-gear" tabindex="-1">Gear</button>
+      </div>
+      <div role="tabpanel" id="panel-route" aria-labelledby="tab-route" tabindex="0">
+        <h2>Ridge Loop, 14 km</h2>
+        <p>Start at the north car park, climb to Eagle Ridge and return along the lake. Allow five to six hours.</p>
+        <p><a href="#map">Open the trail map</a></p>
+      </div>
+      <div role="tabpanel" id="panel-weather" aria-labelledby="tab-weather" tabindex="0" hidden>
+        <table>
+          <caption class="label">Saturday forecast</caption>
+          <tr><th scope="col">Time</th><th scope="col">Sky</th><th scope="col">Temp</th></tr>
+          <tr><td>08:00</td><td>Clear</td><td>9 °C</td></tr>
+          <tr><td>13:00</td><td>Cloudy</td><td>15 °C</td></tr>
+          <tr><td>18:00</td><td>Showers</td><td>11 °C</td></tr>
+        </table>
+      </div>
+      <div role="tabpanel" id="panel-gear" aria-labelledby="tab-gear" tabindex="0" hidden>
+        <ul>
+          <li><label><input type="checkbox" checked> Rain jacket</label></li>
+          <li><label><input type="checkbox"> Two litres of water</label></li>
+          <li><label><input type="checkbox"> Head torch</label></li>
+        </ul>
+      </div>
+    </div>
+    <section class="panel" aria-labelledby="state-h">
+      <h2 class="label" id="state-h">Current ARIA state</h2>
+      <pre class="code" id="state"></pre>
+    </section>
+  </div>
+  <script>
+    const tablist = document.getElementById('tablist');
+    const tabs = [...tablist.querySelectorAll('[role="tab"]')];
+    const manual = document.getElementById('manual');
+
+    function select(tab) {
+      for (const t of tabs) {
+        const selected = t === tab;
+        t.setAttribute('aria-selected', selected);
+        t.tabIndex = selected ? 0 : -1;
+        document.getElementById(t.getAttribute('aria-controls')).hidden = !selected;
+      }
+      show();
+    }
+
+    tablist.addEventListener('click', (e) => {
+      const tab = e.target.closest('[role="tab"]');
+      if (tab) select(tab);
+    });
+
+    tablist.addEventListener('keydown', (e) => {
+      const i = tabs.indexOf(document.activeElement);
+      const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+      if (i < 0 || next === undefined) return;
+      e.preventDefault();
+      const tab = tabs[(next + tabs.length) % tabs.length];
+      tab.focus();
+      if (!manual.checked) select(tab);
+    });
+
+    // Readout of the attributes the script keeps in sync
+    function show() {
+      const lines = tabs.map((t) => `<button role="tab" aria-selected="${t.getAttribute('aria-selected')}" tabindex="${t.tabIndex}">${t.textContent}`);
+      const panels = tabs.map((t) => {
+        const panel = document.getElementById(t.getAttribute('aria-controls'));
+        return `<div role="tabpanel" id="${panel.id}"${panel.hidden ? ' hidden' : ''}>`;
+      });
+      const focus = document.activeElement?.closest?.('[role="tab"], [role="tabpanel"]');
+      document.getElementById('state').textContent = [...lines, '', ...panels, '', `Focus: ${focus ? `${focus.getAttribute('role')} “${focus.id}”` : 'outside the tabs'}`].join('\n');
+    }
+    document.addEventListener('focusin', show);
+    document.addEventListener('focusout', () => setTimeout(show));
+    show();
+  </script>
+</body>
+</html>

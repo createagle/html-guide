@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>32-3 How the Accessible Name Is Chosen</title>
+  <style>
+    .stage { width: min(720px, 100%); flex-direction: column; align-items: stretch; gap: 14px; }
+    fieldset { border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px 14px; display: grid; gap: 6px; }
+    legend { font-weight: 600; font-size: 14px; padding: 0 4px; }
+    fieldset .control { color: var(--fg); }
+    fieldset code { font-size: 13px; }
+    .note-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .note-card h2 { margin: 0; font-size: 17px; }
+    .note-card p { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
+    #del { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; }
+    #del svg { inline-size: 18px; block-size: 18px; }
+    .result { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; font-size: 14px; }
+    .result dt { color: var(--muted); }
+    .result dd { margin: 0; font-weight: 600; }
+    pre.code { font-size: 12px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <fieldset id="sources">
+      <legend>Naming sources on the Delete button</legend>
+      <label class="control"><input type="checkbox" id="use-text" checked> Visible text <code>Delete</code></label>
+      <label class="control"><input type="checkbox" id="use-label"> <code>aria-label="Delete draft"</code></label>
+      <label class="control"><input type="checkbox" id="use-labelledby"> <code>aria-labelledby="del note-title"</code></label>
+      <label class="control"><input type="checkbox" id="use-title"> <code>title="Move to the trash"</code></label>
+      <label class="control"><input type="checkbox" id="use-describedby"> <code>aria-describedby="note-hint"</code></label>
+    </fieldset>
+
+    <article class="panel note-card">
+      <div>
+        <h2 id="note-title">Spring trip notes</h2>
+        <p id="note-hint">Deleted drafts stay in the trash for 30 days.</p>
+      </div>
+      <button type="button" id="del">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+        <span id="del-text">Delete</span>
+      </button>
+    </article>
+
+    <section class="panel" aria-labelledby="result-h">
+      <h2 class="label" id="result-h">What assistive technology gets</h2>
+      <dl class="result">
+        <dt>Role</dt><dd>button</dd>
+        <dt>Name</dt><dd id="name"></dd>
+        <dt>From</dt><dd id="from"></dd>
+        <dt>Description</dt><dd id="desc"></dd>
+      </dl>
+    </section>
+    <pre class="code" id="markup"></pre>
+  </div>
+  <script>
+    const del = document.getElementById('del');
+    const text = document.getElementById('del-text');
+    const $ = (id) => document.getElementById(id).checked;
+    const toggle = (name, on, value) => (on ? del.setAttribute(name, value) : del.removeAttribute(name));
+
+    // A simplified version of the accessible name computation, enough for this button
+    function compute() {
+      const content = text.hidden ? '' : text.textContent;
+      const self = del.getAttribute('aria-label') ?? (content || del.title);
+      const ids = del.getAttribute('aria-labelledby');
+      if (ids) {
+        const parts = ids.split(' ').map((id) => (id === 'del' ? self : document.getElementById(id).textContent));
+        return { name: parts.filter(Boolean).join(' '), from: 'aria-labelledby (beats everything else)' };
+      }
+      if (del.hasAttribute('aria-label')) return { name: self, from: 'aria-label (replaces the content)' };
+      if (content) return { name: content, from: 'the button’s content' };
+      if (del.title) return { name: del.title, from: 'title (last resort)' };
+      return { name: '', from: 'nothing' };
+    }
+
+    function update() {
+      text.hidden = !$('use-text');
+      toggle('aria-label', $('use-label'), 'Delete draft');
+      toggle('aria-labelledby', $('use-labelledby'), 'del note-title');
+      toggle('title', $('use-title'), 'Move to the trash');
+      toggle('aria-describedby', $('use-describedby'), 'note-hint');
+
+      const { name, from } = compute();
+      const nameOut = document.getElementById('name');
+      nameOut.textContent = name ? `“${name}”` : 'No name: a screen reader only says “button”';
+      nameOut.className = name ? '' : 'bad';
+      document.getElementById('from').textContent = from;
+      const descriptions = [];
+      if (del.hasAttribute('aria-describedby')) descriptions.push(document.getElementById('note-hint').textContent);
+      else if (del.title && from !== 'title (last resort)') descriptions.push(del.title);
+      document.getElementById('desc').textContent = descriptions.length ? `“${descriptions.join(' ')}”` : '(none)';
+
+      const attrs = ['id', 'aria-label', 'aria-labelledby', 'title', 'aria-describedby']
+        .filter((a) => del.hasAttribute(a)).map((a) => ` ${a}="${del.getAttribute(a)}"`).join('');
+      document.getElementById('markup').textContent =
+        `<button type="button"${attrs}>\n  <svg aria-hidden="true">…</svg>${text.hidden ? '' : '\n  Delete'}\n</button>`;
+    }
+    document.getElementById('sources').addEventListener('change', update);
+    update();
+  </script>
+</body>
+</html>

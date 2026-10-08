@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 32-1 · Final</title>
+  <style>
+    .settings { width: min(440px, 100%); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px 16px; display: grid; gap: 12px; }
+    .top { display: flex; align-items: center; gap: 10px; }
+    .top h2 { margin: 0; font-size: 18px; flex: 1; }
+    .close { inline-size: 32px; block-size: 32px; border: 0; border-radius: 6px; background: none; color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer; }
+    .group { display: flex; gap: 16px; align-items: center; border: 0; margin: 0; padding: 0; }
+    .group legend { font-weight: 600; font-size: 14px; padding: 0; margin-inline-end: 4px; float: inline-start; }
+    .check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .advanced-toggle { margin: 0; font-size: 15px; }
+    summary { cursor: pointer; font-weight: 600; }
+    .advanced { margin: 8px 0 0; padding: 8px 10px; background: var(--surface); border-radius: 8px; font-size: 14px; display: grid; gap: 6px; }
+    .help { margin: 0; font-size: 14px; color: var(--muted); }
+    .actions { display: flex; align-items: center; gap: 12px; }
+    .save { padding: 6px 18px; }
+    .status { margin: 0; font-size: 14px; color: var(--good); }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  </style>
+</head>
+<body class="demo">
+  <section class="settings" aria-labelledby="title">
+    <div class="top">
+      <h2 id="title">Notification settings</h2>
+      <button type="button" class="close" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+
+    <fieldset class="group">
+      <legend>Send to</legend>
+      <label><input type="radio" name="via" checked> Email</label>
+      <label><input type="radio" name="via"> SMS</label>
+    </fieldset>
+
+    <label class="check"><input type="checkbox" id="weekly"> Weekly digest</label>
+
+    <details class="advanced-toggle">
+      <summary>Advanced options</summary>
+      <div class="advanced">
+        <label><input type="checkbox"> Quiet hours from 22:00 to 07:00</label>
+        <label><input type="checkbox"> Include closed trails</label>
+      </div>
+    </details>
+
+    <p class="help">Questions? <a href="#help">Read the help page</a></p>
+
+    <div class="actions">
+      <button type="button" class="save" id="save">Save</button>
+      <p class="status" role="status" id="status"></p>
+    </div>
+  </section>
+  <script>
+    document.getElementById('save').addEventListener('click', () => {
+      document.getElementById('status').textContent = 'Settings saved';
+    });
+  </script>
+</body>
+</html>

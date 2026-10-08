@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 32-2 · Final</title>
+  <style>
+    .finder { width: min(460px, 100%); display: grid; gap: 10px; }
+    .search { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+    .search input[type="search"] { flex: 1; min-inline-size: 180px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+    .count { margin: 0; font-size: 14px; color: var(--muted); min-block-size: 1.5em; }
+    .trails { margin: 0; padding: 0; list-style: none; border: 1px solid var(--border); border-radius: 10px; }
+    .trails li { display: flex; justify-content: space-between; padding: 8px 12px; border-block-end: 1px solid var(--border); }
+    .trails li:last-child { border-block-end: 0; }
+    .trails .closed { color: var(--muted); }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="finder">
+    <div class="search">
+      <label for="q">Find a trail</label>
+      <input type="search" id="q" autocomplete="off">
+      <label><input type="checkbox" id="open"> Open trails only</label>
+    </div>
+    <p class="count" id="count" role="status"></p>
+    <ul class="trails" id="trails"></ul>
+  </div>
+  <script>
+    const trails = [
+      ['Ridge Loop', '14 km', true], ['Lake Path', '6 km', true], ['Pine Bridge Walk', '3 km', false],
+      ['Eagle Ridge Summit', '9 km', true], ['North Forest Trail', '11 km', true], ['Riverside Loop', '5 km', false],
+      ['Old Mill Track', '7 km', true], ['Ridge to Lake Traverse', '18 km', true],
+    ];
+    const q = document.getElementById('q');
+    const open = document.getElementById('open');
+    const list = document.getElementById('trails');
+    const count = document.getElementById('count');
+
+    function render(event) {
+      const term = q.value.trim().toLowerCase();
+      const shown = trails.filter(([name, , isOpen]) => name.toLowerCase().includes(term) && (isOpen || !open.checked));
+      list.replaceChildren(...shown.map(([name, length, isOpen]) => {
+        const li = document.createElement('li');
+        li.textContent = name;
+        const meta = document.createElement('span');
+        meta.textContent = isOpen ? length : `${length} · closed`;
+        if (!isOpen) meta.className = 'closed';
+        li.append(meta);
+        return li;
+      }));
+      const text = shown.length ? `Showing ${shown.length} of ${trails.length} trails` : 'No trails match';
+      if (event) announce(text); // after user input
+      else count.textContent = text; // first render, nothing to announce yet
+    }
+
+    // Wait until typing pauses, so the count is announced once instead of on every key
+    let timer;
+    function announce(text) {
+      clearTimeout(timer);
+      timer = setTimeout(() => { count.textContent = text; }, 500);
+    }
+    q.addEventListener('input', render);
+    open.addEventListener('change', render);
+    render();
+  </script>
+</body>
+</html>

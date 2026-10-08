@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 32-1 · Starter</title>
+  <style>
+    .settings { width: min(440px, 100%); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px 16px; display: grid; gap: 12px; }
+    .top { display: flex; align-items: center; gap: 10px; }
+    .top h2 { margin: 0; font-size: 18px; flex: 1; }
+    .close { inline-size: 32px; block-size: 32px; border: 0; border-radius: 6px; background: none; color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer; }
+    .group { display: flex; gap: 16px; align-items: center; border: 0; margin: 0; padding: 0; }
+    .group-name { font-weight: 600; font-size: 14px; padding: 0; margin-inline-end: 4px; float: inline-start; }
+    .check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .box { inline-size: 16px; block-size: 16px; border: 2px solid var(--muted); border-radius: 3px; display: grid; place-items: center; font-size: 12px; line-height: 1; }
+    .box.on { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+    .advanced-toggle { margin: 0; font-size: 15px; font-weight: 600; cursor: pointer; }
+    .advanced { margin: 0; padding: 8px 10px; background: var(--surface); border-radius: 8px; font-size: 14px; display: grid; gap: 6px; }
+    .help { margin: 0; font-size: 14px; color: var(--muted); }
+    .actions { display: flex; align-items: center; gap: 12px; }
+    .save { padding: 6px 18px; }
+    .toast { margin: 0; font-size: 14px; color: var(--good); }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  </style>
+</head>
+<body class="demo">
+  <!-- Six ARIA mistakes. Try it with Tab, Enter, Space and a screen reader. -->
+  <!-- [html-validate-disable-block aria-label-misuse: these mistakes are the point of this exercise] -->
+  <section class="settings" aria-labelledby="title">
+    <div class="top">
+      <h2 id="title">Notification settings</h2>
+      <button type="button" class="close" aria-hidden="true">×</button>
+    </div>
+
+    <div class="group" aria-label="Delivery">
+      <span class="group-name">Send to</span>
+      <label><input type="radio" name="via" checked> Email</label>
+      <label><input type="radio" name="via"> SMS</label>
+    </div>
+
+    <div class="check" role="checkbox" aria-checked="false" tabindex="0" id="weekly">
+      <span class="box" aria-hidden="true"></span> Weekly digest
+    </div>
+
+    <h3 class="advanced-toggle" role="button" aria-expanded="false" id="toggle">Advanced options ▸</h3>
+    <div class="advanced" id="advanced" hidden>
+      <label><input type="checkbox"> Quiet hours from 22:00 to 07:00</label>
+      <label><input type="checkbox"> Include closed trails</label>
+    </div>
+
+    <p class="help" aria-hidden="true">Questions? <a href="#help">Read the help page</a></p>
+
+    <div class="actions">
+      <button type="button" class="save" role="button" id="save">Save</button>
+    </div>
+  </section>
+  <script>
+    const weekly = document.getElementById('weekly');
+    weekly.addEventListener('click', () => {
+      const on = weekly.getAttribute('aria-checked') !== 'true';
+      weekly.setAttribute('aria-checked', on);
+      weekly.querySelector('.box').classList.toggle('on', on);
+      weekly.querySelector('.box').textContent = on ? '✓' : '';
+    });
+
+    document.getElementById('toggle').addEventListener('click', () => {
+      const advanced = document.getElementById('advanced');
+      advanced.hidden = !advanced.hidden;
+    });
+
+    document.getElementById('save').addEventListener('click', () => {
+      document.querySelector('.toast')?.remove();
+      const toast = document.createElement('p');
+      toast.className = 'toast';
+      toast.setAttribute('role', 'status');
+      toast.textContent = 'Settings saved';
+      document.querySelector('.actions').append(toast);
+    });
+  </script>
+</body>
+</html>

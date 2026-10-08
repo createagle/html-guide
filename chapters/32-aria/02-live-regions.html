@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>32-2 Live Region Notifications</title>
+  <style>
+    .stage { width: min(760px, 100%); display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+    .panel { display: grid; gap: 10px; }
+    .panel h2 { margin: 0; font-size: 15px; }
+    .panel h2 code { font-size: 13px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    button { padding: 6px 12px; }
+    .region { min-block-size: 1.5em; margin: 0; padding: 6px 10px; border: 1px dashed var(--border); border-radius: 6px; font-size: 14px; }
+    .region:empty::before { content: "(empty)"; color: var(--muted); }
+    #email-error { color: var(--bad); }
+    input[type="email"] { padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); min-inline-size: 0; flex: 1; }
+    input[aria-invalid="true"] { border-color: var(--bad); }
+    ol.region { padding-inline-start: 28px; max-block-size: 96px; overflow: auto; }
+    .toast { position: fixed; inset-block-end: 16px; inset-inline-end: 16px; padding: 8px 14px; border-radius: 8px; background: var(--fg); color: var(--bg); font-size: 14px; }
+    .speech { grid-column: 1 / -1; }
+    ol.log { margin: 0; padding-inline-start: 28px; font: 13px/1.7 var(--mono); max-block-size: 150px; overflow: auto; }
+    .tag { display: inline-block; min-inline-size: 7.5em; color: var(--muted); }
+    .tag.assertive { color: var(--bad); }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage" id="stage">
+    <section class="panel" aria-labelledby="cart-h">
+      <h2 id="cart-h"><code>role="status"</code></h2>
+      <div class="row">
+        <button type="button" data-item="Tent">Add tent</button>
+        <button type="button" data-item="Stove">Add stove</button>
+      </div>
+      <p class="region" role="status" id="cart-status"></p>
+    </section>
+
+    <section class="panel" aria-labelledby="form-h">
+      <h2 id="form-h"><code>role="alert"</code></h2>
+      <form class="row" id="signup" novalidate>
+        <label for="email">Email</label>
+        <input type="email" id="email" required aria-describedby="email-error">
+        <button type="submit">Subscribe</button>
+      </form>
+      <p class="region" role="alert" id="email-error"></p>
+    </section>
+
+    <section class="panel" aria-labelledby="log-h">
+      <h2 id="log-h"><code>role="log"</code></h2>
+      <div class="row">
+        <button type="button" id="update">Receive trail update</button>
+      </div>
+      <ol class="region" role="log" aria-labelledby="log-h" id="updates"></ol>
+    </section>
+
+    <section class="panel" aria-labelledby="late-h">
+      <h2 id="late-h">Region added too late</h2>
+      <div class="row">
+        <button type="button" id="toast">Save draft</button>
+      </div>
+      <p style="margin:0;font-size:14px">Creates a new <code>role="status"</code> element that already contains “Draft saved”.</p>
+    </section>
+
+    <section class="panel speech" aria-labelledby="speech-h">
+      <h2 class="label" id="speech-h">Simulated screen reader output</h2>
+      <ol class="log" id="speech"></ol>
+    </section>
+  </div>
+  <script>
+    // Cart: update the text of a status region that has been on the page since load
+    let count = 0;
+    for (const button of document.querySelectorAll('[data-item]')) {
+      button.addEventListener('click', () => {
+        count += 1;
+        document.getElementById('cart-status').textContent =
+          `${button.dataset.item} added. ${count} ${count === 1 ? 'item' : 'items'} in cart.`;
+      });
+    }
+
+    // Form: an alert interrupts, and the error stays linked to the field
+    const email = document.getElementById('email');
+    const error = document.getElementById('email-error');
+    document.getElementById('signup').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const ok = email.validity.valid;
+      email.setAttribute('aria-invalid', !ok);
+      error.textContent = ok ? '' : 'Enter an email address like name@example.com.';
+    });
+
+    // Log: new entries are announced, old ones are not repeated
+    const places = ['Eagle Ridge', 'Lake path', 'North car park', 'Pine bridge'];
+    const news = ['is clear', 'is muddy after rain', 'is full', 'is closed for repairs'];
+    document.getElementById('update').addEventListener('click', () => {
+      const li = document.createElement('li');
+      li.textContent = `${places[Math.floor(Math.random() * places.length)]} ${news[Math.floor(Math.random() * news.length)]}.`;
+      const log = document.getElementById('updates');
+      log.append(li);
+      log.scrollTop = log.scrollHeight;
+    });
+
+    // Too late: the region and its text arrive in the same change
+    document.getElementById('toast').addEventListener('click', () => {
+      document.querySelector('.toast')?.remove();
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.setAttribute('role', 'status');
+      toast.textContent = 'Draft saved';
+      document.body.append(toast);
+      setTimeout(() => toast.remove(), 3000);
+    });
+
+    /* Simulation only: a rough model of what screen readers announce.
+       Regions that already exist announce their changes; a new status region does not
+       announce the text it was created with; a new alert does. */
+    const speech = document.getElementById('speech');
+    const selector = '[aria-live], [role="status"], [role="alert"], [role="log"]';
+    const known = new WeakSet(document.querySelectorAll(selector));
+    function say(text, politeness, note = '') {
+      const li = document.createElement('li');
+      li.innerHTML = `<span class="tag ${politeness}"></span>`;
+      li.firstChild.textContent = `[${politeness}]`;
+      li.append(` ${text}${note}`);
+      speech.append(li);
+      speech.scrollTop = speech.scrollHeight;
+    }
+    new MutationObserver((records) => {
+      const done = new Set();
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (node.nodeType === 1 && node.matches(selector) && !known.has(node) && !done.has(node)) {
+            done.add(node);
+            if (node.getAttribute('role') === 'alert') say(node.textContent, 'assertive');
+            else say(`“${node.textContent}”`, 'silent', ' (region was created with its text)');
+          }
+        }
+        const target = record.target.nodeType === 1 ? record.target : record.target.parentElement;
+        const region = target.closest(selector);
+        if (!region || !known.has(region) || done.has(region)) continue;
+        const politeness = region.getAttribute('role') === 'alert' ? 'assertive' : 'polite';
+        if (region.getAttribute('role') === 'log') {
+          for (const node of record.addedNodes) say(node.textContent, politeness);
+        } else {
+          done.add(region);
+          if (region.textContent) say(region.textContent, politeness);
+        }
+      }
+      for (const region of document.querySelectorAll(selector)) known.add(region);
+    }).observe(document.getElementById('stage').parentElement, { childList: true, characterData: true, subtree: true });
+  </script>
+</body>
+</html>
