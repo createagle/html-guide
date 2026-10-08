@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>28-2 A Reusable copy-button</title>
+  <style>
+    .stage { width: min(780px, 100%); align-items: stretch; }
+    .uses { flex: 1 1 360px; display: grid; gap: 14px; align-content: start; }
+    .side { flex: 1 1 260px; }
+    .use { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; }
+    .use h2 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    pre.cmd { margin: 0; flex: 1 1 auto; padding: 8px 10px; background: var(--surface); border-radius: 6px; font-size: 14px; }
+    .row input { flex: 1 1 14em; font: 14px var(--mono); padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+
+    /* Before the script runs, show nothing rather than an unstyled label */
+    copy-button:not(:defined) { visibility: hidden; }
+
+    /* Theme every instance through custom properties */
+    .uses { --copy-button-border: var(--border); --copy-button-bg: var(--bg); --copy-button-focus: var(--accent); --copy-button-done: var(--good); }
+
+    /* Restyle one instance through its parts */
+    .coupon { justify-items: start; }
+    .code { font: 700 22px/1 var(--mono); letter-spacing: .12em; padding: 10px 16px; border: 2px dashed var(--accent); border-radius: 8px; }
+    .coupon copy-button { --copy-button-bg: var(--accent); --copy-button-border: var(--accent); --copy-button-radius: 999px; --copy-button-padding: 7px 18px; color: var(--bg); }
+    .coupon copy-button::part(label) { font-weight: 600; }
+    .coupon copy-button::part(icon) { display: none; }
+
+    #log { margin: 0; padding-left: 30px; font: 12px/1.7 var(--mono); max-block-size: 260px; overflow: auto; word-break: break-all; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="uses">
+      <section class="use" aria-labelledby="u1">
+        <h2 id="u1">Copy from an element</h2>
+        <div class="row">
+          <pre class="cmd" id="cmd">npx serve chapters</pre>
+          <copy-button for="cmd"></copy-button>
+        </div>
+      </section>
+      <section class="use" aria-labelledby="u2">
+        <h2 id="u2">Copy a field's value</h2>
+        <div class="row">
+          <input type="url" id="link" aria-labelledby="u2" value="https://createagle.github.io/html-guide/">
+          <copy-button for="link" copied-label="Link copied">Copy link</copy-button>
+        </div>
+      </section>
+      <section class="use coupon" aria-labelledby="u3">
+        <h2 id="u3">Copy a fixed value, restyled with ::part</h2>
+        <div class="code">AUTUMN26</div>
+        <copy-button value="AUTUMN26" copied-label="Code copied">Copy code</copy-button>
+      </section>
+    </div>
+    <section class="panel side" aria-labelledby="l-label">
+      <h2 class="label" id="l-label">copy-success events</h2>
+      <ol id="log"></ol>
+    </section>
+  </div>
+  <script src="copy-button.js"></script>
+  <script>
+    const log = document.getElementById('log');
+    document.addEventListener('copy-success', (e) => {
+      const li = document.createElement('li');
+      li.textContent = JSON.stringify(e.detail.text);
+      log.append(li);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>28-3 Attributes and Properties</title>
+  <style>
+    .stage { width: min(820px, 100%); align-items: stretch; }
+    .left { flex: 1 1 260px; display: grid; gap: 14px; justify-items: center; align-content: start; }
+    .side { flex: 1 1 340px; }
+    .controls { display: grid; grid-template-columns: max-content max-content; gap: 8px 10px; align-items: center; }
+    .controls input[type="text"] { inline-size: 6em; font-family: var(--mono); }
+    .controls button { padding: 4px 10px; font: 13px var(--mono); }
+    progress-ring { --ring-color: var(--accent); --ring-track: var(--border); inline-size: 160px; }
+    pre.code { font-size: 13px; margin: 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <input type="text" id="attr-in" value="75" aria-label="Attribute value">
+    <button type="button" id="set-attr">ring.setAttribute('value', …)</button>
+    <input type="text" id="prop-in" value="150" aria-label="Property value">
+    <button type="button" id="set-prop">ring.value = …</button>
+    <label class="control"><input type="checkbox" id="ind"> ring.indeterminate</label>
+    <button type="button" id="remove">ring.removeAttribute('value')</button>
+  </div>
+  <div class="stage">
+    <div class="left">
+      <progress-ring id="ring" value="40" max="100" aria-label="Upload"></progress-ring>
+    </div>
+    <section class="panel side" aria-labelledby="s-label">
+      <h2 class="label" id="s-label">Attribute vs property</h2>
+      <pre class="code" id="state"></pre>
+    </section>
+  </div>
+
+  <script>
+    const template = document.createElement('template');
+    template.innerHTML = `
+      <style>
+        :host { display: inline-block; aspect-ratio: 1; position: relative; }
+        svg { inline-size: 100%; block-size: 100%; rotate: -90deg; }
+        circle { fill: none; stroke-width: 10; }
+        .track { stroke: var(--ring-track, #ddd); }
+        .bar { stroke: var(--ring-color, currentColor); stroke-linecap: round; transition: stroke-dasharray .3s; }
+        .text { position: absolute; inset: 0; display: grid; place-items: center; font: 600 24px/1 var(--mono, monospace); }
+        :host([indeterminate]) .bar { stroke-dasharray: 25 75; animation: spin 1s linear infinite; transform-origin: center; }
+        :host([indeterminate]) .text { visibility: hidden; }
+        @keyframes spin { to { rotate: 1turn; } }
+        @media (prefers-reduced-motion: reduce) { :host([indeterminate]) .bar { animation-duration: 4s; } }
+      </style>
+      <svg viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="track" cx="60" cy="60" r="50"/>
+        <circle class="bar" cx="60" cy="60" r="50" pathLength="100"/>
+      </svg>
+      <span class="text" aria-hidden="true"></span>
+    `;
+
+    class ProgressRing extends HTMLElement {
+      static observedAttributes = ['value', 'max', 'indeterminate'];
+      #internals = this.attachInternals();
+
+      constructor() {
+        super();
+        this.attachShadow({ mode: 'open' }).append(template.content.cloneNode(true));
+        this.#internals.role = 'progressbar';
+        this.#internals.ariaValueMin = '0';
+      }
+
+      // The attribute is the source of truth; properties read and write it
+      get max() {
+        const n = parseFloat(this.getAttribute('max'));
+        return n > 0 ? n : 100;
+      }
+      set max(n) { this.setAttribute('max', n); }
+
+      get value() {
+        const n = parseFloat(this.getAttribute('value'));
+        return Number.isFinite(n) ? Math.min(Math.max(n, 0), this.max) : 0;
+      }
+      set value(n) { this.setAttribute('value', n); }
+
+      get indeterminate() { return this.hasAttribute('indeterminate'); }
+      set indeterminate(on) { this.toggleAttribute('indeterminate', Boolean(on)); }
+
+      connectedCallback() { this.#render(); }
+      attributeChangedCallback() { this.#render(); }
+
+      #render() {
+        const percent = Math.round(this.value / this.max * 100);
+        this.shadowRoot.querySelector('.bar').style.strokeDasharray = `${percent} 100`;
+        this.shadowRoot.querySelector('.text').textContent = `${percent}%`;
+        this.#internals.ariaValueMax = String(this.max);
+        this.#internals.ariaValueNow = this.indeterminate ? null : String(this.value);
+      }
+    }
+    customElements.define('progress-ring', ProgressRing);
+
+    const ring = document.getElementById('ring');
+    const state = document.getElementById('state');
+    const show = (v) => typeof v === 'string' ? JSON.stringify(v) : `${v} (${typeof v})`;
+    function report() {
+      state.textContent = [
+        `getAttribute('value')          ${show(ring.getAttribute('value'))}`,
+        `ring.value                     ${show(ring.value)}`,
+        `getAttribute('max')            ${show(ring.getAttribute('max'))}`,
+        `ring.max                       ${show(ring.max)}`,
+        `hasAttribute('indeterminate')  ${ring.hasAttribute('indeterminate')}`,
+        `ring.indeterminate             ${ring.indeterminate}`,
+        '',
+        `outerHTML`,
+        ring.outerHTML,
+      ].join('\n');
+    }
+    new MutationObserver(report).observe(ring, { attributes: true });
+    report();
+
+    document.getElementById('set-attr').addEventListener('click', () => ring.setAttribute('value', document.getElementById('attr-in').value));
+    document.getElementById('set-prop').addEventListener('click', () => { ring.value = document.getElementById('prop-in').value; });
+    document.getElementById('ind').addEventListener('change', (e) => { ring.indeterminate = e.target.checked; });
+    document.getElementById('remove').addEventListener('click', () => ring.removeAttribute('value'));
+  </script>
+</body>
+</html>

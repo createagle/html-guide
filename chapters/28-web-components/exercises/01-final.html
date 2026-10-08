@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 28-1 · Final</title>
+  <style>
+    .feed { width: min(460px, 100%); list-style: none; margin: 0 0 12px; padding: 0; border: 1px solid var(--border); border-radius: 10px; }
+    .feed li { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 15px; }
+    .feed li:last-child { border-bottom: 0; }
+    .feed time { color: var(--muted); font-size: 13px; margin-inline-start: 6px; white-space: nowrap; }
+    #post { padding: 6px 14px; }
+  </style>
+</head>
+<body class="demo">
+  <ul class="feed" id="feed">
+    <li><strong>Mei</strong> published “Popover API” <relative-time><time datetime="2026-10-06T08:30:00Z">Oct 6, 2026, 08:30</time></relative-time></li>
+    <li><strong>Jonas</strong> commented on “dialog” <relative-time><time datetime="2026-09-28T14:05:00Z">Sep 28, 2026, 14:05</time></relative-time></li>
+    <li><strong>Priya</strong> joined the team <relative-time><time datetime="2026-08-15T09:00:00Z">Aug 15, 2026, 09:00</time></relative-time></li>
+  </ul>
+  <button type="button" id="post">Post an update</button>
+  <script>
+    const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+    const units = [['year', 31536e6], ['month', 2592e6], ['week', 6048e5], ['day', 864e5], ['hour', 36e5], ['minute', 6e4]];
+    function ago(date) {
+      const diff = date - Date.now();
+      for (const [unit, ms] of units) {
+        if (Math.abs(diff) >= ms) return rtf.format(Math.round(diff / ms), unit);
+      }
+      return 'just now';
+    }
+
+    // Formats its <time> child and keeps it fresh while it is in the page
+    class RelativeTime extends HTMLElement {
+      #timer = 0;
+      connectedCallback() {
+        this.update();
+        this.#timer = setInterval(() => this.update(), 30_000);
+      }
+      disconnectedCallback() {
+        clearInterval(this.#timer);
+      }
+      update() {
+        const time = this.querySelector('time');
+        const date = new Date(time?.dateTime);
+        if (Number.isNaN(date.getTime())) return;
+        time.title = date.toLocaleString('en');
+        time.textContent = ago(date);
+      }
+    }
+    customElements.define('relative-time', RelativeTime);
+
+    document.getElementById('post').addEventListener('click', () => {
+      const now = new Date();
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>You</strong> posted an update <relative-time><time datetime="${now.toISOString()}">${now.toLocaleString('en')}</time></relative-time>`;
+      document.getElementById('feed').prepend(li);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 28-2 · Starter</title>
+  <style>
+    .settings { width: min(380px, 100%); border: 1px solid var(--border); border-radius: 12px; padding: 6px 16px; }
+    .settings h2 { font-size: 16px; margin: 10px 0 4px; }
+    .settings p { display: flex; justify-content: space-between; margin: 0; padding: 8px 0; border-top: 1px solid var(--border); }
+    #status { color: var(--muted); font-size: 14px; }
+
+    /* The page wants switches in its own accent colour, but none of these rules reach inside the shadow root */
+    .settings toggle-switch .track { background: var(--border); }
+    .settings toggle-switch[checked] .track { background: var(--accent); }
+  </style>
+</head>
+<body class="demo">
+  <section class="settings" aria-labelledby="s-title">
+    <h2 id="s-title">Notifications</h2>
+    <p><toggle-switch checked>Email digests</toggle-switch></p>
+    <p><toggle-switch>Push notifications</toggle-switch></p>
+    <p><toggle-switch checked>Weekly report</toggle-switch></p>
+    <p id="status" aria-live="polite"></p>
+  </section>
+  <script>
+    class ToggleSwitch extends HTMLElement {
+      static observedAttributes = ['checked'];
+
+      constructor() {
+        super();
+        this.attachShadow({ mode: 'open' }).innerHTML = `
+          <style>
+            :host { display: inline-block; }
+            button { display: inline-flex; align-items: center; gap: 10px; font: inherit; color: inherit; background: none; border: 0; padding: 2px; cursor: pointer; }
+            .track { position: relative; inline-size: 40px; block-size: 22px; border-radius: 999px; background: #d4d4d4; transition: background .2s; }
+            .thumb { position: absolute; inset-block-start: 3px; inset-inline-start: 3px; inline-size: 16px; block-size: 16px; border-radius: 50%; background: #fff; transition: translate .2s; }
+            :host([checked]) .track { background: #16a34a; }
+            :host([checked]) .thumb { translate: 18px; }
+          </style>
+          <button type="button" role="switch" aria-checked="false">
+            <span class="track"><span class="thumb"></span></span>
+            <slot></slot>
+          </button>
+        `;
+        this.button = this.shadowRoot.querySelector('button');
+        this.button.addEventListener('click', () => {
+          this.checked = !this.checked;
+          this.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      }
+
+      get checked() { return this.hasAttribute('checked'); }
+      set checked(on) { this.toggleAttribute('checked', Boolean(on)); }
+
+      attributeChangedCallback() {
+        this.button.setAttribute('aria-checked', String(this.checked));
+      }
+    }
+    customElements.define('toggle-switch', ToggleSwitch);
+
+    const status = document.getElementById('status');
+    document.querySelector('.settings').addEventListener('change', (e) => {
+      status.textContent = `${e.target.textContent.trim()}: ${e.target.checked ? 'on' : 'off'}`;
+    });
+  </script>
+</body>
+</html>

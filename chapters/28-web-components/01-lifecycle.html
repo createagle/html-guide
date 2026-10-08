@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>28-1 Custom Element Lifecycle</title>
+  <style>
+    .stage { width: min(820px, 100%); align-items: stretch; }
+    .left { flex: 1 1 300px; display: grid; gap: 12px; align-content: start; }
+    .side { flex: 1 1 320px; }
+    .controls button { padding: 5px 10px; font-size: 14px; }
+    .zone { min-block-size: 64px; border: 1px dashed var(--border); border-radius: 10px; padding: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-content: flex-start; }
+    .zone::before { content: attr(data-name); inline-size: 100%; font-size: 12px; color: var(--muted); }
+    life-box { display: inline-grid; place-items: center; min-inline-size: 70px; padding: 8px 12px; border-radius: 8px; font: 600 14px/1.3 var(--mono); }
+    life-box:not(:defined) { border: 2px dashed var(--muted); color: var(--muted); }
+    life-box:not(:defined)::after { content: "not defined"; font-size: 11px; font-weight: 400; }
+    life-box:defined { border: 2px solid var(--accent); background: var(--surface); }
+    #log { margin: 0; padding: 0; list-style: none; font: 12px/1.7 var(--mono); max-block-size: 330px; overflow: auto; }
+    #log li { padding-inline-start: 18px; }
+    #log li.step { color: var(--muted); padding-inline-start: 0; margin-block-start: 4px; }
+    #log li.step::before { content: "› "; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <button type="button" id="define">customElements.define()</button>
+    <button type="button" id="create">createElement + append</button>
+    <button type="button" id="size">Change size</button>
+    <button type="button" id="note">Change note (unobserved)</button>
+    <button type="button" id="append">Move with append()</button>
+    <button type="button" id="move">Move with moveBefore()</button>
+    <button type="button" id="remove">Remove last</button>
+  </div>
+  <div class="stage">
+    <div class="left">
+      <div class="zone" id="zone-a" data-name="Zone A">
+        <life-box size="2">box</life-box>
+      </div>
+      <div class="zone" id="zone-b" data-name="Zone B"></div>
+    </div>
+    <section class="panel side" aria-labelledby="l-label">
+      <h2 class="label" id="l-label">Lifecycle callbacks</h2>
+      <ol id="log"></ol>
+    </section>
+  </div>
+
+  <script>
+    const log = document.getElementById('log');
+    function write(text, step) {
+      const li = document.createElement('li');
+      li.textContent = text;
+      if (step) li.className = 'step';
+      log.append(li);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    class LifeBox extends HTMLElement {
+      static observedAttributes = ['size'];
+      static count = 0;
+
+      constructor() {
+        super();
+        // Only set up internal state here: no attributes, no children
+        this.label = `box ${++LifeBox.count}`;
+        write(`${this.label}: constructor()`);
+      }
+      connectedCallback() {
+        write(`${this.label}: connectedCallback() in ${this.parentElement.dataset.name}`);
+        this.render();
+      }
+      disconnectedCallback() {
+        write(`${this.label}: disconnectedCallback()`);
+      }
+      connectedMoveCallback() {
+        write(`${this.label}: connectedMoveCallback() to ${this.parentElement.dataset.name}`);
+      }
+      attributeChangedCallback(name, oldValue, newValue) {
+        write(`${this.label}: attributeChangedCallback("${name}", ${JSON.stringify(oldValue)}, ${JSON.stringify(newValue)})`);
+        this.render();
+      }
+      render() {
+        if (this.isConnected) this.textContent = `${this.label} · size ${this.getAttribute('size') ?? '–'}`;
+      }
+    }
+
+    const zoneA = document.getElementById('zone-a');
+    const zoneB = document.getElementById('zone-b');
+    const last = () => [...document.querySelectorAll('life-box')].at(-1);
+    const otherZone = (box) => box.parentElement === zoneA ? zoneB : zoneA;
+
+    document.getElementById('define').addEventListener('click', (e) => {
+      write('customElements.define("life-box", LifeBox)', true);
+      customElements.define('life-box', LifeBox);
+      e.currentTarget.disabled = true;
+    });
+    document.getElementById('create').addEventListener('click', () => {
+      write('document.createElement("life-box")', true);
+      const box = document.createElement('life-box');
+      write('setAttribute("size", "1")', true);
+      box.setAttribute('size', '1');
+      write('zoneA.append(box)', true);
+      zoneA.append(box);
+    });
+    document.getElementById('size').addEventListener('click', () => {
+      const box = last(); if (!box) return;
+      const size = String(Number(box.getAttribute('size') ?? 0) + 1);
+      write(`setAttribute("size", "${size}")`, true);
+      box.setAttribute('size', size);
+    });
+    document.getElementById('note').addEventListener('click', () => {
+      const box = last(); if (!box) return;
+      write('setAttribute("note", "hi")', true);
+      box.setAttribute('note', 'hi');
+    });
+    document.getElementById('append').addEventListener('click', () => {
+      const box = last(); if (!box) return;
+      write('otherZone.append(box)', true);
+      otherZone(box).append(box);
+    });
+    document.getElementById('move').addEventListener('click', () => {
+      const box = last(); if (!box) return;
+      write('otherZone.moveBefore(box, null)', true);
+      otherZone(box).moveBefore(box, null);
+    });
+    if (!('moveBefore' in Element.prototype)) document.getElementById('move').disabled = true;
+    document.getElementById('remove').addEventListener('click', () => {
+      const box = last(); if (!box) return;
+      write('box.remove()', true);
+      box.remove();
+    });
+  </script>
+</body>
+</html>
