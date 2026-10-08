@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 25-1 · Starter</title>
+  <style>
+    .card { width: min(380px, 100%); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; overflow: hidden; position: relative; }
+    .card h2 { margin: 0 0 4px; font-size: 18px; }
+    .card p { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+    .share-btn { padding: 7px 14px; font-size: 15px; }
+    .menu { border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--fg); padding: 4px; min-inline-size: 190px; box-shadow: 0 8px 24px rgb(0 0 0 / .18); }
+    .menu a { display: block; padding: 7px 10px; border-radius: 6px; color: inherit; text-decoration: none; font-size: 14px; }
+    .menu a:hover, .menu a:focus-visible { background: var(--surface); outline: none; }
+    .menu { position: absolute; inset-block-start: 100%; inset-inline-start: 16px; display: none; }
+    .menu.open { display: block; }
+  </style>
+</head>
+<body class="demo">
+  <!-- The menu is cut off by the card's overflow: hidden, and it needs three event listeners to open and close. -->
+  <article class="card">
+    <h2>Popovers without JavaScript</h2>
+    <p>A short post about the Popover API.</p>
+    <button type="button" class="share-btn" id="share">Share ▾</button>
+    <div class="menu" id="menu">
+          <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://example.com/post">LinkedIn</a>
+          <a href="https://bsky.app/intent/compose?text=https://example.com/post">Bluesky</a>
+          <a href="mailto:?subject=Worth%20reading&amp;body=https://example.com/post">Email</a>
+          <a href="https://example.com/post">Copy this link</a>
+    </div>
+  </article>
+  <script>
+    const menu = document.getElementById('menu');
+    document.getElementById('share').addEventListener('click', (e) => {
+      e.stopPropagation();
+      menu.classList.toggle('open');
+    });
+    document.addEventListener('click', (e) => {
+      if (!menu.contains(e.target)) menu.classList.remove('open');
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') menu.classList.remove('open');
+    });
+  </script>
+</body>
+</html>

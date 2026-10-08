@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>25-1 Menu and Tooltips</title>
+  <style>
+    .stage { width: min(760px, 100%); flex-direction: column; align-items: stretch; gap: 20px; }
+    .toolbar { display: flex; gap: 6px; align-items: center; border: 1px solid var(--border); border-radius: 10px; padding: 8px; }
+    .toolbar .spacer { flex: 1; }
+    .icon-btn { inline-size: 36px; block-size: 36px; display: grid; place-items: center; padding: 0; border-radius: 8px; }
+    .icon-btn svg { inline-size: 18px; block-size: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .menu-btn { padding: 7px 12px; font-size: 15px; border-radius: 8px; }
+    .doc { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; min-block-size: 140px; color: var(--muted); }
+
+    /* Popovers start in the top layer; anchor them to the button that opened them */
+    [popover] { margin: 0; border: 1px solid var(--border); background: var(--bg); color: var(--fg); }
+    .menu {
+      padding: 4px; border-radius: 10px; box-shadow: 0 8px 24px rgb(0 0 0 / .18);
+      position-area: block-end span-inline-start;
+      position-try-fallbacks: flip-block, flip-inline;
+      margin-block-start: 4px;
+      min-inline-size: 180px;
+    }
+    .menu ul { list-style: none; margin: 0; padding: 0; }
+    .menu button { inline-size: 100%; text-align: start; padding: 7px 10px; font-size: 14px; border: 0; border-radius: 6px; background: none; color: inherit; }
+    .menu button:hover, .menu button:focus-visible { background: var(--surface); outline: none; }
+
+    .tip {
+      padding: 4px 8px; border-radius: 6px; font-size: 13px;
+      background: var(--fg); color: var(--bg); border-color: var(--fg);
+      position-area: block-end;
+      position-try-fallbacks: flip-block;
+      margin-block-start: 6px;
+      pointer-events: none;
+    }
+    #status { margin: 0; font-size: 14px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="toolbar" role="toolbar" aria-label="Formatting">
+      <button type="button" class="icon-btn" aria-label="Bold" data-tip="tip-bold"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z"/></svg></button>
+      <div id="tip-bold" class="tip" popover="hint">Bold (Ctrl+B)</div>
+      <button type="button" class="icon-btn" aria-label="Italic" data-tip="tip-italic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5h8M6 19h8M14 5l-4 14"/></svg></button>
+      <div id="tip-italic" class="tip" popover="hint">Italic (Ctrl+I)</div>
+      <button type="button" class="icon-btn" aria-label="Insert link" data-tip="tip-link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></button>
+      <div id="tip-link" class="tip" popover="hint">Insert link (Ctrl+K)</div>
+      <span class="spacer"></span>
+      <button type="button" class="menu-btn" popovertarget="more-menu">More ▾</button>
+      <div id="more-menu" class="menu" popover>
+        <ul>
+          <li><button type="button" data-action="Duplicate">Duplicate</button></li>
+          <li><button type="button" data-action="Move to folder">Move to folder…</button></li>
+          <li><button type="button" data-action="Download as PDF">Download as PDF</button></li>
+          <li><button type="button" data-action="Delete">Delete</button></li>
+        </ul>
+      </div>
+    </div>
+    <div class="doc">Hover or Tab to the icon buttons for tooltips. Open “More” and click outside, press Esc, or pick an item.</div>
+    <p id="status" role="status"></p>
+  </div>
+  <script>
+    // Menu items: do the action, then close the menu and return focus to its button
+    const menu = document.getElementById('more-menu');
+    menu.addEventListener('click', (e) => {
+      const item = e.target.closest('[data-action]');
+      if (!item) return;
+      document.getElementById('status').textContent = `${item.dataset.action} chosen.`;
+      menu.hidePopover();
+      document.querySelector('[popovertarget="more-menu"]').focus();
+    });
+    menu.addEventListener('toggle', (e) => {
+      if (e.newState === 'open') menu.querySelector('button').focus();
+    });
+
+    // Tooltips: popover="hint" shown on hover and keyboard focus, after a short delay
+    for (const btn of document.querySelectorAll('[data-tip]')) {
+      const tip = document.getElementById(btn.dataset.tip);
+      btn.setAttribute('aria-describedby', tip.id);
+      let timer;
+      const show = () => { clearTimeout(timer); timer = setTimeout(() => tip.showPopover({ source: btn }), 300); };
+      const hide = () => { clearTimeout(timer); tip.hidePopover(); };
+      btn.addEventListener('pointerenter', show);
+      btn.addEventListener('pointerleave', hide);
+      btn.addEventListener('focus', show);
+      btn.addEventListener('blur', hide);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>25-3 Toast Notifications</title>
+  <style>
+    .stage { width: min(640px, 100%); flex-direction: column; align-items: stretch; gap: 12px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    button { padding: 7px 14px; font-size: 15px; }
+    #announcer { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+    /* Each toast is a manual popover: it is in the top layer, above any dialog or overflow container */
+    .toast {
+      margin: 0; inset: auto 16px auto auto;
+      inset-block-end: calc(16px + var(--i, 0) * 64px);
+      inline-size: min(320px, calc(100vw - 32px));
+      display: flex; gap: 10px; align-items: center; justify-content: space-between;
+      padding: 10px 12px 10px 14px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--fg); color: var(--bg); box-shadow: 0 8px 24px rgb(0 0 0 / .25);
+      transition: opacity .25s, translate .25s, inset-block-end .25s, overlay .25s allow-discrete, display .25s allow-discrete;
+      opacity: 0; translate: 0 12px;
+    }
+    .toast:popover-open { opacity: 1; translate: 0 0; }
+    @starting-style { .toast:popover-open { opacity: 0; translate: 0 12px; } }
+    .toast:not(:popover-open) { display: none; }
+    .toast button { background: none; border: 0; color: inherit; font-size: 18px; line-height: 1; padding: 4px 6px; border-radius: 6px; }
+    .toast button:focus-visible { outline: 2px solid var(--bg); }
+    .hint { color: var(--muted); font-size: 14px; margin: 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="row">
+      <button type="button" data-msg="Draft saved.">Save draft</button>
+      <button type="button" data-msg="Link copied to the clipboard.">Copy link</button>
+      <button type="button" data-msg="3 files uploaded.">Upload</button>
+    </div>
+    <p class="hint">Toasts stack in the corner and disappear after 5 seconds. They do not steal focus and clicking elsewhere does not close them.</p>
+  </div>
+  <!-- One live region for screen readers; the visible toasts are popovers -->
+  <div id="announcer" role="status"></div>
+  <script>
+    const announcer = document.getElementById('announcer');
+    const open = [];
+
+    function restack() {
+      open.forEach((t, i) => t.style.setProperty('--i', open.length - 1 - i));
+    }
+
+    function toast(message) {
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.popover = 'manual';
+      const text = document.createElement('span');
+      text.textContent = message;
+      const close = document.createElement('button');
+      close.type = 'button';
+      close.textContent = '×';
+      close.setAttribute('aria-label', 'Dismiss');
+      t.append(text, close);
+      document.body.append(t);
+
+      const remove = () => {
+        clearTimeout(timer);
+        if (!t.matches(':popover-open')) return;
+        t.hidePopover();
+        open.splice(open.indexOf(t), 1);
+        restack();
+        setTimeout(() => t.remove(), 300); // after the exit transition
+      };
+      close.addEventListener('click', remove);
+      const timer = setTimeout(remove, 5000);
+
+      open.push(t);
+      restack();
+      t.showPopover();
+      announcer.textContent = message;
+    }
+
+    document.querySelector('.row').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-msg]');
+      if (btn) toast(btn.dataset.msg);
+    });
+  </script>
+</body>
+</html>

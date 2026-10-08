@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 25-2 · Starter</title>
+  <style>
+    form { width: min(420px, 100%); display: grid; gap: 14px; }
+    .field { display: grid; gap: 4px; }
+    .label-row { display: flex; gap: 6px; align-items: center; }
+    .label-row label { font-weight: 600; font-size: 14px; }
+    .field input { font-size: 15px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .info { inline-size: 22px; block-size: 22px; border-radius: 50%; padding: 0; font-size: 13px; font-weight: 700; line-height: 1; }
+    button[type=submit] { justify-self: start; padding: 7px 16px; font-size: 15px; }
+  </style>
+</head>
+<body class="demo">
+  <!-- The help texts live in title attributes: nothing happens on touch screens or with the keyboard, and the delay is long. -->
+  <form>
+    <div class="field">
+      <div class="label-row"><label for="iban">IBAN</label><span class="info" title="The account number printed on your bank card or statement, starting with two letters, e.g. GB29 NWBK 6016 1331 9268 19.">?</span></div>
+      <input type="text" id="iban" name="iban">
+    </div>
+    <div class="field">
+      <div class="label-row"><label for="ref">Payment reference</label><span class="info" title="Up to 18 characters. It appears on the recipient's statement, so use something they will recognise.">?</span></div>
+      <input type="text" id="ref" name="ref">
+    </div>
+    <button type="submit">Pay</button>
+  </form>
+</body>
+</html>

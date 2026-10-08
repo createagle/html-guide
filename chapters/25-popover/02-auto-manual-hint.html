@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>25-2 auto, manual and hint</title>
+  <style>
+    .stage { width: min(760px, 100%); flex-direction: column; align-items: stretch; }
+    .page { display: grid; gap: 10px; align-content: start; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .row code { font-size: 13px; }
+    button { padding: 7px 12px; font-size: 14px; }
+    [popover] { margin: 0; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--bg); color: var(--fg); box-shadow: 0 8px 24px rgb(0 0 0 / .18); max-inline-size: 260px; font-size: 14px;
+      position-area: inline-end span-block-end; margin-inline-start: 8px; position-try-fallbacks: flip-inline, block-end; }
+    [popover] p { margin: 0 0 8px; }
+    [popover="manual"] { border-color: var(--accent); }
+    [popover="hint"] { border-style: dashed; }
+    #log { margin: 0; padding-left: 30px; font: 12px/1.7 var(--mono); max-block-size: 200px; overflow: auto; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="page">
+      <div class="row"><button type="button" popovertarget="a1">Open auto A</button><code>popover="auto"</code></div>
+      <div id="a1" popover="auto">
+        <p>Auto A. Click outside or press Esc to close.</p>
+        <button type="button" popovertarget="a1-sub">Open nested auto</button>
+      </div>
+      <div id="a1-sub" popover="auto"><p>Nested inside A: opening it keeps A open.</p></div>
+
+      <div class="row"><button type="button" popovertarget="a2">Open auto B</button><code>popover="auto"</code></div>
+      <div id="a2" popover="auto"><p>Auto B. Opening it closed A, because they are not nested.</p></div>
+
+      <div class="row"><button type="button" popovertarget="m1">Toggle manual</button><code>popover="manual"</code></div>
+      <div id="m1" popover="manual">
+        <p>Manual. Clicks outside and Esc do nothing; only its button closes it.</p>
+        <button type="button" popovertarget="m1" popovertargetaction="hide">Close</button>
+      </div>
+
+      <div class="row"><button type="button" id="hint-btn" aria-describedby="h1">Hover or focus for a hint</button><code>popover="hint"</code></div>
+      <div id="h1" popover="hint"><p>Hint. It leaves an open auto popover alone; Esc closes the hint first.</p></div>
+    </div>
+    <section class="panel" aria-labelledby="l-label">
+      <h2 class="label" id="l-label">toggle events</h2>
+      <ol id="log"></ol>
+    </section>
+  </div>
+  <script>
+    // Hints open on hover or focus, not on click (a click outside would close an auto popover)
+    const hintBtn = document.getElementById('hint-btn');
+    const hint = document.getElementById('h1');
+    const showHint = () => hint.showPopover({ source: hintBtn });
+    const hideHint = () => hint.hidePopover();
+    hintBtn.addEventListener('pointerenter', showHint);
+    hintBtn.addEventListener('focus', showHint);
+    hintBtn.addEventListener('pointerleave', hideHint);
+    hintBtn.addEventListener('blur', hideHint);
+
+    const log = document.getElementById('log');
+    for (const p of document.querySelectorAll('[popover]')) {
+      p.addEventListener('toggle', (e) => {
+        const li = document.createElement('li');
+        li.textContent = `#${p.id} (${p.popover}): ${e.oldState} → ${e.newState}`;
+        log.append(li);
+        log.scrollTop = log.scrollHeight;
+      });
+    }
+  </script>
+</body>
+</html>

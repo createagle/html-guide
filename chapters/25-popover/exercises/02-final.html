@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 25-2 · Final</title>
+  <style>
+    form { width: min(420px, 100%); display: grid; gap: 14px; }
+    .field { display: grid; gap: 4px; }
+    .label-row { display: flex; gap: 6px; align-items: center; }
+    .label-row label { font-weight: 600; font-size: 14px; }
+    .field input { font-size: 15px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .info { inline-size: 22px; block-size: 22px; border-radius: 50%; padding: 0; font-size: 13px; font-weight: 700; line-height: 1; }
+    button[type=submit] { justify-self: start; padding: 7px 16px; font-size: 15px; }
+    .tip { margin: 0; max-inline-size: 260px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); font-size: 14px; box-shadow: 0 8px 24px rgb(0 0 0 / .18);
+      position-area: block-start span-inline-end; margin-block-end: 6px; position-try-fallbacks: flip-block, flip-inline; }
+  </style>
+</head>
+<body class="demo">
+  <form>
+    <div class="field">
+      <div class="label-row"><label for="iban">IBAN</label><button type="button" class="info" popovertarget="iban-tip" aria-label="About IBAN">?</button></div>
+      <div id="iban-tip" class="tip" popover role="note">The account number printed on your bank card or statement, starting with two letters, e.g. GB29 NWBK 6016 1331 9268 19.</div>
+      <input type="text" id="iban" name="iban">
+    </div>
+    <div class="field">
+      <div class="label-row"><label for="ref">Payment reference</label><button type="button" class="info" popovertarget="ref-tip" aria-label="About Payment reference">?</button></div>
+      <div id="ref-tip" class="tip" popover role="note">Up to 18 characters. It appears on the recipient's statement, so use something they will recognise.</div>
+      <input type="text" id="ref" name="ref">
+    </div>
+    <button type="submit">Pay</button>
+  </form>
+</body>
+</html>
