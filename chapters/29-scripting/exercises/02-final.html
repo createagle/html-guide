@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 29-2 · Final</title>
+  <style>
+    .files { width: min(520px, 100%); border-collapse: collapse; font-size: 15px; margin-block-end: 10px; }
+    .files th, .files td { padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: start; }
+    .files th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    .files td:last-child { text-align: end; white-space: nowrap; }
+    .files button { padding: 2px 8px; font-size: 13px; }
+    .files button[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+    #add { padding: 6px 14px; }
+    .visually-hidden { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  </style>
+</head>
+<body class="demo">
+  <table class="files">
+    <thead><tr><th scope="col">Name</th><th scope="col">Size</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+    <tbody id="files">
+      <tr data-id="1"><td>report-2026.pdf</td><td>1.2 MB</td><td><button type="button" data-action="star" aria-pressed="false" aria-label="Star report-2026.pdf">★</button> <button type="button" data-action="delete" aria-label="Delete report-2026.pdf">Delete</button></td></tr>
+      <tr data-id="2"><td>budget.xlsx</td><td>84 KB</td><td><button type="button" data-action="star" aria-pressed="false" aria-label="Star budget.xlsx">★</button> <button type="button" data-action="delete" aria-label="Delete budget.xlsx">Delete</button></td></tr>
+      <tr data-id="3"><td>logo.svg</td><td>6 KB</td><td><button type="button" data-action="star" aria-pressed="false" aria-label="Star logo.svg">★</button> <button type="button" data-action="delete" aria-label="Delete logo.svg">Delete</button></td></tr>
+    </tbody>
+  </table>
+  <template id="file-row">
+    <tr><td></td><td>1 KB</td><td><button type="button" data-action="star" aria-pressed="false">★</button> <button type="button" data-action="delete">Delete</button></td></tr>
+  </template>
+  <button type="button" id="add">Upload a file</button>
+  <script>
+    const tbody = document.getElementById('files');
+    let next = 4;
+
+    // One listener on the table body handles every row, now and later
+    tbody.addEventListener('click', (e) => {
+      const button = e.target.closest('button[data-action]');
+      if (!button) return;
+      const row = button.closest('tr');
+      if (button.dataset.action === 'star') {
+        button.setAttribute('aria-pressed', String(button.getAttribute('aria-pressed') !== 'true'));
+      } else if (button.dataset.action === 'delete') {
+        row.remove();
+      }
+    });
+
+    const template = document.getElementById('file-row');
+    document.getElementById('add').addEventListener('click', () => {
+      const name = `upload-${next}.txt`;
+      const row = template.content.firstElementChild.cloneNode(true);
+      row.dataset.id = next++;
+      row.cells[0].textContent = name;
+      row.querySelector('[data-action="star"]').setAttribute('aria-label', `Star ${name}`);
+      row.querySelector('[data-action="delete"]').setAttribute('aria-label', `Delete ${name}`);
+      tbody.append(row);
+    });
+  </script>
+</body>
+</html>

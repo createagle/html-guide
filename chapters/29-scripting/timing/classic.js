@@ -1,0 +1,1 @@
+mark('classic.js', 'classic');

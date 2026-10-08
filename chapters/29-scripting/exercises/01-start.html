@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 29-1 · Starter</title>
+  <!-- Three blocking scripts: each one stops the parser until it has downloaded and run -->
+  <script src="01-start/money.js"></script>
+  <script src="01-start/cart.js"></script>
+  <script src="01-start/stats.js"></script>
+  <style>
+    .cart { width: min(440px, 100%); border-collapse: collapse; font-size: 15px; }
+    .cart th, .cart td { padding: 7px 10px; border-bottom: 1px solid var(--border); text-align: start; }
+    .cart th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    .cart td.num, .cart th.num { text-align: end; font-family: var(--mono); }
+    .cart tfoot td { font-weight: 700; border-bottom: 0; }
+  </style>
+</head>
+<body class="demo">
+  <table class="cart" id="cart">
+    <thead><tr><th scope="col">Item</th><th scope="col" class="num">Qty</th><th scope="col" class="num">Subtotal</th></tr></thead>
+    <tbody>
+      <tr data-price="4.5" data-qty="2"><td>Notebook</td><td class="num">2</td><td class="num"></td></tr>
+      <tr data-price="12" data-qty="1"><td>Fountain pen</td><td class="num">1</td><td class="num"></td></tr>
+      <tr data-price="0.8" data-qty="10"><td>Sticky notes</td><td class="num">10</td><td class="num"></td></tr>
+    </tbody>
+    <tfoot><tr><td colspan="2">Total</td><td class="num" id="total"></td></tr></tfoot>
+  </table>
+</body>
+</html>

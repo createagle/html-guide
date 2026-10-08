@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 29-2 · Starter</title>
+  <style>
+    .files { width: min(520px, 100%); border-collapse: collapse; font-size: 15px; margin-block-end: 10px; }
+    .files th, .files td { padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: start; }
+    .files th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    .files td:last-child { text-align: end; white-space: nowrap; }
+    .files button { padding: 2px 8px; font-size: 13px; }
+    .files button[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+    #add { padding: 6px 14px; }
+    .visually-hidden { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  </style>
+</head>
+<body class="demo">
+  <!-- Files added with "Upload a file" have buttons that do nothing. -->
+  <table class="files">
+    <thead><tr><th scope="col">Name</th><th scope="col">Size</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+    <tbody id="files">
+      <tr data-id="1"><td>report-2026.pdf</td><td>1.2 MB</td><td><button type="button" class="star" aria-pressed="false" aria-label="Star report-2026.pdf">★</button> <button type="button" class="delete" aria-label="Delete report-2026.pdf">Delete</button></td></tr>
+      <tr data-id="2"><td>budget.xlsx</td><td>84 KB</td><td><button type="button" class="star" aria-pressed="false" aria-label="Star budget.xlsx">★</button> <button type="button" class="delete" aria-label="Delete budget.xlsx">Delete</button></td></tr>
+      <tr data-id="3"><td>logo.svg</td><td>6 KB</td><td><button type="button" class="star" aria-pressed="false" aria-label="Star logo.svg">★</button> <button type="button" class="delete" aria-label="Delete logo.svg">Delete</button></td></tr>
+    </tbody>
+  </table>
+  <button type="button" id="add">Upload a file</button>
+  <script>
+    const tbody = document.getElementById('files');
+    let next = 4;
+
+    function onStar() {
+      this.setAttribute('aria-pressed', String(this.getAttribute('aria-pressed') !== 'true'));
+    }
+    function onDelete() {
+      this.closest('tr').remove();
+    }
+    // One listener per button, attached once when the page loads
+    for (const button of document.querySelectorAll('.star')) button.addEventListener('click', onStar);
+    for (const button of document.querySelectorAll('.delete')) button.addEventListener('click', onDelete);
+
+    document.getElementById('add').addEventListener('click', () => {
+      const name = `upload-${next}.txt`;
+      tbody.insertAdjacentHTML('beforeend', `<tr data-id="${next++}"><td>${name}</td><td>1 KB</td><td><button type="button" class="star" aria-pressed="false" aria-label="Star ${name}">★</button> <button type="button" class="delete" aria-label="Delete ${name}">Delete</button></td></tr>`);
+    });
+  </script>
+</body>
+</html>

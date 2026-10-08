@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>29-3 A To-do List With Event Delegation</title>
+  <style>
+    .stage { width: min(820px, 100%); align-items: stretch; }
+    .app { flex: 1 1 360px; display: grid; gap: 10px; align-content: start; }
+    .side { flex: 1 1 260px; }
+    form { display: flex; gap: 8px; }
+    form input { flex: 1; font: inherit; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .filters { display: flex; gap: 6px; align-items: center; font-size: 14px; }
+    .filters button { padding: 3px 10px; font-size: 13px; }
+    .filters button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--bg); }
+    .filters output { margin-inline-start: auto; color: var(--muted); }
+    #list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: 10px; }
+    #list li { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    #list li:last-child { border-bottom: 0; }
+    #list li[data-done="true"] .title { text-decoration: line-through; color: var(--muted); }
+    #list .title { flex: 1; }
+    #list button { padding: 2px 8px; font-size: 13px; }
+    #list[data-filter="active"] li[data-done="true"], #list[data-filter="done"] li[data-done="false"] { display: none; }
+    #log { margin: 0; padding-left: 30px; font: 12px/1.7 var(--mono); max-block-size: 260px; overflow: auto; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="app">
+      <form id="add">
+        <input type="text" id="new-title" name="title" aria-label="New task" placeholder="Add a task" required autocomplete="off">
+        <button type="submit">Add</button>
+      </form>
+      <div class="filters" role="group" aria-label="Show">
+        <button type="button" data-filter="all" aria-pressed="true">All</button>
+        <button type="button" data-filter="active" aria-pressed="false">Active</button>
+        <button type="button" data-filter="done" aria-pressed="false">Done</button>
+        <output id="count" for="list"></output>
+      </div>
+      <ul id="list" data-filter="all"></ul>
+    </div>
+    <section class="panel side" aria-labelledby="l-label">
+      <h2 class="label" id="l-label">One click listener on the list</h2>
+      <ol id="log"></ol>
+    </section>
+  </div>
+
+  <template id="task">
+    <li data-done="false">
+      <input type="checkbox" data-action="toggle">
+      <span class="title"></span>
+      <button type="button" data-action="up">↑</button>
+      <button type="button" data-action="delete">Delete</button>
+    </li>
+  </template>
+
+  <script>
+    const list = document.getElementById('list');
+    const template = document.getElementById('task');
+    const log = document.getElementById('log');
+    let nextId = 1;
+
+    function addTask(title, done = false) {
+      const li = template.content.firstElementChild.cloneNode(true);
+      const id = nextId++;
+      li.dataset.id = id;
+      li.dataset.done = done;
+      li.querySelector('.title').textContent = title;
+      li.querySelector('.title').id = `t${id}`;
+      const box = li.querySelector('[data-action="toggle"]');
+      box.checked = done;
+      box.setAttribute('aria-labelledby', `t${id}`);
+      li.querySelector('[data-action="up"]').setAttribute('aria-label', `Move “${title}” up`);
+      li.querySelector('[data-action="delete"]').setAttribute('aria-label', `Delete “${title}”`);
+      list.append(li);
+      updateCount();
+    }
+
+    function updateCount() {
+      const total = list.children.length;
+      const done = list.querySelectorAll('li[data-done="true"]').length;
+      document.getElementById('count').textContent = `${done} of ${total} done`;
+    }
+
+    // Event delegation: the list handles clicks for every item, including ones added later
+    list.addEventListener('click', (e) => {
+      const control = e.target.closest('[data-action]');
+      if (!control || !list.contains(control)) return;
+      const li = control.closest('li');
+      const action = control.dataset.action;
+      if (action === 'toggle') li.dataset.done = control.checked;
+      if (action === 'up' && li.previousElementSibling) li.previousElementSibling.before(li);
+      if (action === 'delete') {
+        (li.nextElementSibling ?? li.previousElementSibling)?.querySelector('[data-action="delete"]')?.focus();
+        li.remove();
+      }
+      updateCount();
+      const entry = document.createElement('li');
+      entry.textContent = `${action} → item ${li.dataset.id} (target <${e.target.localName}>)`;
+      log.append(entry);
+      log.scrollTop = log.scrollHeight;
+    });
+
+    document.querySelector('.filters').addEventListener('click', (e) => {
+      const button = e.target.closest('button[data-filter]');
+      if (!button) return;
+      list.dataset.filter = button.dataset.filter;
+      for (const b of document.querySelectorAll('.filters button')) b.setAttribute('aria-pressed', String(b === button));
+    });
+
+    document.getElementById('add').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const input = document.getElementById('new-title');
+      addTask(input.value.trim());
+      input.value = '';
+    });
+
+    addTask('Read chapter 29');
+    addTask('Write the delegation demo', true);
+    addTask('Ship the to-do list');
+  </script>
+</body>
+</html>

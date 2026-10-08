@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>29-2 textContent, innerText and innerHTML</title>
+  <style>
+    .stage { width: min(820px, 100%); flex-direction: column; align-items: stretch; gap: 12px; }
+    .field { display: grid; gap: 4px; }
+    .field label { font-weight: 600; font-size: 14px; }
+    textarea { font: 14px/1.5 var(--mono); padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .row button { font: 13px var(--mono); padding: 5px 10px; }
+    .row button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--bg); }
+    .results { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+    #result { display: block; min-block-size: 3em; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; }
+    #result img { inline-size: 16px; block-size: 16px; vertical-align: middle; }
+    #warning { margin: 6px 0 0; font-size: 14px; }
+    pre.code { font-size: 12.5px; margin: 0; white-space: pre-wrap; word-break: break-all; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="field">
+      <label for="input">Text from a user</label>
+      <textarea id="input" rows="3">Tom &amp; Jerry use &lt;b>bold&lt;/b>.
+Second line. &lt;img src="data:," alt="" onerror="this.parentNode.dataset.ran = 'yes'"></textarea>
+    </div>
+    <div class="row" role="group" aria-label="Insert with">
+      <button type="button" data-prop="textContent" aria-pressed="true">el.textContent = text</button>
+      <button type="button" data-prop="innerText" aria-pressed="false">el.innerText = text</button>
+      <button type="button" data-prop="innerHTML" aria-pressed="false">el.innerHTML = text</button>
+    </div>
+    <div class="results">
+      <section class="panel" aria-labelledby="r-label">
+        <h2 class="label" id="r-label">Rendered result</h2>
+        <output id="result" for="input"></output>
+        <p id="warning" class="bad" hidden>An onerror handler from the text just ran. With innerHTML, user text can run script.</p>
+      </section>
+      <section class="panel" aria-labelledby="d-label">
+        <h2 class="label" id="d-label">The DOM it produced</h2>
+        <pre class="code" id="dom"></pre>
+      </section>
+    </div>
+  </div>
+  <script>
+    const input = document.getElementById('input');
+    const result = document.getElementById('result');
+    const dom = document.getElementById('dom');
+    const warning = document.getElementById('warning');
+    const buttons = document.querySelectorAll('[data-prop]');
+    let prop = 'textContent';
+
+    function describe(node) {
+      if (node.nodeType === Node.TEXT_NODE) return `#text ${JSON.stringify(node.data)}`;
+      return `<${node.localName}>` + (node.childNodes.length ? ` (${node.childNodes.length} child nodes)` : '');
+    }
+
+    function render() {
+      delete result.dataset.ran;
+      result[prop] = input.value;
+      const nodes = [...result.childNodes];
+      dom.textContent = `${nodes.length} child node(s):\n` + nodes.map(describe).join('\n');
+      // onerror fires a moment later, after the image fails to load
+      setTimeout(() => { warning.hidden = result.dataset.ran !== 'yes'; }, 300);
+    }
+
+    for (const button of buttons) {
+      button.addEventListener('click', () => {
+        prop = button.dataset.prop;
+        for (const b of buttons) b.setAttribute('aria-pressed', String(b === button));
+        render();
+      });
+    }
+    input.addEventListener('input', render);
+    render();
+  </script>
+</body>
+</html>
