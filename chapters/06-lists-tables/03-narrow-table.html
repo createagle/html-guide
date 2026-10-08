@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>6-3 Tables on Narrow Screens</title>
+  <style>
+    .frame { width: var(--w, 680px); max-width: 100%; border: 1px dashed var(--border); border-radius: 10px; padding: 12px; container-type: inline-size; }
+    table { border-collapse: collapse; font-size: 14px; width: 100%; }
+    caption { text-align: left; font-weight: 600; margin-bottom: 8px; }
+    th, td { border-bottom: 1px solid var(--border); padding: 8px 10px; text-align: left; white-space: nowrap; }
+    td.num, th.num { text-align: right; }
+    /* Mode 1: let the table scroll sideways inside a focusable, labeled region */
+    .scroll { overflow-x: auto; }
+    .scroll:focus-visible { outline: 2px solid var(--accent); }
+    /* Mode 2: below 480px of container width, turn each row into a card */
+    @container (max-width: 480px) {
+      .stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+      .stack tr { display: block; padding: 8px 0; border-bottom: 1px solid var(--border); }
+      .stack th[scope=row], .stack td { display: flex; justify-content: space-between; gap: 16px; border: 0; padding: 4px 0; white-space: normal; }
+      .stack td::before { content: attr(data-label); color: var(--muted); }
+      .stack th[scope=row] { font-size: 16px; }
+    }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <span class="control"><label for="width">Container width</label> <input type="range" id="width" min="280" max="680" value="680"> <output id="w-out" for="width"></output></span>
+    <label class="control">Layout
+      <select id="mode"><option value="scroll">Scroll sideways</option><option value="stack">Stack into cards</option></select>
+    </label>
+  </div>
+  <div class="frame" id="frame">
+    <div class="wrap scroll" id="wrap" role="region" aria-labelledby="cap" tabindex="0">
+      <table>
+        <caption id="cap">Phone plans compared</caption>
+        <thead>
+          <tr><th scope="col">Plan</th><th scope="col" class="num">Data</th><th scope="col" class="num">Minutes</th><th scope="col" class="num">Price / month</th><th scope="col">Contract</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Lite</th><td class="num" data-label="Data">5 GB</td><td class="num" data-label="Minutes">100</td><td class="num" data-label="Price / month">$9</td><td data-label="Contract">None</td></tr>
+          <tr><th scope="row">Plus</th><td class="num" data-label="Data">30 GB</td><td class="num" data-label="Minutes">Unlimited</td><td class="num" data-label="Price / month">$19</td><td data-label="Contract">12 months</td></tr>
+          <tr><th scope="row">Max</th><td class="num" data-label="Data">Unlimited</td><td class="num" data-label="Minutes">Unlimited</td><td class="num" data-label="Price / month">$35</td><td data-label="Contract">24 months</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    const frame = document.getElementById('frame');
+    const wrap = document.getElementById('wrap');
+    function update() {
+      const w = document.getElementById('width').value;
+      frame.style.setProperty('--w', w + 'px');
+      document.getElementById('w-out').value = w + 'px';
+      const mode = document.getElementById('mode').value;
+      wrap.className = 'wrap ' + mode;
+    }
+    document.getElementById('width').addEventListener('input', update);
+    document.getElementById('mode').addEventListener('change', update);
+    update();
+  </script>
+</body>
+</html>

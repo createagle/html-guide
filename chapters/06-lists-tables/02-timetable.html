@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>6-2 A Timetable with Merged Cells</title>
+  <style>
+    table { border-collapse: collapse; font-size: 14px; }
+    caption { caption-side: top; font-weight: 600; margin-bottom: 8px; text-align: left; }
+    th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: center; }
+    thead th { background: var(--surface); }
+    tbody th { background: var(--surface); font-weight: 600; white-space: nowrap; }
+    td { cursor: pointer; }
+    td:hover, td:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+    td.break { color: var(--muted); font-style: italic; }
+    body.spans td[rowspan]::after, body.spans td[colspan]::after { display: block; font: 11px var(--mono); color: var(--accent); }
+    body.spans td[rowspan]::after { content: 'rowspan=' attr(rowspan); }
+    body.spans td[colspan]::after { content: 'colspan=' attr(colspan); }
+    #read { min-height: 3em; width: min(560px, 100%); }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="spans"> Show spans</label>
+  </div>
+  <table id="table">
+    <caption>Class timetable, week 12</caption>
+    <thead>
+      <tr><th scope="col">Time</th><th scope="col">Mon</th><th scope="col">Tue</th><th scope="col">Wed</th><th scope="col">Thu</th><th scope="col">Fri</th></tr>
+    </thead>
+    <tbody>
+      <tr><th scope="row">9:00</th><td rowspan="2" tabindex="0">Maths</td><td tabindex="0">English</td><td tabindex="0">Art</td><td rowspan="2" tabindex="0">Science lab</td><td tabindex="0">Music</td></tr>
+      <tr><th scope="row">10:00</th><td tabindex="0">History</td><td tabindex="0">Maths</td><td tabindex="0">English</td></tr>
+      <tr><th scope="row">11:00</th><td colspan="5" class="break" tabindex="0">Break</td></tr>
+      <tr><th scope="row">11:30</th><td tabindex="0">PE</td><td colspan="2" tabindex="0">Field trip</td><td tabindex="0">Geography</td><td tabindex="0">Drama</td></tr>
+    </tbody>
+  </table>
+  <p class="panel" id="read" aria-live="polite">Click a cell to see which headers apply to it.</p>
+  <script>
+    // Build a grid of the body rows so spanned cells know every slot they cover
+    function grid(rows) {
+      const map = [];
+      rows.forEach((tr, r) => {
+        map[r] ??= [];
+        let c = 0;
+        for (const cell of tr.cells) {
+          while (map[r][c]) c++;
+          for (let dr = 0; dr < cell.rowSpan; dr++) {
+            for (let dc = 0; dc < cell.colSpan; dc++) {
+              (map[r + dr] ??= [])[c + dc] = cell;
+            }
+          }
+          c += cell.colSpan;
+        }
+      });
+      return map;
+    }
+    const table = document.getElementById('table');
+    const bodyRows = [...table.tBodies[0].rows];
+    const map = grid(bodyRows);
+    const colHeads = [...table.tHead.rows[0].cells];
+
+    function describe(td) {
+      const rows = [], cols = [];
+      map.forEach((row, r) => row.forEach((cell, c) => {
+        if (cell !== td) return;
+        const rh = bodyRows[r].cells[0].textContent;
+        if (!rows.includes(rh)) rows.push(rh);
+        const ch = colHeads[c].textContent;
+        if (!cols.includes(ch)) cols.push(ch);
+      }));
+      return `“${td.textContent}” · column: ${cols.join(', ')} · row: ${rows.join(', ')}`;
+    }
+    table.addEventListener('click', (e) => {
+      const td = e.target.closest('td');
+      if (td) document.getElementById('read').textContent = describe(td);
+    });
+    table.addEventListener('keydown', (e) => {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('td')) { e.preventDefault(); e.target.click(); }
+    });
+    document.getElementById('spans').addEventListener('change', (e) => document.body.classList.toggle('spans', e.target.checked));
+  </script>
+</body>
+</html>

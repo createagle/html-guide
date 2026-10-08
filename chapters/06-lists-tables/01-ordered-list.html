@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>6-1 Ordered List Attributes</title>
+  <style>
+    .stage { width: min(760px, 100%); align-items: stretch; }
+    .stage .panel { flex: 1 1 280px; }
+    #list li::marker { color: var(--accent); font-weight: 600; }
+    input[type=number] { width: 5em; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">type
+      <select id="type"><option value="">(default)</option><option>1</option><option>a</option><option>A</option><option>i</option><option>I</option></select>
+    </label>
+    <label class="control">start <input type="number" id="start" placeholder="1"></label>
+    <label class="control"><input type="checkbox" id="reversed"> reversed</label>
+    <label class="control">value on item 3 <input type="number" id="value"></label>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="out-label">
+      <h2 class="label" id="out-label">Rendered</h2>
+      <ol id="list">
+        <li>Preheat the pan</li>
+        <li>Scramble the eggs</li>
+        <li>Cook the tomatoes</li>
+        <li>Fold everything together</li>
+        <li>Serve</li>
+      </ol>
+    </section>
+    <section class="panel" aria-labelledby="code-label">
+      <h2 class="label" id="code-label">Markup</h2>
+      <pre class="code" id="code"></pre>
+    </section>
+  </div>
+  <script>
+    const list = document.getElementById('list');
+    const third = list.children[2];
+    const $ = (id) => document.getElementById(id);
+
+    function sync(el, name, value) {
+      if (value === '' || value === false) el.removeAttribute(name);
+      else el.setAttribute(name, value === true ? '' : value);
+    }
+    function update() {
+      sync(list, 'type', $('type').value);
+      sync(list, 'start', $('start').value);
+      sync(list, 'reversed', $('reversed').checked);
+      sync(third, 'value', $('value').value);
+      // Show the markup without the demo's own id
+      const copy = list.cloneNode(true);
+      copy.removeAttribute('id');
+      $('code').textContent = copy.outerHTML.replace('reversed=""', 'reversed').replace(/\n\s*<li/g, '\n  <li').replace(/\s*<\/ol>$/, '\n</ol>');
+    }
+    document.querySelectorAll('.controls input, .controls select').forEach((el) => el.addEventListener('input', update));
+    update();
+  </script>
+</body>
+</html>
