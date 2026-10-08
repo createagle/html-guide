@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>24-3 Three Kinds of closedby</title>
+  <style>
+    .stage { width: min(900px, 100%); align-items: stretch; }
+    .page { flex: 1 1 340px; display: grid; gap: 10px; align-content: start; }
+    .side { flex: 1 1 320px; }
+    .page button { padding: 8px 14px; font-size: 15px; justify-self: start; }
+    .page code { font-size: 13px; }
+    #support { font-size: 13px; margin: 0; }
+    dialog { border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; background: var(--bg); color: var(--fg); inline-size: min(360px, 90vw); }
+    dialog h2 { margin: 0 0 6px; font-size: 18px; }
+    dialog ul { margin: 0 0 14px; padding-left: 20px; font-size: 14px; }
+    dialog::backdrop { background: rgb(0 0 0 / .45); }
+    #log { margin: 0; padding-left: 30px; font: 12px/1.7 var(--mono); max-block-size: 320px; overflow: auto; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="page">
+      <button type="button" data-open="d-any">Open <code>closedby="any"</code></button>
+      <button type="button" data-open="d-closerequest">Open <code>closedby="closerequest"</code></button>
+      <button type="button" data-open="d-none">Open <code>closedby="none"</code></button>
+      <p id="support"></p>
+    </div>
+    <section class="panel side" aria-labelledby="l-label">
+      <h2 class="label" id="l-label">How each dialog closed</h2>
+      <ol id="log"></ol>
+    </section>
+  </div>
+
+  <dialog id="d-any" closedby="any" aria-labelledby="t-any">
+    <h2 id="t-any">closedby="any"</h2>
+    <ul><li>Close button ✓</li><li>Esc ✓</li><li>Click on the backdrop ✓</li></ul>
+    <form method="dialog"><button type="submit" value="button">Close</button></form>
+  </dialog>
+  <dialog id="d-closerequest" closedby="closerequest" aria-labelledby="t-cr">
+    <h2 id="t-cr">closedby="closerequest"</h2>
+    <ul><li>Close button ✓</li><li>Esc ✓</li><li>Click on the backdrop ✗</li></ul>
+    <form method="dialog"><button type="submit" value="button">Close</button></form>
+  </dialog>
+  <dialog id="d-none" closedby="none" aria-labelledby="t-none">
+    <h2 id="t-none">closedby="none"</h2>
+    <ul><li>Close button ✓</li><li>Esc ✗</li><li>Click on the backdrop ✗</li></ul>
+    <form method="dialog"><button type="submit" value="button">Close</button></form>
+  </dialog>
+
+  <script>
+    const log = document.getElementById('log');
+    const note = (t) => { const li = document.createElement('li'); li.textContent = t; log.append(li); log.scrollTop = log.scrollHeight; };
+    const supported = 'closedBy' in HTMLDialogElement.prototype;
+    const support = document.getElementById('support');
+    support.className = supported ? 'good' : 'bad';
+    support.textContent = supported
+      ? 'This browser supports closedby.'
+      : 'This browser does not support closedby; a small script below provides the same behavior.';
+
+    for (const d of document.querySelectorAll('dialog')) {
+      let how = '';
+      d.addEventListener('keydown', (e) => { if (e.key === 'Escape') how = 'Esc'; });
+      d.addEventListener('pointerdown', (e) => { if (e.target === d) how = 'backdrop click'; });
+      d.addEventListener('cancel', () => note(`${d.id}: cancel event (${how || 'close request'})`));
+      d.addEventListener('close', () => {
+        note(`${d.id}: closed by ${d.returnValue === 'button' ? 'the Close button' : how || 'a close request'}`);
+        how = '';
+      });
+    }
+    document.querySelector('.page').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-open]');
+      if (!btn) return;
+      const d = document.getElementById(btn.dataset.open);
+      d.returnValue = '';
+      d.showModal();
+    });
+
+    // Fallback for browsers without closedby: backdrop clicks land on the dialog element itself
+    if (!supported) {
+      for (const d of document.querySelectorAll('dialog[closedby="any"]')) {
+        d.addEventListener('click', (e) => {
+          const r = d.getBoundingClientRect();
+          const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+          if (e.target === d && !inside) d.close();
+        });
+      }
+      for (const d of document.querySelectorAll('dialog[closedby="none"]')) {
+        d.addEventListener('cancel', (e) => e.preventDefault());
+      }
+    }
+  </script>
+</body>
+</html>

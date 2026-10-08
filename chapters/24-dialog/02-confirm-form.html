@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>24-2 Confirm and Form Dialogs</title>
+  <style>
+    .stage { width: min(820px, 100%); align-items: stretch; }
+    .page { flex: 1 1 320px; display: grid; gap: 12px; align-content: start; }
+    .side { flex: 1 1 320px; }
+    .album { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+    .album h2 { margin: 0 0 4px; font-size: 18px; }
+    .album p { margin: 0 0 10px; color: var(--muted); font-size: 14px; }
+    .row { display: flex; gap: 8px; justify-content: flex-end; }
+    .album .row { justify-content: flex-start; }
+    button { padding: 7px 14px; font-size: 15px; }
+    .danger { color: var(--bad); }
+
+    dialog { border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; background: var(--bg); color: var(--fg); inline-size: min(380px, 90vw); }
+    dialog h2 { margin: 0 0 8px; font-size: 18px; }
+    dialog p { margin: 0 0 14px; }
+    dialog::backdrop { background: rgb(0 0 0 / .45); }
+    .field { display: grid; gap: 4px; margin-bottom: 14px; }
+    .field label { font-weight: 600; font-size: 14px; }
+    .field input { font-size: 15px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .field input:user-invalid { border-color: var(--bad); }
+
+    /* Lock page scrolling while any modal dialog is open */
+    :root:has(dialog:modal) { overflow: hidden; }
+
+    /* Open and close animation, including the backdrop */
+    dialog, dialog::backdrop {
+      transition: opacity .2s, translate .2s, overlay .2s allow-discrete, display .2s allow-discrete;
+      opacity: 0;
+    }
+    dialog { translate: 0 12px; }
+    dialog[open], dialog[open]::backdrop { opacity: 1; translate: 0 0; }
+    @starting-style {
+      dialog[open], dialog[open]::backdrop { opacity: 0; }
+      dialog[open] { translate: 0 12px; }
+    }
+    pre.code { font-size: 12.5px; min-block-size: 140px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="page">
+      <article class="album">
+        <h2 id="album-name">Summer 2026</h2>
+        <p>3 photos</p>
+        <div class="row">
+          <button type="button" id="rename">Rename…</button>
+          <button type="button" id="delete" class="danger">Delete…</button>
+        </div>
+      </article>
+    </div>
+    <section class="panel side" aria-labelledby="r-label">
+      <h2 class="label" id="r-label">After the dialog closed</h2>
+      <pre class="code" id="read" aria-live="polite">Nothing yet.</pre>
+    </section>
+  </div>
+
+  <dialog id="confirm" aria-labelledby="c-title" aria-describedby="c-desc">
+    <h2 id="c-title">Delete this album?</h2>
+    <p id="c-desc">The 3 photos in it will be deleted too. This cannot be undone.</p>
+    <form method="dialog" class="row">
+      <!-- The safe choice gets the focus -->
+      <button type="submit" value="cancel" autofocus>Cancel</button>
+      <button type="submit" value="delete" class="danger">Delete album</button>
+    </form>
+  </dialog>
+
+  <dialog id="rename-dialog" aria-labelledby="r-title">
+    <form method="dialog" id="rename-form">
+      <h2 id="r-title">Rename album</h2>
+      <div class="field">
+        <label for="new-name">Album name</label>
+        <input type="text" id="new-name" name="name" required maxlength="40">
+      </div>
+      <div class="row">
+        <!-- Not a submit button: Enter in the field must save, not cancel -->
+        <button type="button" id="rename-cancel">Cancel</button>
+        <button type="submit" value="save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    const read = document.getElementById('read');
+    const albumName = document.getElementById('album-name');
+    const confirmDialog = document.getElementById('confirm');
+    const renameDialog = document.getElementById('rename-dialog');
+    const renameForm = document.getElementById('rename-form');
+
+    function open(dialog) {
+      dialog.returnValue = ''; // otherwise the value from the previous close is still there
+      dialog.showModal();
+    }
+
+    document.getElementById('delete').addEventListener('click', () => open(confirmDialog));
+    confirmDialog.addEventListener('close', () => {
+      const v = confirmDialog.returnValue;
+      read.textContent = `confirm.returnValue = ${JSON.stringify(v)}\n\n` +
+        (v === 'delete' ? '→ the album would be deleted now' : '→ nothing happens (Cancel, Esc or empty)');
+    });
+
+    document.getElementById('rename-cancel').addEventListener('click', () => renameDialog.close('cancel'));
+    document.getElementById('rename').addEventListener('click', () => {
+      renameForm.elements.name.value = albumName.textContent;
+      open(renameDialog);
+    });
+    renameDialog.addEventListener('close', () => {
+      const v = renameDialog.returnValue;
+      const data = new FormData(renameForm);
+      if (v === 'save') albumName.textContent = data.get('name');
+      read.textContent = `rename.returnValue = ${JSON.stringify(v)}\nform field name = ${JSON.stringify(data.get('name'))}\n\n` +
+        (v === 'save' ? '→ album renamed' : '→ change discarded');
+    });
+  </script>
+</body>
+</html>

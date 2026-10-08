@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 24-2 · Starter</title>
+  <style>
+    ul { list-style: none; margin: 0; padding: 0; width: min(420px, 100%); display: grid; gap: 6px; }
+    li { display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); border-radius: 8px; padding: 6px 6px 6px 12px; }
+    button { padding: 5px 12px; font-size: 14px; }
+    #status { margin: 0; font-size: 14px; min-block-size: 1.5em; }
+  </style>
+</head>
+<body class="demo">
+  <!-- window.confirm() blocks the page, cannot be styled, shows the site address as its title and "OK" as the button. -->
+  <ul id="files">
+    <li><span>budget-2026.xlsx</span><button type="button" data-file="budget-2026.xlsx">Delete</button></li>
+    <li><span>holiday-photos.zip</span><button type="button" data-file="holiday-photos.zip">Delete</button></li>
+    <li><span>notes.txt</span><button type="button" data-file="notes.txt">Delete</button></li>
+  </ul>
+  <p id="status" role="status"></p>
+  <script>
+    document.getElementById('files').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-file]');
+      if (!btn) return;
+      if (confirm(`Delete ${btn.dataset.file}?`)) {
+        btn.closest('li').remove();
+        document.getElementById('status').textContent = `${btn.dataset.file} deleted.`;
+      }
+    });
+  </script>
+</body>
+</html>

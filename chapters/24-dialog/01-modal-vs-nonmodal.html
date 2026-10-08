@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>24-1 show() vs showModal()</title>
+  <style>
+    .stage { width: min(880px, 100%); align-items: stretch; }
+    .page { flex: 1 1 380px; display: grid; gap: 12px; align-content: start; }
+    .side { flex: 1 1 300px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    button { padding: 7px 14px; font-size: 15px; }
+    .bg-buttons button { font-size: 14px; }
+    dialog { border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; background: var(--bg); color: var(--fg); max-inline-size: min(360px, 90vw); }
+    dialog h2 { margin: 0 0 8px; font-size: 18px; }
+    dialog p { margin: 0 0 12px; }
+    dialog::backdrop { background: rgb(0 0 0 / .45); }
+    /* A non-modal dialog sits in the page; place it like a floating panel */
+    #panel { position: fixed; inset: auto 16px 16px auto; margin: 0; box-shadow: 0 8px 24px rgb(0 0 0 / .2); }
+    #log { margin: 0; padding-left: 30px; font: 12px/1.7 var(--mono); max-block-size: 300px; overflow: auto; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="page">
+      <div class="row">
+        <button type="button" id="open-show">Open with show()</button>
+        <button type="button" id="open-modal">Open with showModal()</button>
+      </div>
+      <p class="label">The rest of the page</p>
+      <div class="row bg-buttons">
+        <button type="button" data-bg="A">Background A</button>
+        <button type="button" data-bg="B">Background B</button>
+        <a href="#top">A link</a>
+      </div>
+    </div>
+    <section class="panel side" aria-labelledby="l-label">
+      <h2 class="label" id="l-label">What happened</h2>
+      <ol id="log"></ol>
+    </section>
+  </div>
+
+  <dialog id="panel" aria-labelledby="panel-title">
+    <h2 id="panel-title">Non-modal</h2>
+    <p>The page behind stays usable. Esc does nothing by default.</p>
+    <form method="dialog"><button type="submit">Close</button></form>
+  </dialog>
+
+  <dialog id="modal" aria-labelledby="modal-title">
+    <h2 id="modal-title">Modal</h2>
+    <p>Everything behind is inert: no clicks, no Tab, hidden from screen readers. Esc closes it.</p>
+    <form method="dialog"><button type="submit">Close</button></form>
+  </dialog>
+
+  <script>
+    const log = document.getElementById('log');
+    const note = (t) => { const li = document.createElement('li'); li.textContent = t; log.append(li); log.scrollTop = log.scrollHeight; };
+    const panel = document.getElementById('panel');
+    const modal = document.getElementById('modal');
+
+    document.getElementById('open-show').addEventListener('click', () => { panel.show(); note('panel.show()'); });
+    document.getElementById('open-modal').addEventListener('click', () => { modal.showModal(); note('modal.showModal()'); });
+
+    for (const d of [panel, modal]) {
+      d.addEventListener('cancel', () => note(`${d.id}: cancel (Esc)`));
+      d.addEventListener('close', () => note(`${d.id}: close, focus is back on “${document.activeElement.textContent.trim() || document.activeElement.tagName}”`));
+    }
+    document.querySelector('.bg-buttons').addEventListener('click', (e) => {
+      if (e.target.dataset.bg) note(`clicked Background ${e.target.dataset.bg}`);
+    });
+    document.addEventListener('focusin', (e) => {
+      if (e.target.closest('dialog')) note(`focus moved into the ${e.target.closest('dialog').id} dialog`);
+    });
+  </script>
+</body>
+</html>

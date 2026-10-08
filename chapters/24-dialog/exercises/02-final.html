@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 24-2 · Final</title>
+  <style>
+    ul { list-style: none; margin: 0; padding: 0; width: min(420px, 100%); display: grid; gap: 6px; }
+    li { display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); border-radius: 8px; padding: 6px 6px 6px 12px; }
+    button { padding: 5px 12px; font-size: 14px; }
+    #status { margin: 0; font-size: 14px; min-block-size: 1.5em; }
+    dialog { border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; background: var(--bg); color: var(--fg); inline-size: min(360px, 90vw); }
+    dialog::backdrop { background: rgb(0 0 0 / .45); }
+    dialog p { margin: 0 0 14px; font-size: 16px; }
+    .row { display: flex; gap: 8px; justify-content: flex-end; }
+    .row button { font-size: 15px; padding: 7px 14px; }
+    .danger { color: var(--bad); }
+  </style>
+</head>
+<body class="demo">
+  <ul id="files">
+    <li><span>budget-2026.xlsx</span><button type="button" data-file="budget-2026.xlsx">Delete</button></li>
+    <li><span>holiday-photos.zip</span><button type="button" data-file="holiday-photos.zip">Delete</button></li>
+    <li><span>notes.txt</span><button type="button" data-file="notes.txt">Delete</button></li>
+  </ul>
+  <p id="status" role="status"></p>
+  <dialog id="ask" aria-labelledby="ask-text">
+    <form method="dialog">
+      <p id="ask-text"></p>
+      <div class="row">
+        <button type="submit" value="cancel" autofocus>Cancel</button>
+        <button type="submit" value="ok" class="danger" id="ask-ok">Delete</button>
+      </div>
+    </form>
+  </dialog>
+  <script>
+    const ask = document.getElementById('ask');
+
+    // A replacement for confirm(): resolves to true only when the user picks the OK button
+    function confirmDialog(text, okLabel = 'OK') {
+      document.getElementById('ask-text').textContent = text;
+      document.getElementById('ask-ok').textContent = okLabel;
+      ask.returnValue = '';
+      ask.showModal();
+      return new Promise((resolve) => {
+        ask.addEventListener('close', () => resolve(ask.returnValue === 'ok'), { once: true });
+      });
+    }
+
+    document.getElementById('files').addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-file]');
+      if (!btn) return;
+      if (await confirmDialog(`Delete ${btn.dataset.file}?`, 'Delete')) {
+        const li = btn.closest('li');
+        // Keep focus somewhere sensible: the next row's button, or the previous one
+        const next = (li.nextElementSibling || li.previousElementSibling)?.querySelector('button');
+        li.remove();
+        document.getElementById('status').textContent = `${btn.dataset.file} deleted.`;
+        next?.focus();
+      }
+    });
+  </script>
+</body>
+</html>
