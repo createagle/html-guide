@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 9-1 · Starter</title>
+  <style>
+    .shop { display: grid; gap: 12px; width: min(420px, 100%); }
+    .product { display: flex; justify-content: space-between; align-items: center; }
+    .total { font-weight: 600; }
+  </style>
+</head>
+<body class="demo">
+  <!-- Store each product's price and SKU in data-* attributes instead of class names, and use hidden instead of inline display styles. -->
+  <section class="panel shop">
+    <h1 class="label">Basket</h1>
+    <div class="product sku-tea-01 price-450">Green tea <button type="button" class="add">Add</button></div>
+    <div class="product sku-mug-07 price-1200">Mountain mug <button type="button" class="add">Add</button></div>
+    <p class="total">Total: £<span id="total">0.00</span></p>
+    <p id="empty" style="display:block">Your basket is empty.</p>
+  </section>
+  <script>
+    let total = 0;
+    for (const btn of document.querySelectorAll('.add')) {
+      btn.addEventListener('click', () => {
+        const cls = [...btn.parentElement.classList].find((c) => c.startsWith('price-'));
+        total += Number(cls.slice(6));
+        document.getElementById('total').textContent = (total / 100).toFixed(2);
+        document.getElementById('empty').style.display = 'none';
+      });
+    }
+  </script>
+</body>
+</html>

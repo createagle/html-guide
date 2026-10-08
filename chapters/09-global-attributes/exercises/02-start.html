@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 9-2 · Starter</title>
+  <style>
+    form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: min(460px, 100%); }
+    form label { display: grid; gap: 4px; }
+    .wide { grid-column: 1 / -1; }
+    .help { font-size: 13px; color: var(--muted); cursor: pointer; }
+  </style>
+</head>
+<body class="demo">
+  <!-- Press Tab through this form: the order is wrong. Fix it without any positive tabindex, and make the help text reachable properly. -->
+  <form class="panel">
+    <label>Last name <input type="text" name="family" tabindex="2"></label>
+    <label>First name <input type="text" name="given" tabindex="1"></label>
+    <label class="wide">Street <input type="text" name="street" tabindex="3"></label>
+    <div class="help wide" tabindex="4" onclick="alert('Use the address on your bank card.')">Which address should I use?</div>
+    <button type="submit" class="wide">Continue</button>
+  </form>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>9-3 tabindex and Tab Order</title>
+  <style>
+    .stage { width: min(820px, 100%); align-items: stretch; }
+    .stage > .panel { flex: 1 1 320px; }
+    #form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    #form > * { position: relative; }
+    #form input, #form button, #form .card { width: 100%; }
+    .card { border: 1px solid var(--border); border-radius: 8px; padding: 8px; font-size: 14px; }
+    .card:focus-visible, #form :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+    .badge { position: absolute; top: -8px; right: -8px; background: var(--accent); color: #fff; border-radius: 999px; font: 600 12px/22px var(--mono); min-width: 22px; text-align: center; padding: 0 4px; }
+    .ti { font: 11px var(--mono); color: var(--muted); }
+    #order { margin: 0; padding-left: 20px; font: 13px var(--mono); }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="positive" checked> Use positive tabindex on two fields</label>
+    <button type="button" id="run">Press Tab through the form for me</button>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="form-label">
+      <h2 class="label" id="form-label">Checkout form</h2>
+      <div id="form">
+        <label>Name <span class="ti"></span><input type="text" id="name"></label>
+        <label>Email <span class="ti"></span><input type="email" id="email"></label>
+        <label>Card number <span class="ti"></span><input type="text" id="card" inputmode="numeric"></label>
+        <label>Coupon <span class="ti"></span><input type="text" id="coupon"></label>
+        <div class="card" id="summary" tabindex="0">Order summary (a div with tabindex="0")</div>
+        <div class="card" id="note" tabindex="-1">Error note (tabindex="-1": focus() only)</div>
+        <button type="button" id="pay">Pay</button>
+      </div>
+    </section>
+    <section class="panel" aria-labelledby="order-label">
+      <h2 class="label" id="order-label">Focus order</h2>
+      <ol id="order"></ol>
+    </section>
+  </div>
+  <script>
+    const form = document.getElementById('form');
+    const order = document.getElementById('order');
+    function setup() {
+      const positive = document.getElementById('positive').checked;
+      // Positive values jump the queue: 1 goes first, then 2, then everything with 0 in DOM order
+      document.getElementById('coupon').tabIndex = positive ? 1 : 0;
+      document.getElementById('pay').tabIndex = positive ? 2 : 0;
+      if (!positive) { document.getElementById('coupon').removeAttribute('tabindex'); document.getElementById('pay').removeAttribute('tabindex'); }
+      for (const el of form.querySelectorAll('input')) {
+        el.closest('label').querySelector('.ti').textContent = el.hasAttribute('tabindex') ? `tabindex="${el.getAttribute('tabindex')}"` : '';
+      }
+      document.getElementById('pay').textContent = positive ? 'Pay (tabindex="2")' : 'Pay';
+      form.querySelectorAll('.badge').forEach((b) => b.remove());
+      order.replaceChildren();
+    }
+    let step = 0;
+    form.addEventListener('focusin', (e) => {
+      const el = e.target;
+      step += 1;
+      const badge = Object.assign(document.createElement('span'), { className: 'badge', textContent: step });
+      (el.closest('label') ?? el).append(badge);
+      order.append(Object.assign(document.createElement('li'), { textContent: '#' + el.id }));
+    });
+    document.getElementById('positive').addEventListener('change', () => { step = 0; setup(); });
+    // Walks the sequential focus order the same way the browser does
+    document.getElementById('run').addEventListener('click', () => {
+      step = 0; setup();
+      const all = [...form.querySelectorAll('input, button, [tabindex]')].filter((el) => el.tabIndex >= 0);
+      const pos = all.filter((el) => el.tabIndex > 0).sort((a, b) => a.tabIndex - b.tabIndex);
+      const zero = all.filter((el) => el.tabIndex === 0);
+      [...pos, ...zero].forEach((el, i) => setTimeout(() => el.focus(), i * 350));
+    });
+    setup();
+  </script>
+</body>
+</html>

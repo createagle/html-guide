@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>9-2 inert and Focus</title>
+  <style>
+    .stage { width: min(820px, 100%); align-items: stretch; }
+    .stage > .panel { flex: 1 1 320px; }
+    #page { display: grid; gap: 10px; position: relative; }
+    #page[inert] { opacity: 0.45; }
+    #page.ariahidden { outline: 2px dashed var(--bad); outline-offset: 4px; }
+    #page label { display: grid; gap: 4px; font-size: 14px; }
+    #log { margin: 0; padding-left: 32px; font-size: 13px; font-family: var(--mono); max-height: 14em; overflow: auto; }
+    #log .blocked { color: var(--bad); }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">Mode
+      <select id="mode">
+        <option value="none">nothing</option>
+        <option value="inert">inert</option>
+        <option value="aria">aria-hidden="true"</option>
+      </select>
+    </label>
+    <button type="button" id="start">Focus first control, then press Tab</button>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="page-label">
+      <h2 class="label" id="page-label">The page behind a dialog</h2>
+      <div id="page">
+        <a href="#top">A link</a>
+        <label>Search <input type="search" id="q"></label>
+        <button type="button" id="buy">Buy now</button>
+        <p>Try selecting this sentence with the mouse.</p>
+      </div>
+      <p style="margin-top:16px"><button type="button" id="after">A button outside the area</button></p>
+    </section>
+    <section class="panel" aria-labelledby="log-label">
+      <h2 class="label" id="log-label">Focus and click log</h2>
+      <ol id="log" aria-live="polite"></ol>
+    </section>
+  </div>
+  <script>
+    const page = document.getElementById('page');
+    const log = document.getElementById('log');
+    function add(text, cls) {
+      const li = Object.assign(document.createElement('li'), { textContent: text });
+      if (cls) li.className = cls;
+      log.append(li);
+      log.scrollTop = log.scrollHeight;
+    }
+    const label = (el) => el.id ? '#' + el.id : el.tagName.toLowerCase() + (el.textContent ? ` "${el.textContent.trim().slice(0, 20)}"` : '');
+    document.addEventListener('focusin', (e) => add('focus → ' + label(e.target)));
+    page.addEventListener('click', (e) => add('click on ' + label(e.target)));
+    // Clicks on an inert subtree never reach it, so listen on the document to report them
+    document.addEventListener('pointerdown', (e) => {
+      if (page.inert && page.contains(document.elementFromPoint(e.clientX, e.clientY)) === false) {
+        const r = page.getBoundingClientRect();
+        if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) add('click swallowed by inert', 'blocked');
+      }
+    });
+    document.getElementById('mode').addEventListener('change', (e) => {
+      page.inert = e.target.value === 'inert';
+      page.classList.toggle('ariahidden', e.target.value === 'aria');
+      if (e.target.value === 'aria') page.setAttribute('aria-hidden', 'true'); else page.removeAttribute('aria-hidden');
+      add(`— mode: ${e.target.value} —`);
+    });
+    document.getElementById('start').addEventListener('click', () => {
+      const first = page.querySelector('a');
+      first.focus();
+      if (document.activeElement !== first) add('focus() refused: the link is inert', 'blocked');
+    });
+  </script>
+</body>
+</html>
