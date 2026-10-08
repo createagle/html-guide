@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>12-2 Fixing Mixed-Direction Text with bdi</title>
+  <style>
+    .stage { width: min(860px, 100%); align-items: stretch; }
+    .stage > .panel { flex: 1 1 260px; }
+    ol { margin: 0; padding-left: 22px; font-size: 16px; line-height: 2; }
+    .controls input { width: 12em; }
+    .code { font-size: 12px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">Add a name <input type="text" id="name" dir="auto" value="מיכל"></label>
+    <button type="button" id="add">Add</button>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="plain-label">
+      <h2 class="label" id="plain-label">&lt;span&gt;name&lt;/span&gt;: N posts</h2>
+      <ol id="plain"></ol>
+    </section>
+    <section class="panel" aria-labelledby="bdi-label">
+      <h2 class="label" id="bdi-label">&lt;bdi&gt;name&lt;/bdi&gt;: N posts</h2>
+      <ol id="isolated"></ol>
+    </section>
+    <section class="panel" aria-labelledby="bdo-label">
+      <h2 class="label" id="bdo-label">&lt;bdo dir="rtl"&gt; forces the order</h2>
+      <p><bdo dir="rtl">Hello, world 123</bdo></p>
+      <p class="label">Every character is laid out right to left, even Latin letters. Use it only when you really need to override the algorithm.</p>
+    </section>
+  </div>
+  <script>
+    const users = [['Ada', 12], ['إيان', 3], ['李明', 7], ['שרה', 25]];
+    function add(name, n) {
+      for (const [id, tag] of [['plain', 'span'], ['isolated', 'bdi']]) {
+        const li = document.createElement('li');
+        const who = document.createElement(tag);
+        who.textContent = name;
+        li.append(who, `: ${n} posts`);
+        document.getElementById(id).append(li);
+      }
+    }
+    users.forEach(([u, n]) => add(u, n));
+    document.getElementById('add').addEventListener('click', () => {
+      const v = document.getElementById('name').value.trim();
+      if (v) add(v, Math.floor(Math.random() * 40) + 1);
+    });
+  </script>
+</body>
+</html>

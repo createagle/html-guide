@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>12-3 Machine-Readable Values</title>
+  <style>
+    .stage { width: min(880px, 100%); align-items: stretch; }
+    .stage > .panel { flex: 1 1 380px; display: grid; gap: 10px; align-content: start; }
+    table { border-collapse: collapse; font-size: 14px; width: 100%; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th button { font: inherit; font-weight: 600; background: none; border: 0; padding: 0; cursor: pointer; color: var(--accent); }
+    .local { display: block; font-size: 12px; color: var(--good); }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    #tz { font-size: 13px; color: var(--muted); margin: 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <section class="panel" aria-labelledby="events-label">
+      <h2 class="label" id="events-label">time: events in another time zone</h2>
+      <table>
+        <thead><tr><th scope="col">Event</th><th scope="col">When (as written)</th></tr></thead>
+        <tbody id="events">
+          <tr><td>Launch stream</td><td><time datetime="2026-10-20T19:30+08:00">20 Oct, 7:30 pm Beijing</time></td></tr>
+          <tr><td>Q&amp;A</td><td><time datetime="2026-10-21T09:00-07:00">21 Oct, 9 am San Francisco</time></td></tr>
+          <tr><td>Workshop</td><td><time datetime="2026-10-22T14:00Z">22 Oct, 14:00 UTC</time></td></tr>
+          <tr><td>Talk length</td><td><time datetime="PT1H30M">90 minutes</time></td></tr>
+        </tbody>
+      </table>
+      <p id="tz"></p>
+    </section>
+    <section class="panel" aria-labelledby="data-label">
+      <h2 class="label" id="data-label">data: sort by the value, not the label</h2>
+      <table>
+        <thead><tr><th scope="col">Item</th><th scope="col" class="num"><button type="button" id="sort-text">Size (text)</button></th><th scope="col" class="num"><button type="button" id="sort-value">Size (value)</button></th></tr></thead>
+        <tbody id="files">
+          <tr><td>photo.jpg</td><td class="num">1.2 MB</td><td class="num"><data value="1200000">1.2 MB</data></td></tr>
+          <tr><td>notes.txt</td><td class="num">900 KB</td><td class="num"><data value="900000">900 KB</data></td></tr>
+          <tr><td>video.mp4</td><td class="num">35 MB</td><td class="num"><data value="35000000">35 MB</data></td></tr>
+          <tr><td>icon.svg</td><td class="num">4 KB</td><td class="num"><data value="4000">4 KB</data></td></tr>
+        </tbody>
+      </table>
+      <p class="label" id="order"></p>
+    </section>
+  </div>
+  <script>
+    // Convert every machine-readable time into the viewer's own time zone
+    const fmt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    for (const t of document.querySelectorAll('#events time')) {
+      const d = new Date(t.dateTime);
+      const span = document.createElement('span');
+      span.className = 'local';
+      if (!isNaN(d)) span.textContent = 'Your time: ' + fmt.format(d);
+      else span.textContent = 'A duration, not a moment: ' + t.dateTime;
+      t.after(span);
+    }
+    document.getElementById('tz').textContent = 'Your time zone: ' + Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const tbody = document.getElementById('files');
+    function sortBy(key) {
+      const rows = [...tbody.rows];
+      rows.sort((a, b) => key === 'text'
+        ? a.cells[1].textContent.localeCompare(b.cells[1].textContent, undefined, { numeric: true })
+        : Number(a.querySelector('data').value) - Number(b.querySelector('data').value));
+      tbody.append(...rows);
+      document.getElementById('order').textContent = `Sorted by ${key}: ` + rows.map((r) => r.cells[0].textContent).join(' → ');
+    }
+    document.getElementById('sort-text').addEventListener('click', () => sortBy('text'));
+    document.getElementById('sort-value').addEventListener('click', () => sortBy('value'));
+  </script>
+</body>
+</html>

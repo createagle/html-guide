@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>12-1 A Revised Article</title>
+  <style>
+    .stage { width: min(880px, 100%); align-items: stretch; }
+    #article { flex: 1 1 460px; font-size: 15px; line-height: 1.7; }
+    #article h1 { font-size: 20px; margin: 0 0 8px; }
+    ins { background: color-mix(in srgb, var(--good) 18%, transparent); text-decoration: none; border-bottom: 2px solid var(--good); }
+    del { color: var(--bad); }
+    .final del, .original ins { display: none; }
+    .final ins, .original del { background: none; border: 0; color: inherit; text-decoration: none; }
+    #log { flex: 0 1 300px; }
+    #log ol { margin: 0; padding-left: 20px; font-size: 13px; }
+    #log time { font-family: var(--mono); color: var(--muted); }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">Show
+      <select id="view">
+        <option value="tracked">tracked changes</option>
+        <option value="final">final text</option>
+        <option value="original">original text</option>
+      </select>
+    </label>
+  </div>
+  <div class="stage">
+    <article class="panel" id="article">
+      <h1>Ridge path reopens</h1>
+      <p>The northern ridge path reopens on <del datetime="2026-09-28T09:10Z" cite="#note-1">Saturday 4 October</del><ins datetime="2026-09-28T09:10Z" cite="#note-1">Monday 6 October</ins> after a summer of repairs.</p>
+      <p>The steepest section now has new steps<ins datetime="2026-10-02T15:40Z" cite="#note-2"> and a handrail</ins>. Parking at the lower car park costs <del datetime="2026-10-05T08:00Z">£4</del> <ins datetime="2026-10-05T08:00Z">£3</ins> a day.</p>
+      <del datetime="2026-10-06T07:30Z"><p>Dogs are not allowed on the upper section.</p></del>
+      <p id="note-1" class="label">Note 1: the opening was moved because of late deliveries.</p>
+      <p id="note-2" class="label">Note 2: the handrail was finished ahead of schedule.</p>
+    </article>
+    <section class="panel" id="log" aria-labelledby="log-label">
+      <h2 class="label" id="log-label">Edit history, read from the markup</h2>
+      <ol id="history"></ol>
+    </section>
+  </div>
+  <script>
+    const article = document.getElementById('article');
+    document.getElementById('view').addEventListener('change', (e) => { article.className = 'panel ' + e.target.value; });
+    // datetime and cite make each edit machine-readable, so the history can be built from the page itself
+    const edits = [...article.querySelectorAll('ins, del')].sort((a, b) => a.dateTime.localeCompare(b.dateTime));
+    const fmt = new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' });
+    document.getElementById('history').replaceChildren(...edits.map((el) => {
+      const li = document.createElement('li');
+      const t = Object.assign(document.createElement('time'), { dateTime: el.dateTime, textContent: fmt.format(new Date(el.dateTime)) + ' UTC' });
+      li.append(t, ` ${el.localName === 'ins' ? 'added' : 'removed'} “${el.textContent.trim()}”`);
+      if (el.cite) li.append(` (${new URL(el.cite).hash})`);
+      return li;
+    }));
+  </script>
+</body>
+</html>
