@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>North Ridge Weather</title>
+  <style>
+    :root { color-scheme: light dark; font: 14px system-ui, sans-serif; }
+    body { margin: 0; padding: 12px; background: Canvas; color: CanvasText; }
+    h1 { font-size: 14px; margin: 0 0 8px; }
+    ol { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; list-style: none; margin: 0 0 8px; padding: 0; }
+    li { border: 1px solid #a8a29e; border-radius: 6px; padding: 6px; text-align: center; }
+    li b { display: block; font-size: 20px; }
+    p { margin: 0; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h1>North Ridge, next three days</h1>
+  <ol id="days"><li>Loading…</li></ol>
+  <p><a href="../../../index.html" target="_blank">Full forecast</a></p>
+  <script>
+    // The widget draws itself with a script, so a sandbox around it must allow scripts
+    const days = [['Sat', 14, 'Sunny'], ['Sun', 11, 'Showers'], ['Mon', 9, 'Windy']];
+    document.getElementById('days').innerHTML = days.map(([d, t, s]) => `<li>${d}<b>${t}°</b>${s}</li>`).join('');
+  </script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>15-1 The sandbox Lab</title>
+  <style>
+    .stage { width: min(900px, 100%); align-items: stretch; }
+    .left { flex: 1 1 360px; display: grid; gap: 12px; align-content: start; }
+    .right { flex: 1 1 360px; }
+    fieldset { border: 1px solid var(--border); border-radius: 8px; margin: 0; padding: 8px 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 4px 12px; font-size: 14px; }
+    legend { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); padding: 0 4px; }
+    fieldset label { display: flex; gap: 6px; align-items: center; font-family: var(--mono); font-size: 13px; }
+    iframe { width: 100%; height: 150px; border: 2px dashed var(--accent); border-radius: 8px; background: var(--bg); }
+    #warn { margin: 0; font-size: 13px; color: var(--bad); }
+    #warn:empty { display: none; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    td:last-child { font-family: var(--mono); font-size: 12px; }
+    #top-note { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="left">
+      <fieldset id="tokens">
+        <legend>sandbox tokens</legend>
+        <label><input type="checkbox" value="allow-scripts" checked> allow-scripts</label>
+        <label><input type="checkbox" value="allow-same-origin"> allow-same-origin</label>
+        <label><input type="checkbox" value="allow-forms"> allow-forms</label>
+        <label><input type="checkbox" value="allow-modals"> allow-modals</label>
+        <label><input type="checkbox" value="allow-popups"> allow-popups</label>
+        <label><input type="checkbox" value="allow-top-navigation"> allow-top-navigation</label>
+      </fieldset>
+      <pre class="code" id="markup"></pre>
+      <p id="warn" role="status"></p>
+      <iframe id="frame" title="Sandboxed test page"></iframe>
+    </div>
+    <section class="panel right" aria-labelledby="results-label">
+      <h2 class="label" id="results-label">What the framed page could do</h2>
+      <table>
+        <tbody id="results"></tbody>
+      </table>
+      <p id="top-note">The last three rows are tested by the buttons inside the frame.</p>
+    </section>
+  </div>
+  <script>
+    const frame = document.getElementById('frame');
+    const boxes = [...document.querySelectorAll('#tokens input')];
+    const rows = [
+      ['scripts', 'Run scripts'],
+      ['origin', 'Its origin (self.origin)'],
+      ['storage', 'Use localStorage'],
+      ['parent', 'Read the parent page'],
+      ['forms', 'Submit a form'],
+      ['modals', 'Show alert()'],
+      ['popups', 'Open a popup'],
+      ['top', 'Navigate the top page'],
+    ];
+    const cells = {};
+    document.getElementById('results').innerHTML = rows.map(([k, label]) => `<tr><th scope="row">${label}</th><td id="r-${k}">—</td></tr>`).join('');
+    rows.forEach(([k]) => { cells[k] = document.getElementById('r-' + k); });
+
+    function show(k, text, ok) {
+      cells[k].textContent = text;
+      cells[k].className = ok === undefined ? '' : ok ? 'good' : 'bad';
+    }
+
+    // The page inside the frame tests itself and reports back with postMessage
+    const testPage = `<!doctype html><meta charset="utf-8">
+<style>:root{color-scheme:light dark;font:14px system-ui,sans-serif}body{margin:10px}p{margin:0 0 8px}</style>
+<p id="s">I am the framed page. My scripts did not run.</p>
+<form id="f" action="about:blank"><button>Submit form</button>
+<button type="button" id="a">alert()</button>
+<button type="button" id="o">window.open()</button>
+<button type="button" id="t">Navigate top</button></form>
+<script>
+const send = (k, v, ok) => parent.postMessage({ lab: true, k, v, ok }, '*');
+document.getElementById('s').textContent = 'I am the framed page. My scripts ran.';
+send('scripts', 'allowed', true);
+send('origin', self.origin, self.origin !== 'null');
+try { localStorage.getItem('x'); send('storage', 'allowed', true); } catch (e) { send('storage', 'blocked (' + e.name + ')', false); }
+try { const t = parent.document.title; send('parent', 'allowed: read "' + t + '"', true); } catch (e) { send('parent', 'blocked (' + e.name + ')', false); }
+const f = document.getElementById('f');
+let submitted = false;
+f.addEventListener('submit', (e) => { e.preventDefault(); submitted = true; });
+f.requestSubmit();
+send('forms', submitted ? 'allowed' : 'blocked', submitted);
+document.getElementById('a').onclick = () => { const t = Date.now(); alert('Hello from the framed page'); const ok = Date.now() - t > 100; send('modals', ok ? 'allowed (a dialog appeared)' : 'blocked (alert returned at once)', ok); };
+document.getElementById('o').onclick = () => { const w = window.open('about:blank', '_blank', 'width=320,height=200'); send('popups', w ? 'allowed' : 'blocked (open returned null)', !!w); if (w) w.close(); };
+document.getElementById('t').onclick = () => { try { top.location.href = '${location.href.split('#')[0]}#navigated-by-frame'; send('top', 'allowed: see the address bar', true); } catch (e) { send('top', 'blocked (' + e.name + ')', false); } };
+<\/script>`;
+
+    let reported = false;
+    function load() {
+      const tokens = boxes.filter((b) => b.checked).map((b) => b.value);
+      const value = tokens.join(' ');
+      document.getElementById('markup').textContent = `<iframe sandbox="${value}" srcdoc="…">`;
+      document.getElementById('warn').textContent = tokens.includes('allow-scripts') && tokens.includes('allow-same-origin')
+        ? 'allow-scripts + allow-same-origin on same-origin content: the framed page can reach frameElement and remove its own sandbox.'
+        : '';
+      rows.forEach(([k]) => show(k, '—'));
+      reported = false;
+      frame.setAttribute('sandbox', value);
+      frame.srcdoc = testPage;
+    }
+
+    window.addEventListener('message', (e) => {
+      if (e.source !== frame.contentWindow || !e.data || !e.data.lab) return;
+      reported = true;
+      show(e.data.k, e.data.v, e.data.ok);
+    });
+    frame.addEventListener('load', () => {
+      setTimeout(() => {
+        if (reported) return;
+        show('scripts', 'blocked', false);
+        ['origin', 'storage', 'parent', 'forms', 'modals', 'popups', 'top'].forEach((k) => show(k, 'unknown: without scripts nothing can report'));
+      }, 300);
+    });
+    boxes.forEach((b) => b.addEventListener('change', load));
+    load();
+  </script>
+</body>
+</html>

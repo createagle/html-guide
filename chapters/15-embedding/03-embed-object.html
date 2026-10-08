@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>15-3 img, object, embed and iframe</title>
+  <style>
+    .stage { width: min(900px, 100%); display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+    .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+    .cell { border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: grid; gap: 6px; justify-items: center; align-content: start; }
+    .cell pre.code { font-size: 11px; width: 100%; box-sizing: border-box; }
+    .frame { width: 160px; height: 120px; border: 0; display: block; }
+    .fallback { width: 160px; height: 120px; display: grid; place-items: center; text-align: center; font-size: 13px; border: 1px dashed var(--border); border-radius: 8px; padding: 6px; box-sizing: border-box; }
+    .result { font: 12px var(--mono); margin: 0; text-align: center; min-height: 2.6em; }
+    .controls { justify-content: flex-start; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="controls">
+      <button type="button" id="probe">Reach into each one from the page</button>
+    </div>
+    <section class="panel" aria-labelledby="ok-label">
+      <h2 class="label" id="ok-label">The same SVG, four ways (click the circles)</h2>
+      <div class="row">
+        <div class="cell">
+          <img class="frame" id="e-img" src="media/badge.svg" alt="A blue badge that says Click me">
+          <pre class="code">&lt;img src="badge.svg" alt="…"&gt;</pre>
+          <p class="result" id="r-img"></p>
+        </div>
+        <div class="cell">
+          <object class="frame" id="e-object" data="media/badge.svg" type="image/svg+xml">
+            <p class="fallback">Fallback content</p>
+          </object>
+          <pre class="code">&lt;object data="badge.svg"
+  type="image/svg+xml"&gt;…&lt;/object&gt;</pre>
+          <p class="result" id="r-object"></p>
+        </div>
+        <div class="cell">
+          <embed class="frame" id="e-embed" src="media/badge.svg" type="image/svg+xml" title="Clickable badge">
+          <pre class="code">&lt;embed src="badge.svg"
+  type="image/svg+xml"&gt;</pre>
+          <p class="result" id="r-embed"></p>
+        </div>
+        <div class="cell">
+          <iframe class="frame" id="e-iframe" src="media/badge.svg" title="Clickable badge"></iframe>
+          <pre class="code">&lt;iframe src="badge.svg"
+  title="…"&gt;&lt;/iframe&gt;</pre>
+          <p class="result" id="r-iframe"></p>
+        </div>
+      </div>
+    </section>
+    <section class="panel" aria-labelledby="missing-label">
+      <h2 class="label" id="missing-label">When the file is missing</h2>
+      <div class="row">
+        <div class="cell">
+          <img class="frame" src="media/missing.svg" alt="A blue badge that says Click me">
+          <p class="result">Shows the alt text</p>
+        </div>
+        <div class="cell">
+          <object class="frame" data="media/missing.svg" type="image/svg+xml">
+            <p class="fallback">Fallback content: the badge could not be loaded.</p>
+          </object>
+          <p class="result">Shows its fallback content</p>
+        </div>
+        <div class="cell">
+          <embed class="frame" src="media/missing.svg" type="image/svg+xml" title="Missing badge">
+          <p class="result">No fallback possible</p>
+        </div>
+        <div class="cell">
+          <iframe class="frame" src="media/missing.svg" title="Missing badge"></iframe>
+          <p class="result">Shows the server’s error page</p>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+    // Each element exposes the inner document differently; img exposes none at all
+    const ways = {
+      img: (el) => null,
+      object: (el) => el.contentDocument,
+      embed: (el) => (el.getSVGDocument ? el.getSVGDocument() : null),
+      iframe: (el) => el.contentDocument,
+    };
+    document.getElementById('probe').addEventListener('click', () => {
+      for (const [name, get] of Object.entries(ways)) {
+        const out = document.getElementById('r-' + name);
+        let doc = null;
+        try { doc = get(document.getElementById('e-' + name)); } catch (err) { out.textContent = err.name; continue; }
+        if (!doc) { out.className = 'result bad'; out.textContent = 'No document to reach'; continue; }
+        const count = doc.getElementById('count');
+        out.className = 'result good';
+        out.textContent = `Reached it: reads "${count ? count.textContent : '?'}"`;
+      }
+    });
+  </script>
+</body>
+</html>

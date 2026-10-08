@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trail FAQ</title>
+  <style>
+    :root { color-scheme: light dark; font: 14px system-ui, sans-serif; }
+    body { margin: 0; padding: 12px; background: Canvas; color: CanvasText; }
+    h1 { font-size: 15px; margin: 0 0 8px; }
+    details { border: 1px solid #a8a29e; border-radius: 6px; padding: 6px 10px; margin-bottom: 6px; }
+    summary { cursor: pointer; font-weight: 600; }
+    details p { margin: 6px 0 2px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <h1>Trail questions</h1>
+  <details><summary>Do I need a permit?</summary><p>No permit is needed for day walks. Overnight camping at the second saddle needs a free permit from the visitor centre, which you can collect on the morning you set off.</p></details>
+  <details><summary>Is there water on the ridge?</summary><p>There is a spring at the second saddle that runs all year. Treat or filter the water. There is no water on the crest itself, so carry at least two litres for the second day.</p></details>
+  <details><summary>Can I bring a dog?</summary><p>Dogs are welcome on a lead. Sheep graze the lower slopes from April to September.</p></details>
+  <script>
+    // Report the height every time it changes, and only to the page that is allowed to embed this FAQ
+    const PARENT_ORIGIN = location.origin;
+    new ResizeObserver(() => {
+      parent.postMessage({ type: 'faq-height', height: document.documentElement.scrollHeight }, PARENT_ORIGIN);
+    }).observe(document.body);
+  </script>
+</body>
+</html>

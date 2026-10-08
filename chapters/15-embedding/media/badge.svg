@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" width="160" height="120">
+  <title>Clickable badge</title>
+  <rect width="160" height="120" rx="12" fill="#f5f5f4"/>
+  <circle id="dot" cx="80" cy="52" r="34" fill="#2563eb" style="cursor:pointer"/>
+  <text x="80" y="58" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#fff" pointer-events="none">Click me</text>
+  <text id="count" x="80" y="108" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#57534e">0 clicks</text>
+  <script>
+    const colors = ['#2563eb', '#16a34a', '#dc2626', '#7c3aed'];
+    let n = 0;
+    document.getElementById('dot').addEventListener('click', () => {
+      n += 1;
+      document.getElementById('dot').setAttribute('fill', colors[n % colors.length]);
+      document.getElementById('count').textContent = n + (n === 1 ? ' click' : ' clicks');
+    });
+  </script>
+</svg>

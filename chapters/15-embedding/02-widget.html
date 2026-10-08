@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Color Picker Widget</title>
+  <style>
+    :root { color-scheme: light; --bg: #fff; --fg: #1c1917; --border: #d6d3d1; font: 14px system-ui, sans-serif; }
+    :root.dark { color-scheme: dark; --bg: #1c1917; --fg: #f5f5f4; --border: #57534e; }
+    body { margin: 0; padding: 12px; background: var(--bg); color: var(--fg); }
+    h1 { font-size: 14px; margin: 0 0 8px; }
+    .swatches { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .swatches button { height: 36px; border: 2px solid var(--border); border-radius: 6px; cursor: pointer; color: #fff; font: 600 12px system-ui, sans-serif; text-shadow: 0 1px 2px rgb(0 0 0 / .5); }
+    .swatches button[aria-pressed="true"] { outline: 3px solid var(--fg); outline-offset: 1px; }
+    #more { margin-top: 8px; display: none; font-size: 13px; }
+    #more.open { display: block; }
+  </style>
+</head>
+<body>
+  <h1>Pick a color</h1>
+  <div class="swatches" id="swatches"></div>
+  <p><label><input type="checkbox" id="toggle"> Show notes</label></p>
+  <p id="more">This widget lives in its own document. The page around it can only talk to it with postMessage, and it reports its height so the iframe can grow.</p>
+  <script>
+    // The only origin this widget trusts; a real widget would list the sites allowed to embed it
+    const PARENT_ORIGIN = location.origin;
+    const colors = [['Ridge', '#2563eb'], ['Moss', '#16a34a'], ['Ember', '#dc2626'], ['Dusk', '#7c3aed'], ['Sand', '#ca8a04'], ['Slate', '#475569']];
+    const box = document.getElementById('swatches');
+    colors.forEach(([name, hex]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = name;
+      b.style.background = hex;
+      b.setAttribute('aria-pressed', 'false');
+      b.addEventListener('click', () => {
+        box.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        parent.postMessage({ type: 'pick', name, color: hex }, PARENT_ORIGIN);
+      });
+      box.append(b);
+    });
+
+    window.addEventListener('message', (e) => {
+      if (e.origin !== PARENT_ORIGIN || e.source !== parent) return;
+      if (e.data && e.data.type === 'theme') document.documentElement.classList.toggle('dark', e.data.value === 'dark');
+    });
+
+    document.getElementById('toggle').addEventListener('change', (e) => document.getElementById('more').classList.toggle('open', e.target.checked));
+    new ResizeObserver(() => {
+      parent.postMessage({ type: 'size', height: document.documentElement.scrollHeight }, PARENT_ORIGIN);
+    }).observe(document.body);
+  </script>
+</body>
+</html>
