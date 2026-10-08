@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 23-1 · Starter</title>
+  <style>
+    .help { width: min(520px, 100%); display: grid; gap: 8px; }
+    .item { border: 1px solid var(--border); border-radius: 8px; }
+    .question { padding: 10px 14px; font-weight: 600; cursor: pointer; }
+    .question::before { content: "▸ "; }
+    .item.open .question::before { content: "▾ "; }
+    .answer { display: none; padding: 0 14px 12px; margin: 0; }
+    .item.open .answer { display: block; }
+  </style>
+</head>
+<body class="demo">
+  <!-- An accordion built from divs: the mouse works, the keyboard and screen readers do not, and Ctrl+F cannot find the closed answers. -->
+  <div class="help" id="help">
+    <div class="item">
+      <div class="question">How do I reset my password?</div>
+      <p class="answer">Choose “Forgot password” on the sign-in page. We email you a link that works for one hour.</p>
+    </div>
+    <div class="item">
+      <div class="question">Can I change my username?</div>
+      <p class="answer">Yes, once every 30 days, under Settings › Profile.</p>
+    </div>
+    <div class="item">
+      <div class="question">How do I delete my account?</div>
+      <p class="answer">Go to Settings › Privacy and choose “Delete account”. Your data is removed after 14 days.</p>
+    </div>
+  </div>
+  <script>
+    // Only one item may be open
+    document.getElementById('help').addEventListener('click', (e) => {
+      const q = e.target.closest('.question');
+      if (!q) return;
+      const item = q.parentElement;
+      const wasOpen = item.classList.contains('open');
+      for (const other of document.querySelectorAll('.item')) other.classList.remove('open');
+      if (!wasOpen) item.classList.add('open');
+    });
+  </script>
+</body>
+</html>

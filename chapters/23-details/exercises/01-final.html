@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 23-1 · Final</title>
+  <style>
+    .help { width: min(520px, 100%); display: grid; gap: 8px; }
+    details { border: 1px solid var(--border); border-radius: 8px; }
+    details[open] { border-color: var(--accent); }
+    summary { padding: 10px 14px; font-weight: 600; cursor: pointer; border-radius: 8px; }
+    summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    details > p { padding: 0 14px 12px; margin: 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="help">
+    <details name="help">
+      <summary>How do I reset my password?</summary>
+      <p>Choose “Forgot password” on the sign-in page. We email you a link that works for one hour.</p>
+    </details>
+    <details name="help">
+      <summary>Can I change my username?</summary>
+      <p>Yes, once every 30 days, under Settings › Profile.</p>
+    </details>
+    <details name="help">
+      <summary>How do I delete my account?</summary>
+      <p>Go to Settings › Privacy and choose “Delete account”. Your data is removed after 14 days.</p>
+    </details>
+  </div>
+</body>
+</html>

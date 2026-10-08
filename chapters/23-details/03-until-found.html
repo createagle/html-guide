@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>23-3 Collapsed but Findable</title>
+  <style>
+    .stage { width: min(900px, 100%); align-items: stretch; }
+    article { flex: 1 1 420px; display: grid; gap: 14px; align-content: start; }
+    .side { flex: 1 1 260px; display: grid; gap: 16px; align-content: start; }
+    section h2 { font-size: 17px; margin: 0 0 4px; }
+    section p { margin: 0 0 6px; }
+    .more-btn { font-size: 13px; padding: 3px 10px; }
+    #log { margin: 0; padding-left: 22px; font: 12px/1.7 var(--mono); }
+    .jump { margin: 0; padding-left: 20px; font-size: 14px; }
+    .tip { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">Collapsed sections use
+      <select id="mode"><option value="until-found" selected>hidden="until-found"</option><option value="hidden">hidden</option></select>
+    </label>
+  </div>
+  <div class="stage">
+    <article id="article">
+      <!-- [html-validate-disable-block attribute-allowed-values: hidden="until-found" is newer than the validator] -->
+      <section>
+        <h2>Planting</h2>
+        <p>Plant tulip bulbs in autumn, about three times as deep as the bulb is tall.</p>
+        <div id="more-1" hidden="until-found">
+          <p>Choose a sunny spot with soil that drains well; bulbs rot in wet ground. Point the tip upwards and leave a hand’s width between bulbs.</p>
+        </div>
+        <button type="button" class="more-btn" aria-expanded="false" aria-controls="more-1">Read more</button>
+      </section>
+      <section>
+        <h2>Watering</h2>
+        <p>Water once after planting, then leave them alone until spring.</p>
+        <div id="more-2" hidden="until-found">
+          <p id="squirrels">In spring, water only in dry weeks. Cover the bed with wire mesh if squirrels dig up the bulbs.</p>
+        </div>
+        <button type="button" class="more-btn" aria-expanded="false" aria-controls="more-2">Read more</button>
+      </section>
+      <section>
+        <h2>After flowering</h2>
+        <p>Cut off the faded flowers but keep the leaves.</p>
+        <div id="more-3" hidden="until-found">
+          <p>The leaves feed the bulb for next year. Remove them only when they have turned completely yellow, usually six weeks later.</p>
+        </div>
+        <button type="button" class="more-btn" aria-expanded="false" aria-controls="more-3">Read more</button>
+      </section>
+    </article>
+    <div class="side">
+      <section class="panel" aria-labelledby="f-label">
+        <h2 class="label" id="f-label">Find hidden text</h2>
+        <ul class="jump"><li><a href="#squirrels">#squirrels</a></li></ul>
+        <p class="tip">Or press Ctrl+F / ⌘F and search for “mesh”</p>
+      </section>
+      <section class="panel" aria-labelledby="l-label">
+        <h2 class="label" id="l-label">Events</h2>
+        <ol id="log"></ol>
+      </section>
+    </div>
+  </div>
+  <script>
+    const article = document.getElementById('article');
+    const log = document.getElementById('log');
+    const mode = document.getElementById('mode');
+    const note = (t) => { const li = document.createElement('li'); li.textContent = t; log.append(li); };
+
+    function sync(panel) {
+      const btn = article.querySelector(`[aria-controls="${panel.id}"]`);
+      const open = !panel.hidden;
+      btn.setAttribute('aria-expanded', String(open));
+      btn.textContent = open ? 'Show less' : 'Read more';
+    }
+
+    article.addEventListener('click', (e) => {
+      const btn = e.target.closest('.more-btn');
+      if (!btn) return;
+      const panel = document.getElementById(btn.getAttribute('aria-controls'));
+      // Collapse to "until-found" so the text stays searchable
+      panel.hidden = panel.hidden ? false : (mode.value === 'until-found' ? 'until-found' : true);
+      sync(panel);
+    });
+
+    // The browser removes hidden="until-found" by itself when find-in-page or a link reaches the text.
+    // beforematch fires just before that, so the button can be updated.
+    for (const panel of article.querySelectorAll('[id^="more-"]')) {
+      panel.addEventListener('beforematch', () => {
+        note(`beforematch on #${panel.id}`);
+        requestAnimationFrame(() => sync(panel));
+      });
+    }
+
+    mode.addEventListener('change', () => {
+      for (const panel of article.querySelectorAll('[id^="more-"]')) {
+        if (panel.hidden) panel.hidden = mode.value === 'until-found' ? 'until-found' : true;
+      }
+    });
+  </script>
+</body>
+</html>

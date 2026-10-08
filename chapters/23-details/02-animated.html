@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>23-2 Animating details</title>
+  <style>
+    .stage { width: min(560px, 100%); flex-direction: column; align-items: stretch; gap: 10px; }
+    details { border: 1px solid var(--border); border-radius: 10px; background: var(--bg); }
+    summary { padding: 12px 16px; font-weight: 600; cursor: pointer; border-radius: 10px;
+      /* Replace the default triangle with our own icon */
+      list-style: none; display: flex; justify-content: space-between; align-items: center; }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: "+"; font-size: 20px; line-height: 1; color: var(--muted); transition: rotate .3s; }
+    details[open] > summary::after { rotate: 45deg; }
+    summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .body { padding: 0 16px 14px; margin: 0; }
+
+    /* The animation: let height animate to and from "auto" */
+    .animate { interpolate-size: allow-keywords; }
+    .animate details::details-content {
+      block-size: 0;
+      overflow-y: clip;
+      transition: block-size .35s ease, content-visibility .35s allow-discrete;
+    }
+    .animate details[open]::details-content { block-size: auto; }
+    #support { font-size: 13px; margin: 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="toggle" checked> animate</label>
+  </div>
+  <div class="stage animate" id="stage">
+    <details>
+      <summary>What is included?</summary>
+      <p class="body">A printed guide, a set of practice files, and a year of updates. Everything works offline once downloaded.</p>
+    </details>
+    <details>
+      <summary>Is there a student discount?</summary>
+      <div class="body">
+        <p style="margin-top:0">Yes. Students and teachers get 40% off with a school email address.</p>
+        <p style="margin-bottom:0">Schools can also order class sets; write to us for a quote. Discounts cannot be combined with other offers.</p>
+      </div>
+    </details>
+    <details>
+      <summary>Can I get an invoice?</summary>
+      <p class="body">An invoice is attached to the confirmation email. You can add a company name and VAT number at checkout.</p>
+    </details>
+    <p id="support"></p>
+  </div>
+  <script>
+    const ok = CSS.supports('selector(::details-content)') && CSS.supports('interpolate-size', 'allow-keywords');
+    const s = document.getElementById('support');
+    s.className = ok ? 'good' : 'bad';
+    s.textContent = ok ? 'This browser can animate details.' : 'This browser opens details instantly, which works just as well.';
+    document.getElementById('toggle').addEventListener('change', (e) => document.getElementById('stage').classList.toggle('animate', e.target.checked));
+  </script>
+</body>
+</html>

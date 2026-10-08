@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 23-2 · Starter</title>
+  <style>
+    .tabs { width: min(560px, 100%); }
+    [role=tablist] { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
+    [role=tab] { font-size: 15px; padding: 8px 14px; border: 1px solid transparent; border-bottom: 0; border-radius: 8px 8px 0 0; background: none; color: var(--muted); cursor: pointer; margin-bottom: -1px; }
+    [role=tab][aria-selected=true] { color: var(--fg); border-color: var(--border); background: var(--bg); font-weight: 600; }
+    [role=tab]:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+    [role=tabpanel] { padding: 12px 4px; }
+    [role=tabpanel] p { margin: 0 0 8px; }
+    .link { margin: 12px 0 0; font-size: 14px; }
+  </style>
+</head>
+<body class="demo">
+  <!-- Text in the other tabs cannot be found with Ctrl+F, and the link to the delivery cost does nothing. -->
+  <div class="tabs" id="tabs">
+    <div role="tablist" aria-label="Product details">
+      <button type="button" role="tab" id="tab-desc" aria-controls="panel-desc" aria-selected="true">Description</button>
+      <button type="button" role="tab" id="tab-specs" aria-controls="panel-specs" aria-selected="false" tabindex="-1">Specifications</button>
+      <button type="button" role="tab" id="tab-ship" aria-controls="panel-ship" aria-selected="false" tabindex="-1">Shipping</button>
+    </div>
+    <div role="tabpanel" id="panel-desc" aria-labelledby="tab-desc"><p>A waxed cotton backpack with a padded laptop sleeve and two side pockets.</p><p>Holds 22 litres; fits under most airline seats.</p></div>
+    <div role="tabpanel" id="panel-specs" aria-labelledby="tab-specs" hidden><p>Size: 45 × 30 × 16 cm. Weight: 900 g.</p><p>Outer: waxed cotton canvas. Lining: recycled polyester.</p></div>
+    <div role="tabpanel" id="panel-ship" aria-labelledby="tab-ship" hidden><p id="ship-cost">Delivery is free over £50; otherwise it costs £4.95.</p><p>Returns are free within 30 days.</p></div>
+  </div>
+  <p class="link">Questions about delivery? <a href="#ship-cost">See the delivery cost</a>.</p>
+  <script>
+    const tabs = [...document.querySelectorAll('[role=tab]')];
+    function select(tab) {
+      for (const t of tabs) {
+        const on = t === tab;
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+        document.getElementById(t.getAttribute('aria-controls')).hidden = on ? false : true;
+      }
+    }
+    for (const t of tabs) t.addEventListener('click', () => select(t));
+    document.querySelector('[role=tablist]').addEventListener('keydown', (e) => {
+      const i = tabs.indexOf(document.activeElement);
+      const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+      if (next === undefined) return;
+      e.preventDefault();
+      const tab = tabs[(next + tabs.length) % tabs.length];
+      select(tab);
+      tab.focus();
+    });
+  </script>
+</body>
+</html>
