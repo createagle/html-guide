@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>27-3 Slot Inspector</title>
+  <style>
+    .stage { width: min(820px, 100%); align-items: stretch; }
+    .left { flex: 1 1 320px; display: grid; gap: 12px; align-content: start; }
+    .side { flex: 1 1 300px; display: grid; gap: 12px; align-content: start; }
+    .controls { display: grid; grid-template-columns: repeat(2, minmax(0, max-content)); gap: 6px 16px; }
+    .controls code { font-size: 13px; }
+    #card h3 { margin: 0; font-size: 18px; }
+    #card p { margin: 0; }
+    #log { margin: 0; padding-left: 30px; font: 12px/1.7 var(--mono); max-block-size: 150px; overflow: auto; }
+    pre.code { font-size: 12.5px; margin: 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls" id="pickers"></div>
+  <div class="stage">
+    <div class="left">
+      <div id="card">
+        <h3 data-label="h3" slot="title">Night trains of Europe</h3>
+        <span data-label="span" slot="meta">12 min read · Travel</span>
+        <p data-label="p">Sleeper routes are back. Here is where they go and what a cabin costs.</p>
+        <button type="button" data-label="button" slot="actions">Save</button>
+      </div>
+    </div>
+    <div class="side">
+      <section class="panel" aria-labelledby="a-label">
+        <h2 class="label" id="a-label">assignedElements() per slot</h2>
+        <pre class="code" id="assigned"></pre>
+      </section>
+      <section class="panel" aria-labelledby="l-label">
+        <h2 class="label" id="l-label">slotchange events</h2>
+        <ol id="log"></ol>
+      </section>
+    </div>
+  </div>
+
+  <template id="card-template">
+    <style>
+      :host { display: grid; gap: 8px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; }
+      header { display: grid; gap: 2px; }
+      .meta { color: var(--muted); font-size: 14px; }
+      footer { display: flex; gap: 8px; border-top: 1px solid var(--border); padding-top: 10px; }
+      .fallback { color: var(--muted); font-style: italic; }
+    </style>
+    <header>
+      <slot name="title"><span class="fallback">Untitled</span></slot>
+      <span class="meta"><slot name="meta"></slot></span>
+    </header>
+    <slot><span class="fallback">No content.</span></slot>
+    <footer><slot name="actions"><span class="fallback">No actions.</span></slot></footer>
+  </template>
+
+  <script>
+    const card = document.getElementById('card');
+    const shadow = card.attachShadow({ mode: 'open' });
+    shadow.append(document.getElementById('card-template').content.cloneNode(true));
+    const slots = [...shadow.querySelectorAll('slot')];
+
+    // A picker for each child's slot attribute
+    const choices = ['title', 'meta', 'actions', '', 'subtitle'];
+    const pickers = document.getElementById('pickers');
+    for (const child of card.children) {
+      const label = document.createElement('label');
+      label.className = 'control';
+      const code = document.createElement('code');
+      code.textContent = `<${child.dataset.label}> slot=`;
+      const select = document.createElement('select');
+      for (const name of choices) {
+        select.add(new Option(name ? `"${name}"` : '(none)', name));
+      }
+      select.value = child.getAttribute('slot') ?? '';
+      select.addEventListener('change', () => {
+        if (select.value) child.slot = select.value;
+        else child.removeAttribute('slot');
+      });
+      label.append(code, select);
+      pickers.append(label);
+    }
+
+    const out = document.getElementById('assigned');
+    function show() {
+      out.textContent = slots.map((slot) => {
+        const name = slot.name ? `slot "${slot.name}"` : 'default slot';
+        const nodes = slot.assignedNodes();
+        if (!nodes.length) return `${name.padEnd(14)} — fallback shown`;
+        const parts = slot.assignedElements().map((el) => `<${el.dataset.label}>`);
+        const texts = nodes.filter((n) => n.nodeType === Node.TEXT_NODE).length;
+        if (texts) parts.push(`${texts} text node(s)`);
+        return `${name.padEnd(14)} ${parts.join(' + ')}`;
+      }).join('\n');
+      const lost = [...card.children].filter((el) => !el.assignedSlot).map((el) => `<${el.dataset.label}>`);
+      out.textContent += `\n\nnot rendered   ${lost.length ? lost.join(' ') : '—'}`;
+    }
+
+    const log = document.getElementById('log');
+    for (const slot of slots) {
+      slot.addEventListener('slotchange', () => {
+        const li = document.createElement('li');
+        li.textContent = `${slot.name || '(default)'}: ${slot.assignedElements().length} element(s)`;
+        log.append(li);
+        log.scrollTop = log.scrollHeight;
+        show();
+      });
+    }
+    show();
+  </script>
+</body>
+</html>

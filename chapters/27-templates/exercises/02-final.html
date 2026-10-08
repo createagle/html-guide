@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 27-2 · Final</title>
+  <style>
+    .plans { width: min(620px, 100%); display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="plans">
+    <price-card>
+      <template shadowrootmode="open">
+        <style>
+          :host { display: grid; gap: 10px; align-content: start; padding: 16px 18px; border: 1px solid var(--border); border-radius: 14px; }
+          :host(.featured) { border: 2px solid var(--accent); }
+          .price { margin: 0; font: 700 28px/1 var(--mono); }
+          .price small { font: 400 14px/1 system-ui, sans-serif; color: var(--muted); }
+          ::slotted(h2) { margin: 0; font-size: 16px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+          ::slotted(ul) { margin: 0; padding-inline-start: 20px; line-height: 1.7; font-size: 14px; }
+          ::slotted(a) { justify-self: start; padding: 6px 16px; border: 1.5px solid; border-radius: 8px; text-decoration: none; font-weight: 600; }
+        </style>
+        <slot name="plan"></slot>
+        <p class="price"><slot name="price"></slot> <small>per month</small></p>
+        <slot></slot>
+        <slot name="action"></slot>
+      </template>
+      <h2 slot="plan">Free</h2>
+      <span slot="price">$0</span>
+      <ul>
+        <li>3 projects</li>
+        <li>Community support</li>
+      </ul>
+      <a slot="action" href="https://example.com/signup">Start free</a>
+    </price-card>
+    <price-card class="featured">
+      <template shadowrootmode="open">
+        <style>
+          :host { display: grid; gap: 10px; align-content: start; padding: 16px 18px; border: 1px solid var(--border); border-radius: 14px; }
+          :host(.featured) { border: 2px solid var(--accent); }
+          .price { margin: 0; font: 700 28px/1 var(--mono); }
+          .price small { font: 400 14px/1 system-ui, sans-serif; color: var(--muted); }
+          ::slotted(h2) { margin: 0; font-size: 16px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+          ::slotted(ul) { margin: 0; padding-inline-start: 20px; line-height: 1.7; font-size: 14px; }
+          ::slotted(a) { justify-self: start; padding: 6px 16px; border: 1.5px solid; border-radius: 8px; text-decoration: none; font-weight: 600; }
+        </style>
+        <slot name="plan"></slot>
+        <p class="price"><slot name="price"></slot> <small>per month</small></p>
+        <slot></slot>
+        <slot name="action"></slot>
+      </template>
+      <h2 slot="plan">Pro</h2>
+      <span slot="price">$12</span>
+      <ul>
+        <li>Unlimited projects</li>
+        <li>Custom domains</li>
+        <li>Email support</li>
+      </ul>
+      <a slot="action" href="https://example.com/signup?plan=pro">Go Pro</a>
+    </price-card>
+  </div>
+</body>
+</html>

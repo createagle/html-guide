@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>27-2 Declarative Cards Without JavaScript</title>
+  <style>
+    .stage { width: min(820px, 100%); display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; align-items: start; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <team-card>
+      <template shadowrootmode="open">
+        <style>
+          :host { display: grid; grid-template-columns: 56px 1fr; gap: 2px 14px; align-content: start; padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); }
+          .avatar { grid-row: span 4; inline-size: 56px; block-size: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); color: var(--accent); font: 600 20px/1 var(--mono); }
+          ::slotted(h2) { margin: 0; font-size: 18px; }
+          .role { color: var(--muted); font-size: 14px; }
+          .bio { font-size: 14px; }
+          ::slotted(p) { margin: 6px 0; }
+          .links { font-size: 14px; color: var(--muted); }
+        </style>
+        <div class="avatar"><slot name="initials">?</slot></div>
+        <slot name="name"></slot>
+        <div class="role"><slot name="role">Team member</slot></div>
+        <div class="bio"><slot></slot></div>
+        <div class="links"><slot name="links">No links yet.</slot></div>
+      </template>
+      <span slot="initials">AL</span>
+      <h2 slot="name">Ada Lovelace</h2>
+      <span slot="role">Engineering lead</span>
+      <p>Writes the build tools and reviews every pull request that touches the parser.</p>
+      <a slot="links" href="https://example.com/ada">example.com/ada</a>
+    </team-card>
+    <team-card>
+      <template shadowrootmode="open">
+        <style>
+          :host { display: grid; grid-template-columns: 56px 1fr; gap: 2px 14px; align-content: start; padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); }
+          .avatar { grid-row: span 4; inline-size: 56px; block-size: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); color: var(--accent); font: 600 20px/1 var(--mono); }
+          ::slotted(h2) { margin: 0; font-size: 18px; }
+          .role { color: var(--muted); font-size: 14px; }
+          .bio { font-size: 14px; }
+          ::slotted(p) { margin: 6px 0; }
+          .links { font-size: 14px; color: var(--muted); }
+        </style>
+        <div class="avatar"><slot name="initials">?</slot></div>
+        <slot name="name"></slot>
+        <div class="role"><slot name="role">Team member</slot></div>
+        <div class="bio"><slot></slot></div>
+        <div class="links"><slot name="links">No links yet.</slot></div>
+      </template>
+      <span slot="initials">GH</span>
+      <h2 slot="name">Grace Hopper</h2>
+      <p>Joined this spring. No role has been set yet, so the slot shows its fallback.</p>
+      <a slot="links" href="https://example.com/grace">example.com/grace</a>
+    </team-card>
+    <team-card>
+      <template shadowrootmode="open">
+        <style>
+          :host { display: grid; grid-template-columns: 56px 1fr; gap: 2px 14px; align-content: start; padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); }
+          .avatar { grid-row: span 4; inline-size: 56px; block-size: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); color: var(--accent); font: 600 20px/1 var(--mono); }
+          ::slotted(h2) { margin: 0; font-size: 18px; }
+          .role { color: var(--muted); font-size: 14px; }
+          .bio { font-size: 14px; }
+          ::slotted(p) { margin: 6px 0; }
+          .links { font-size: 14px; color: var(--muted); }
+        </style>
+        <div class="avatar"><slot name="initials">?</slot></div>
+        <slot name="name"></slot>
+        <div class="role"><slot name="role">Team member</slot></div>
+        <div class="bio"><slot></slot></div>
+        <div class="links"><slot name="links">No links yet.</slot></div>
+      </template>
+      <h2 slot="name">Alan Turing</h2>
+      <span slot="role">Researcher</span>
+      <p>No initials and no links: both slots fall back to their default content.</p>
+    </team-card>
+  </div>
+</body>
+</html>

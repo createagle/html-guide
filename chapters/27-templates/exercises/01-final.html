@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 27-1 · Final</title>
+  <style>
+    .comments { width: min(480px, 100%); }
+    .comments h2 { margin: 0 0 8px; font-size: 18px; }
+    #list { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 10px; }
+    #list li { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+    #list .who { font-weight: 600; }
+    #list time { color: var(--muted); font-size: 13px; margin-inline-start: 6px; }
+    #list p { margin: 4px 0 0; }
+    form { display: grid; gap: 6px; }
+    form label { font-weight: 600; font-size: 14px; }
+    textarea { font: inherit; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    form button { justify-self: start; padding: 6px 14px; }
+  </style>
+</head>
+<body class="demo">
+  <section class="comments" aria-labelledby="c-title">
+    <h2 id="c-title">Comments</h2>
+    <ul id="list"></ul>
+    <form id="new">
+      <label for="text">Add a comment</label>
+      <textarea id="text" name="text" rows="2" required></textarea>
+      <button type="submit">Post</button>
+    </form>
+  </section>
+
+  <template id="comment">
+    <li><span class="who"></span><time></time><p></p></li>
+  </template>
+
+  <script>
+    const comments = [
+      { author: 'Mei', date: '2026-10-02', text: 'Great overview, thanks!' },
+      { author: 'Jonas', date: '2026-10-03', text: 'Use <strong> for importance and <em> for stress, not <b> and <i>.' },
+      { author: 'Priya', date: '2026-10-05', text: 'Is 5 < 7 && 7 > 5 still true in the footnote?' },
+    ];
+    const list = document.getElementById('list');
+    const template = document.getElementById('comment');
+
+    function renderComment(c) {
+      const li = template.content.cloneNode(true);
+      li.querySelector('.who').textContent = c.author;
+      const time = li.querySelector('time');
+      time.dateTime = c.date;
+      time.textContent = c.date;
+      li.querySelector('p').textContent = c.text;
+      return li;
+    }
+
+    function render() {
+      list.replaceChildren(...comments.map(renderComment));
+    }
+    document.getElementById('new').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = document.getElementById('text');
+      const c = { author: 'You', date: new Date().toISOString().slice(0, 10), text: text.value };
+      comments.push(c);
+      list.append(renderComment(c));
+      text.value = '';
+    });
+    render();
+  </script>
+</body>
+</html>

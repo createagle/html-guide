@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>27-1 Rendering a List With template</title>
+  <style>
+    .stage { width: min(760px, 100%); flex-direction: column; align-items: stretch; }
+    table { border-collapse: collapse; inline-size: 100%; font-size: 14px; }
+    th, td { text-align: start; padding: 7px 10px; border-bottom: 1px solid var(--border); }
+    th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    td.num { font-family: var(--mono); text-align: end; }
+    th.num { text-align: end; }
+    .title { font-weight: 600; }
+    .tag { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; background: var(--surface); border: 1px solid var(--border); }
+    .tag.read { border-color: var(--good); color: var(--good); }
+    .empty td { color: var(--muted); text-align: center; padding: 18px; }
+    .controls input[type="search"] { inline-size: 14em; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">Filter <input type="search" id="filter" placeholder="Title or author"></label>
+    <label class="control">Sort by
+      <select id="sort">
+        <option value="title">Title</option>
+        <option value="year">Year</option>
+        <option value="pages">Pages</option>
+      </select>
+    </label>
+    <output id="count" for="filter sort"></output>
+  </div>
+  <div class="stage">
+    <table>
+      <thead>
+        <tr><th scope="col">Title</th><th scope="col">Author</th><th scope="col" class="num">Year</th><th scope="col" class="num">Pages</th><th scope="col">Status</th></tr>
+      </thead>
+      <tbody id="books"></tbody>
+    </table>
+  </div>
+
+  <template id="book-row">
+    <tr>
+      <td class="title"></td>
+      <td class="author"></td>
+      <td class="num year"></td>
+      <td class="num pages"></td>
+      <td><span class="tag"></span></td>
+    </tr>
+  </template>
+  <template id="empty-row">
+    <tr class="empty"><td colspan="5">No books match.</td></tr>
+  </template>
+
+  <script>
+    const books = [
+      { title: 'Resilient Web Design', author: 'Jeremy Keith', year: 2016, pages: 160, read: true },
+      { title: 'Inclusive Components', author: 'Heydon Pickering', year: 2019, pages: 312, read: true },
+      { title: 'Form Design Patterns', author: 'Adam Silver', year: 2018, pages: 348, read: false },
+      { title: 'Every Layout', author: 'Heydon Pickering & Andy Bell', year: 2019, pages: 230, read: false },
+      { title: 'Eloquent JavaScript', author: 'Marijn Haverbeke', year: 2024, pages: 456, read: true },
+      { title: 'Don’t Make Me Think', author: 'Steve Krug', year: 2014, pages: 216, read: true },
+      { title: 'Designing with Web Standards', author: 'Jeffrey Zeldman', year: 2009, pages: 432, read: false },
+      { title: 'Atomic Design', author: 'Brad Frost', year: 2016, pages: 193, read: false },
+    ];
+    const template = document.getElementById('book-row');
+    const tbody = document.getElementById('books');
+    const filter = document.getElementById('filter');
+    const sort = document.getElementById('sort');
+    const count = document.getElementById('count');
+
+    function renderRow(book) {
+      const row = template.content.cloneNode(true);
+      row.querySelector('.title').textContent = book.title;
+      row.querySelector('.author').textContent = book.author;
+      row.querySelector('.year').textContent = book.year;
+      row.querySelector('.pages').textContent = book.pages;
+      const tag = row.querySelector('.tag');
+      tag.textContent = book.read ? 'Read' : 'To read';
+      tag.classList.toggle('read', book.read);
+      return row;
+    }
+
+    function render() {
+      const q = filter.value.trim().toLowerCase();
+      const key = sort.value;
+      const list = books
+        .filter((b) => (b.title + ' ' + b.author).toLowerCase().includes(q))
+        .sort((a, b) => key === 'title' ? a.title.localeCompare(b.title) : a[key] - b[key]);
+      const rows = list.length ? list.map(renderRow) : [document.getElementById('empty-row').content.cloneNode(true)];
+      tbody.replaceChildren(...rows);
+      count.textContent = `${list.length} of ${books.length} books`;
+    }
+
+    filter.addEventListener('input', render);
+    sort.addEventListener('change', render);
+    render();
+  </script>
+</body>
+</html>
