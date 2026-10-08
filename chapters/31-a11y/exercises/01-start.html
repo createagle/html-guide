@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 31-1 · Starter</title>
+  <style>
+    .order { width: min(440px, 100%); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; }
+    .top { display: flex; align-items: center; gap: 10px; }
+    .top h2 { margin: 0; font-size: 18px; flex: 1; }
+    .meta { margin: 0; color: var(--muted); font-size: 14px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { display: inline-block; padding: 6px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); font: inherit; font-size: 14px; cursor: pointer; text-decoration: none; }
+    .btn.danger { color: var(--bad); }
+    .star { font-size: 22px; line-height: 1; padding: 2px 6px; border: 0; background: none; color: var(--muted); cursor: pointer; }
+    .star.on, .star[aria-pressed="true"] { color: #d97706; }
+    .details { margin: 0; padding: 8px 10px; background: var(--surface); border-radius: 8px; font-size: 14px; }
+    #status { margin: 0; font-size: 14px; min-block-size: 1.4em; }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  </style>
+</head>
+<body class="demo">
+  <!-- Everything here is a div or span with a click handler. Try it with Tab, Enter and a screen reader. -->
+  <div class="order">
+    <div class="top">
+      <div class="title" style="font-weight:700;font-size:18px;flex:1">Order #1234</div>
+      <span class="star" id="star">★</span>
+    </div>
+    <p class="meta">2 items · shipped Oct 6</p>
+    <div class="row">
+      <div class="btn" id="track">Track package</div>
+      <div class="btn" id="toggle">More details ▾</div>
+      <div class="btn danger" id="cancel">Cancel order</div>
+    </div>
+    <div class="details" id="details" style="display:none">Carrier: Parcelways · Tracking number PW-88421-UK</div>
+    <p id="status"></p>
+  </div>
+  <script>
+    document.getElementById('star').addEventListener('click', (e) => e.target.classList.toggle('on'));
+    document.getElementById('track').addEventListener('click', () => { location.href = '#tracking'; });
+    document.getElementById('toggle').addEventListener('click', () => {
+      const d = document.getElementById('details');
+      d.style.display = d.style.display === 'none' ? 'block' : 'none';
+    });
+    document.getElementById('cancel').addEventListener('click', () => {
+      document.getElementById('status').textContent = 'Cancellation requested.';
+    });
+  </script>
+</body>
+</html>

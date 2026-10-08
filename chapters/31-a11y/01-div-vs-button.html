@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>31-1 div Button vs button</title>
+  <style>
+    .stage { width: min(820px, 100%); flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 14px; }
+    .trio { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; align-items: start; }
+    .case { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; display: grid; gap: 10px; align-content: start; }
+    .case h2 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+    .case pre.code { margin: 0; font-size: 12px; white-space: pre-wrap; }
+    .save { justify-self: start; display: inline-block; padding: 7px 16px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--bg); font: 600 15px/1.2 system-ui, sans-serif; cursor: pointer; user-select: none; }
+    .save:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
+    table { border-collapse: collapse; inline-size: 100%; font-size: 14px; }
+    th, td { padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: start; }
+    thead th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    td.yes { color: var(--good); font-weight: 600; }
+    td.no { color: var(--bad); }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="trio">
+      <section class="case" aria-labelledby="a-h">
+        <h2 id="a-h">A · div with a click handler</h2>
+        <div class="save" id="a" data-case="A">Save</div>
+        <pre class="code">&lt;div class="save"&gt;Save&lt;/div&gt;
++ click listener</pre>
+      </section>
+      <section class="case" aria-labelledby="b-h">
+        <h2 id="b-h">B · div repaired with ARIA</h2>
+        <div class="save" id="b" data-case="B" role="button" tabindex="0">Save</div>
+        <pre class="code">&lt;div role="button" tabindex="0"&gt;
++ click listener
++ keydown for Enter
++ keyup for Space</pre>
+      </section>
+      <section class="case" aria-labelledby="c-h">
+        <h2 id="c-h">C · button</h2>
+        <button type="button" class="save" id="c" data-case="C">Save</button>
+        <pre class="code">&lt;button type="button"&gt;Save&lt;/button&gt;
++ click listener</pre>
+      </section>
+    </div>
+    <section class="panel" aria-labelledby="t-label">
+      <h2 class="label" id="t-label">Try each one with the mouse, Tab, Enter and Space</h2>
+      <table>
+        <thead><tr><th scope="col">Case</th><th scope="col">Role for assistive tech</th><th scope="col">Reached with Tab</th><th scope="col">Enter</th><th scope="col">Space</th><th scope="col">Saves</th></tr></thead>
+        <tbody id="results">
+          <tr data-case="A"><th scope="row">A</th><td class="no">none (generic)</td><td data-k="tab">–</td><td data-k="enter">–</td><td data-k="space">–</td><td data-k="n">0</td></tr>
+          <tr data-case="B"><th scope="row">B</th><td class="yes">button</td><td data-k="tab">–</td><td data-k="enter">–</td><td data-k="space">–</td><td data-k="n">0</td></tr>
+          <tr data-case="C"><th scope="row">C</th><td class="yes">button</td><td data-k="tab">–</td><td data-k="enter">–</td><td data-k="space">–</td><td data-k="n">0</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+  <script>
+    const row = (k) => document.querySelector(`#results tr[data-case="${k}"]`);
+    const mark = (k, key, ok) => { const td = row(k).querySelector(`[data-k="${key}"]`); td.textContent = ok ? 'yes' : 'no'; td.className = ok ? 'yes' : 'no'; };
+    function save(k) {
+      const td = row(k).querySelector('[data-k="n"]');
+      td.textContent = Number(td.textContent) + 1;
+    }
+
+    // Remember the last key so we can tell which key produced a click
+    let lastKey = null;
+    document.addEventListener('keydown', (e) => { lastKey = e.key; }, true);
+    document.addEventListener('pointerdown', () => { lastKey = null; }, true);
+
+    // Did Tab reach it? A case that Tab skipped over can never be used from the keyboard
+    const order = ['A', 'B', 'C'];
+    document.addEventListener('focusin', (e) => {
+      const k = e.target.dataset?.case;
+      if (!k || lastKey !== 'Tab') return;
+      mark(k, 'tab', true);
+      for (const earlier of order.slice(0, order.indexOf(k))) {
+        if (row(earlier).querySelector('[data-k="tab"]').textContent === '–') {
+          for (const key of ['tab', 'enter', 'space']) mark(earlier, key, false);
+        }
+      }
+    });
+
+    // A: a div only hears clicks
+    document.getElementById('a').addEventListener('click', () => save('A'));
+
+    // B: the extra work a div needs to behave like a button
+    const b = document.getElementById('b');
+    b.addEventListener('click', () => save('B'));
+    b.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); mark('B', 'enter', true); save('B'); }
+      if (e.key === ' ') e.preventDefault(); // stop the page from scrolling
+    });
+    b.addEventListener('keyup', (e) => {
+      if (e.key === ' ') { mark('B', 'space', true); save('B'); }
+    });
+
+    // C: the browser turns Enter and Space into a click
+    document.getElementById('c').addEventListener('click', () => {
+      if (lastKey === 'Enter') mark('C', 'enter', true);
+      if (lastKey === ' ') mark('C', 'space', true);
+      save('C');
+    });
+  </script>
+</body>
+</html>

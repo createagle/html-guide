@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 31-2 · Final</title>
+  <style>
+    .shop { width: min(460px, 100%); display: grid; gap: 12px; }
+    .bar { display: flex; justify-content: space-between; align-items: center; }
+    .bar img { display: block; }
+    .cart-link { display: inline-flex; padding: 6px; border-radius: 8px; background: #fff; }
+    .product { display: grid; grid-template-columns: 140px 1fr; gap: 14px; align-items: start; }
+    .product img { inline-size: 140px; block-size: 140px; border-radius: 10px; }
+    .product h1 { margin: 0 0 4px; font-size: 20px; }
+    .price { font-size: 20px; font-weight: 700; margin: 0 0 6px; }
+    .divider { inline-size: 100%; block-size: 12px; }
+    .sizes { font-size: 14px; }
+    .sizes table { border-collapse: collapse; }
+    .sizes th, .sizes td { padding: 3px 10px; border-bottom: 1px solid var(--border); text-align: start; }
+    .field { display: grid; gap: 4px; }
+    .field input { font: inherit; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .note { color: var(--muted); font-size: 14px; margin: 0; }
+    .field label { font-weight: 600; font-size: 14px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="shop">
+    <div class="bar">
+      <a href="#home"><img src="logo.svg" alt="Trailhead home" width="160" height="40"></a>
+      <a class="cart-link" href="#cart"><img src="cart.svg" alt="Cart" width="24" height="24"></a>
+    </div>
+    <div class="product">
+      <img src="jacket.svg" alt="Red hooded rain jacket with a full-length zip and two chest pockets" width="140" height="140">
+      <div>
+        <h1>Ridge Rain Jacket</h1>
+        <p class="price">$129</p>
+        <p class="note">Free returns within 30 days. Ships in 2–3 working days.</p>
+      </div>
+    </div>
+    <img class="divider" src="divider.svg" alt="">
+    <div class="field">
+      <label for="restock">Email me when it is back in stock</label>
+      <input type="email" id="restock" name="email" autocomplete="email">
+    </div>
+  </div>
+</body>
+</html>

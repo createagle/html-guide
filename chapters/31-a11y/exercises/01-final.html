@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 31-1 · Final</title>
+  <style>
+    .order { width: min(440px, 100%); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; }
+    .top { display: flex; align-items: center; gap: 10px; }
+    .top h2 { margin: 0; font-size: 18px; flex: 1; }
+    .meta { margin: 0; color: var(--muted); font-size: 14px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { display: inline-block; padding: 6px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); font: inherit; font-size: 14px; cursor: pointer; text-decoration: none; }
+    .btn.danger { color: var(--bad); }
+    .star { font-size: 22px; line-height: 1; padding: 2px 6px; border: 0; background: none; color: var(--muted); cursor: pointer; }
+    .star.on, .star[aria-pressed="true"] { color: #d97706; }
+    .details { margin: 0; padding: 8px 10px; background: var(--surface); border-radius: 8px; font-size: 14px; }
+    #status { margin: 0; font-size: 14px; min-block-size: 1.4em; }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  </style>
+</head>
+<body class="demo">
+  <article class="order" aria-labelledby="order-title">
+    <div class="top">
+      <h2 id="order-title">Order #1234</h2>
+      <button type="button" class="star" aria-pressed="false" aria-label="Favorite">★</button>
+    </div>
+    <p class="meta">2 items · shipped Oct 6</p>
+    <div class="row">
+      <a class="btn" href="#tracking">Track package</a>
+      <button type="button" class="btn" aria-expanded="false" aria-controls="details">More details <span aria-hidden="true">▾</span></button>
+      <button type="button" class="btn danger" id="cancel">Cancel order</button>
+    </div>
+    <p class="details" id="details" hidden>Carrier: Parcelways · Tracking number PW-88421-UK</p>
+    <p id="status" role="status"></p>
+  </article>
+  <script>
+    const star = document.querySelector('.star');
+    star.addEventListener('click', () => {
+      star.setAttribute('aria-pressed', String(star.getAttribute('aria-pressed') !== 'true'));
+    });
+    const toggle = document.querySelector('[aria-controls="details"]');
+    toggle.addEventListener('click', () => {
+      const open = toggle.getAttribute('aria-expanded') === 'true';
+      toggle.setAttribute('aria-expanded', String(!open));
+      document.getElementById('details').hidden = open;
+    });
+    document.getElementById('cancel').addEventListener('click', () => {
+      document.getElementById('status').textContent = 'Cancellation requested.';
+    });
+  </script>
+</body>
+</html>

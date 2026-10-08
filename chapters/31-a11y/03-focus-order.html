@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>31-3 Focus Order and Visible Focus</title>
+  <style>
+    .stage { width: min(640px, 100%); flex-direction: column; align-items: stretch; }
+    .card { display: flex; flex-direction: column; gap: 12px; border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+    .card h2 { margin: 0; font-size: 18px; }
+    .field { display: grid; gap: 4px; position: relative; }
+    .field label { font-weight: 600; font-size: 14px; }
+    .field input { font: inherit; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .actions { display: flex; gap: 10px; align-items: center; position: relative; }
+    .actions button { padding: 7px 16px; }
+    .help { font-size: 14px; position: relative; }
+    .tab-no { position: absolute; inset-block-start: -8px; inset-inline-end: -8px; inline-size: 22px; block-size: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--bg); font: 700 12px/1 var(--mono); pointer-events: none; }
+    [data-tabno] { position: relative; }
+
+    /* Toggled by the controls */
+    .card.reorder .actions { order: -1; }
+    .card.reorder .email { order: -2; }
+    .card.no-outline :focus { outline: none; }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="reorder"> Reorder visually with CSS <code>order</code></label>
+    <label class="control"><input type="checkbox" id="positive"> Give “Need help?” <code>tabindex="1"</code></label>
+    <label class="control"><input type="checkbox" id="outline"> Remove the focus outline</label>
+  </div>
+  <div class="stage">
+    <form class="card" id="card" action="#sent">
+      <h2>Create an account</h2>
+      <div class="field name"><label for="name">Name</label><input type="text" id="name" autocomplete="name"></div>
+      <div class="field email"><label for="email">Email</label><input type="email" id="email" autocomplete="email"></div>
+      <div class="field password"><label for="pw">Password</label><input type="password" id="pw" autocomplete="new-password"></div>
+      <div class="actions"><button type="submit">Create account</button><button type="reset">Clear</button></div>
+      <p class="help" style="margin:0"><a href="#help" id="help">Need help?</a></p>
+    </form>
+  </div>
+  <script>
+    const card = document.getElementById('card');
+
+    // Number every focusable element in the order Tab will visit it
+    function tabOrder() {
+      const all = [...card.querySelectorAll('a[href], button, input')].filter((el) => el.tabIndex >= 0);
+      const positive = all.filter((el) => el.tabIndex > 0).sort((a, b) => a.tabIndex - b.tabIndex);
+      return [...positive, ...all.filter((el) => el.tabIndex === 0)];
+    }
+    function number() {
+      for (const badge of card.querySelectorAll('.tab-no')) badge.remove();
+      tabOrder().forEach((el, i) => {
+        const badge = document.createElement('span');
+        badge.className = 'tab-no';
+        badge.setAttribute('aria-hidden', 'true');
+        badge.textContent = i + 1;
+        (el.closest('.field') ?? el.parentElement).append(badge);
+        if (el.closest('.actions')) badge.style.insetInlineEnd = 'auto', badge.style.insetInlineStart = `${el.offsetLeft + el.offsetWidth - 14}px`;
+      });
+    }
+
+    document.getElementById('reorder').addEventListener('change', (e) => { card.classList.toggle('reorder', e.target.checked); number(); });
+    document.getElementById('positive').addEventListener('change', (e) => {
+      const help = document.getElementById('help');
+      if (e.target.checked) help.tabIndex = 1; else help.removeAttribute('tabindex');
+      number();
+    });
+    document.getElementById('outline').addEventListener('change', (e) => card.classList.toggle('no-outline', e.target.checked));
+    card.addEventListener('submit', (e) => e.preventDefault());
+    number();
+  </script>
+</body>
+</html>
