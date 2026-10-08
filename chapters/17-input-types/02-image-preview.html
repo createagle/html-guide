@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>17-2 Previewing Local Images</title>
+  <style>
+    .stage { width: min(860px, 100%); display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    .controls { justify-content: flex-start; }
+    #markup { font-size: 12px; }
+    .drop { border: 2px dashed var(--border); border-radius: 10px; padding: 18px; text-align: center; display: grid; gap: 8px; justify-items: center; }
+    .drop.over { border-color: var(--accent); background: var(--surface); }
+    #list { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; list-style: none; margin: 0; padding: 0; }
+    #list li { border: 1px solid var(--border); border-radius: 8px; padding: 8px; font: 12px/1.5 var(--mono); word-break: break-all; }
+    #list img { width: 100%; height: 120px; object-fit: cover; border-radius: 6px; background: var(--surface); display: block; margin-bottom: 6px; }
+    #list .no { color: var(--bad); }
+    #empty { margin: 0; color: var(--muted); font-size: 14px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="controls">
+      <label class="control"><input type="checkbox" id="multiple" checked> multiple</label>
+      <label class="control">accept
+        <select id="accept">
+          <option value="image/*">image/*</option>
+          <option value="image/png, image/jpeg, image/webp">image/png, image/jpeg, image/webp</option>
+          <option value=".svg">.svg</option>
+          <option value="">(none)</option>
+        </select>
+      </label>
+      <label class="control">capture
+        <select id="capture">
+          <option value="">(none)</option>
+          <option value="environment">environment</option>
+          <option value="user">user</option>
+        </select>
+      </label>
+    </div>
+    <pre class="code" id="markup"></pre>
+    <div class="drop" id="drop">
+      <label for="file">Choose photos, or drop them here</label>
+      <input type="file" id="file" name="photos">
+    </div>
+    <p id="empty">No files chosen yet. Nothing leaves your computer: the previews are made in the browser.</p>
+    <ul id="list"></ul>
+  </div>
+  <script>
+    const input = document.getElementById('file');
+    const list = document.getElementById('list');
+    const drop = document.getElementById('drop');
+    let urls = [];
+
+    function sync() {
+      input.multiple = document.getElementById('multiple').checked;
+      const accept = document.getElementById('accept').value;
+      const capture = document.getElementById('capture').value;
+      if (accept) input.accept = accept; else input.removeAttribute('accept');
+      if (capture) input.setAttribute('capture', capture); else input.removeAttribute('capture');
+      document.getElementById('markup').textContent = `<input type="file"${input.multiple ? ' multiple' : ''}${accept ? ` accept="${accept}"` : ''}${capture ? ` capture="${capture}"` : ''}>`;
+    }
+
+    function size(bytes) {
+      return bytes < 1024 ? bytes + ' B' : bytes < 1048576 ? (bytes / 1024).toFixed(1) + ' KB' : (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    function show(files) {
+      urls.forEach((u) => URL.revokeObjectURL(u)); // free the previous previews
+      urls = [];
+      list.replaceChildren();
+      document.getElementById('empty').hidden = files.length > 0;
+      for (const file of files) {
+        const li = document.createElement('li');
+        // accept is only a hint for the picker; drag and drop ignores it, so check the type yourself
+        if (file.type.startsWith('image/')) {
+          const url = URL.createObjectURL(file);
+          urls.push(url);
+          const img = document.createElement('img');
+          img.src = url;
+          img.alt = '';
+          li.append(img);
+        } else {
+          const p = document.createElement('p');
+          p.className = 'no';
+          p.textContent = 'Not an image: no preview';
+          li.append(p);
+        }
+        li.append(`${file.name}`, document.createElement('br'), `${file.type || '(no type)'} · ${size(file.size)}`, document.createElement('br'), `modified ${new Date(file.lastModified).toLocaleDateString('en-GB')}`);
+        list.append(li);
+      }
+    }
+
+    input.addEventListener('change', () => show(input.files));
+    ['multiple', 'accept', 'capture'].forEach((id) => document.getElementById(id).addEventListener('change', sync));
+    drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+    drop.addEventListener('drop', (e) => {
+      e.preventDefault();
+      drop.classList.remove('over');
+      input.files = e.dataTransfer.files; // a FileList from a drop can be assigned to the input
+      show(input.files);
+    });
+    sync();
+  </script>
+</body>
+</html>

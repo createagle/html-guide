@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>17-3 When Not to Use type=number</title>
+  <style>
+    .stage { width: min(900px, 100%); display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+    .cell { border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: grid; gap: 8px; align-content: start; }
+    .cell label { font-weight: 600; font-size: 14px; }
+    .cell input { font-size: 16px; padding: 6px 8px; width: 100%; box-sizing: border-box; }
+    .read { font: 12px/1.6 var(--mono); margin: 0; background: var(--surface); border-radius: 6px; padding: 8px; white-space: pre-wrap; min-height: 6.4em; }
+    .controls { justify-content: flex-start; }
+    #tries button { font-family: var(--mono); font-size: 12px; }
+    .hint { margin: 0; font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="controls" id="tries">
+      <span class="control">Type this into both:</span>
+      <button type="button" data-v="007">007</button>
+      <button type="button" data-v="1e3">1e3</button>
+      <button type="button" data-v="4929 1234 5678 9012">4929 1234 5678 9012</button>
+      <button type="button" data-v="12abc">12abc</button>
+      <button type="button" data-v="1e">1e</button>
+      <button type="button" data-v="12345678901234567890">12345678901234567890</button>
+      <button type="button" data-v="-5">-5</button>
+      <button type="button" data-v="2.50">2.50</button>
+    </div>
+    <div class="row">
+      <section class="cell">
+        <label for="a">type="number"</label>
+        <input type="number" id="a" min="0">
+        <pre class="read" id="ra"></pre>
+      </section>
+      <section class="cell">
+        <label for="b">type="text" inputmode="numeric" pattern="[0-9 ]*"</label>
+        <input type="text" id="b" inputmode="numeric" pattern="[0-9 ]*" autocomplete="off">
+        <pre class="read" id="rb"></pre>
+      </section>
+    </div>
+    <p class="hint" id="wheel">Tip: click into the number box and scroll the mouse wheel over it. In some browsers the value changes.</p>
+  </div>
+  <script>
+    function report(input, out) {
+      const v = input.validity;
+      const lines = [`value         = "${input.value}"`];
+      if (input.type === 'number') lines.push(`valueAsNumber = ${input.valueAsNumber}`);
+      lines.push(`badInput      = ${v.badInput}`, `valid         = ${v.valid}${v.valid ? '' : '  (' + input.validationMessage + ')'}`);
+      out.textContent = lines.join('\n');
+    }
+    const pairs = [['a', 'ra'], ['b', 'rb']].map(([i, o]) => [document.getElementById(i), document.getElementById(o)]);
+    pairs.forEach(([input, out]) => { input.addEventListener('input', () => report(input, out)); report(input, out); });
+
+    // Simulate typing so the browser's own sanitizing runs exactly as it would for a person
+    document.querySelectorAll('#tries button').forEach((b) => b.addEventListener('click', async () => {
+      for (const [input, out] of pairs) {
+        input.focus();
+        input.select();
+        document.execCommand('insertText', false, b.dataset.v);
+        report(input, out);
+      }
+    }));
+  </script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 17-2 · Final</title>
+  <style>
+    .form { width: min(380px, 100%); display: grid; gap: 12px; justify-items: start; }
+    .avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; background: var(--surface); border: 1px solid var(--border); }
+    #msg { margin: 0; font-size: 14px; min-height: 1.4em; }
+  </style>
+</head>
+<body class="demo">
+  <div class="form">
+    <img class="avatar" id="preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' fill='%23d6d3d1'/%3E%3Ccircle cx='60' cy='48' r='22' fill='%23a8a29e'/%3E%3Cellipse cx='60' cy='112' rx='40' ry='32' fill='%23a8a29e'/%3E%3C/svg%3E" alt="">
+    <label for="avatar">Profile photo (PNG, JPEG or WebP, up to 2 MB)</label>
+    <input type="file" id="avatar" name="avatar" accept="image/png, image/jpeg, image/webp" aria-describedby="msg">
+    <p id="msg" aria-live="polite"></p>
+  </div>
+  <script>
+    const input = document.getElementById('avatar');
+    const preview = document.getElementById('preview');
+    const msg = document.getElementById('msg');
+    const types = ['image/png', 'image/jpeg', 'image/webp'];
+    const DEFAULT = preview.src;
+    let url = null;
+
+    input.addEventListener('change', () => {
+      const file = input.files[0];
+      if (url) URL.revokeObjectURL(url);
+      url = null;
+      preview.src = DEFAULT;
+      preview.alt = '';
+      input.setCustomValidity('');
+      if (!file) { msg.textContent = ''; return; }
+      // accept only filters the picker; check the real type and size here too
+      if (!types.includes(file.type)) {
+        input.setCustomValidity('Choose a PNG, JPEG or WebP image.');
+      } else if (file.size > 2 * 1024 * 1024) {
+        input.setCustomValidity(`That photo is ${(file.size / 1048576).toFixed(1)} MB; the limit is 2 MB.`);
+      }
+      if (!input.validity.valid) { msg.textContent = input.validationMessage; return; }
+      url = URL.createObjectURL(file);
+      preview.src = url;
+      preview.alt = 'Preview of the chosen profile photo';
+      msg.textContent = `${file.name}, ${(file.size / 1024).toFixed(0)} KB`;
+    });
+  </script>
+</body>
+</html>

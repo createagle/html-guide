@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>17-1 Every Input Type</title>
+  <style>
+    .stage { width: min(960px, 100%); display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 6px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    thead th { font-size: 12px; color: var(--muted); font-weight: 600; }
+    tbody th { font-family: var(--mono); font-weight: 600; white-space: nowrap; }
+    tbody th .fallback { color: var(--bad); font-weight: 400; }
+    .group th { background: var(--surface); font-family: inherit; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+    td.value { font: 12px var(--mono); word-break: break-all; }
+    td.value span { color: var(--muted); }
+    input:not([type=checkbox], [type=radio], [type=range], [type=color], [type=image]) { max-width: 230px; }
+    .wrap { overflow-x: auto; }
+    .hint, .nothing { margin: 0; font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body class="demo">
+  <form class="stage" id="form" action="#">
+    <p class="hint">All 22 types. Change any control and watch what the script reads. A red “→ text” means this browser doesn’t support the type and fell back to a text box.</p>
+    <div class="wrap">
+      <table>
+        <thead><tr><th scope="col">type</th><th scope="col">Control</th><th scope="col">What the script reads</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </form>
+  <datalist id="marks"><option value="0"></option><option value="25"></option><option value="50"></option><option value="75"></option><option value="100"></option></datalist>
+  <script>
+    const groups = [
+      ['Text', [
+        ['text', 'value="North Ridge"'],
+        ['search', 'placeholder="Search trails"'],
+        ['email', 'value="ana@example.com" multiple'],
+        ['url', 'value="https://example.com"'],
+        ['tel', 'value="+44 20 7946 0000"'],
+        ['password', 'value="correct horse"'],
+      ]],
+      ['Numbers', [
+        ['number', 'value="3" min="1" max="12"'],
+        ['range', 'value="50" list="marks"'],
+      ]],
+      ['Dates and times', [
+        ['date', 'value="2026-07-14"'],
+        ['time', 'value="07:30"'],
+        ['datetime-local', 'value="2026-07-14T07:30"'],
+        ['month', 'value="2026-07"'],
+        ['week', 'value="2026-W29"'],
+      ]],
+      ['Choices', [
+        ['checkbox', 'checked'],
+        ['radio', 'name="r" checked'],
+        ['color', 'value="#2563eb"'],
+        ['file', 'multiple'],
+      ]],
+      ['Buttons and hidden data', [
+        ['submit', 'value="Submit"'],
+        ['reset', 'value="Reset"'],
+        ['button', 'value="Button"'],
+        ['image', 'src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2228%22%3E%3Crect width=%2280%22 height=%2228%22 rx=%226%22 fill=%22%232563eb%22/%3E%3Ctext x=%2240%22 y=%2219%22 fill=%22white%22 font-family=%22sans-serif%22 font-size=%2213%22 text-anchor=%22middle%22%3EGo%3C/text%3E%3C/svg%3E" alt="Go" width="80" height="28"'],
+        ['hidden', 'value="trip-42"'],
+      ]],
+    ];
+
+    const rows = document.getElementById('rows');
+    rows.innerHTML = groups.map(([name, list]) =>
+      `<tr class="group"><th colspan="3" scope="colgroup">${name}</th></tr>` +
+      list.map(([type, attrs]) => `<tr><th scope="row">${type} <span class="fallback" id="fb-${type}"></span></th>
+        <td><input type="${type}" name="${type === 'radio' ? 'r' : type}" id="in-${type}" aria-label="${type} input" ${attrs}>${type === 'hidden' ? '<span class="nothing">(nothing to see)</span>' : ''}</td>
+        <td class="value" id="out-${type}"></td></tr>`).join('')
+    ).join('');
+
+    function read(input) {
+      const parts = [];
+      if (input.type === 'checkbox' || input.type === 'radio') parts.push(`checked = ${input.checked}`, `value = "${input.value}"`);
+      else if (input.type === 'file') parts.push(`files = [${[...input.files].map((f) => `${f.name} (${f.size} bytes)`).join(', ')}]`, `value = "${input.value}"`);
+      else parts.push(`value = "${input.value}"`);
+      if (['number', 'range', 'date', 'time', 'datetime-local', 'month', 'week'].includes(input.type)) parts.push(`valueAsNumber = ${input.valueAsNumber}`);
+      if (['date', 'time', 'month', 'week'].includes(input.type)) parts.push(`valueAsDate = ${input.valueAsDate ? input.valueAsDate.toISOString() : null}`);
+      if (input.willValidate && !input.validity.valid) parts.push(`<span>invalid: ${input.validationMessage}</span>`);
+      return parts.join('<br>');
+    }
+    document.querySelectorAll('#rows input').forEach((input) => {
+      const declared = input.getAttribute('type');
+      // An unsupported type falls back to text, and the type property says so
+      if (input.type !== declared) document.getElementById('fb-' + declared).textContent = '→ ' + input.type;
+      const show = () => { document.getElementById('out-' + declared).innerHTML = read(input); };
+      input.addEventListener('input', show);
+      input.addEventListener('change', show);
+      show();
+    });
+    // Submitting would leave the page; just report which button did it
+    document.getElementById('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const b = e.submitter;
+      document.getElementById('out-' + b.getAttribute('type')).innerHTML = `submitted by this button` + (b.type === 'image' ? '<br><span>the click position is sent as image.x and image.y</span>' : '');
+    });
+    document.getElementById('form').addEventListener('reset', () => setTimeout(() => document.querySelectorAll('#rows input').forEach((i) => i.dispatchEvent(new Event('change'))), 0));
+  </script>
+</body>
+</html>

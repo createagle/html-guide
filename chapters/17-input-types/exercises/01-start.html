@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 17-1 · Starter</title>
+  <style>
+    form { width: min(460px, 100%); display: grid; gap: 12px; }
+    .field { display: grid; gap: 4px; }
+    .field label { font-weight: 600; font-size: 14px; }
+    .field input { font-size: 16px; padding: 6px 8px; }
+    .field input[type=range] { padding: 0; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    button { justify-self: start; padding: 8px 16px; font-size: 15px; }
+  </style>
+</head>
+<body class="demo">
+  <!-- Every field is type="text". Pick the right type for each one, with sensible limits. -->
+  <form action="https://httpbin.org/get">
+    <div class="field"><label for="name">Full name</label><input type="text" id="name" name="name"></div>
+    <div class="field"><label for="email">Email</label><input type="text" id="email" name="email"></div>
+    <div class="field"><label for="phone">Phone</label><input type="text" id="phone" name="phone"></div>
+    <div class="row">
+      <div class="field"><label for="arrive">Arrival date</label><input type="text" id="arrive" name="arrive"></div>
+      <div class="field"><label for="time">Arrival time</label><input type="text" id="time" name="time"></div>
+    </div>
+    <div class="field"><label for="nights">Nights (1 to 14)</label><input type="text" id="nights" name="nights"></div>
+    <div class="field"><label for="budget">Budget per night (€50 to €300)</label><input type="text" id="budget" name="budget"></div>
+    <div class="field"><label for="postcode">Postcode</label><input type="text" id="postcode" name="postcode"></div>
+    <div class="field"><label for="card">Card number</label><input type="text" id="card" name="card"></div>
+    <button type="submit">Book</button>
+  </form>
+</body>
+</html>
