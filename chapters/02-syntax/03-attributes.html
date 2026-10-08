@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>2-3 How Attributes Are Parsed</title>
+  <style>
+    .stage { width: min(820px, 100%); align-items: stretch; }
+    .stage .panel { flex: 1 1 300px; display: flex; flex-direction: column; gap: 8px; }
+    input[type=text] { width: 100%; font: 13px var(--mono); padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); }
+    table { border-collapse: collapse; font: 13px var(--mono); width: 100%; }
+    th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--border); }
+    th { font: 600 12px system-ui, sans-serif; color: var(--muted); }
+    #live { min-height: 40px; display: flex; align-items: center; gap: 8px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">Example
+      <select id="preset">
+        <option>&lt;input type="checkbox" checked="false"&gt;</option>
+        <option>&lt;button disabled="no"&gt;Send&lt;/button&gt;</option>
+        <option>&lt;a href=/docs/intro title=Getting started&gt;Docs&lt;/a&gt;</option>
+        <option>&lt;p class="note" class="warning"&gt;Hello&lt;/p&gt;</option>
+        <option>&lt;INPUT TYPE="Email" Placeholder='you@example.com'&gt;</option>
+        <option>&lt;input type="emial"&gt;</option>
+      </select>
+    </label>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="src-label">
+      <h2 class="label" id="src-label"><label for="source">Tag</label></h2>
+      <input type="text" id="source" spellcheck="false">
+      <h2 class="label">Live element</h2>
+      <div id="live"></div>
+    </section>
+    <section class="panel" aria-labelledby="attr-label">
+      <h2 class="label" id="attr-label">Parsed attributes</h2>
+      <table>
+        <thead><tr><th scope="col">Name</th><th scope="col">Value</th></tr></thead>
+        <tbody id="attrs"></tbody>
+      </table>
+      <pre class="code" id="props"></pre>
+    </section>
+  </div>
+  <script>
+    const source = document.getElementById('source');
+    const preset = document.getElementById('preset');
+
+    function render() {
+      const t = document.createElement('template');
+      t.innerHTML = source.value;
+      const el = t.content.firstElementChild;
+      const rows = document.getElementById('attrs');
+      rows.replaceChildren();
+      document.getElementById('live').replaceChildren();
+      if (!el) { document.getElementById('props').textContent = 'No element found'; return; }
+      for (const a of el.attributes) {
+        const tr = rows.insertRow();
+        tr.insertCell().textContent = a.name;
+        tr.insertCell().textContent = a.value === '' ? '(empty string)' : JSON.stringify(a.value);
+      }
+      // What the browser actually does with them, read from DOM properties
+      const props = [`element: <${el.localName}>`];
+      if ('disabled' in el) props.push(`.disabled = ${el.disabled}`);
+      if ('checked' in el) props.push(`.checked = ${el.checked}`);
+      if (el.localName === 'input') props.push(`.type = "${el.type}"`);
+      if ('className' in el && el.hasAttribute('class')) props.push(`.className = "${el.className}"`);
+      document.getElementById('props').textContent = props.join('\n');
+      // Show the element itself, minus event handler attributes, so pasted code can't run
+      const live = el.cloneNode(true);
+      for (const node of [live, ...live.querySelectorAll('*')]) {
+        for (const a of [...node.attributes]) if (a.name.startsWith('on')) node.removeAttribute(a.name);
+      }
+      document.getElementById('live').append(live);
+    }
+    preset.addEventListener('change', () => { source.value = preset.value; render(); });
+    source.addEventListener('input', render);
+    source.value = preset.value;
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>2-2 Character References</title>
+  <style>
+    .stage { width: min(820px, 100%); align-items: stretch; }
+    .stage .panel { flex: 1 1 240px; display: flex; flex-direction: column; gap: 8px; }
+    textarea { width: 100%; min-height: 120px; resize: vertical; font: 13px/1.55 var(--mono); padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); }
+    #rendered { min-height: 120px; padding: 10px 12px; border: 1px dashed var(--border); border-radius: 8px; overflow-wrap: anywhere; }
+    table { border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 4px 10px; border-bottom: 1px solid var(--border); }
+    td:first-child { font-family: var(--mono); }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control"><input type="radio" name="mode" value="escape" checked> Text → HTML</label>
+    <label class="control"><input type="radio" name="mode" value="decode"> HTML → text</label>
+    <label class="control"><input type="checkbox" id="ascii"> Escape non-ASCII too</label>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="in-label">
+      <h2 class="label" id="in-label"><label for="input">Input</label></h2>
+      <textarea id="input" spellcheck="false">Fish &amp; Chips &lt;£9&gt; "Today's special" © 2026 😀</textarea>
+    </section>
+    <section class="panel" aria-labelledby="out-label">
+      <h2 class="label" id="out-label">Output</h2>
+      <pre class="code" id="output"></pre>
+      <h2 class="label">Rendered as HTML</h2>
+      <div id="rendered"></div>
+    </section>
+  </div>
+  <table>
+    <caption class="label">Common references</caption>
+    <thead><tr><th scope="col">Reference</th><th scope="col">Character</th><th scope="col">When you need it</th></tr></thead>
+    <tbody>
+      <tr><td>&amp;lt;</td><td>&lt;</td><td>Text that would start a tag</td></tr>
+      <tr><td>&amp;amp;</td><td>&amp;</td><td>Text that would start a reference</td></tr>
+      <tr><td>&amp;quot;</td><td>&quot;</td><td>Inside a double-quoted attribute</td></tr>
+      <tr><td>&amp;nbsp;</td><td>(no-break space)</td><td>Keep two words on one line</td></tr>
+      <tr><td>&amp;#169; &amp;#xA9;</td><td>&#169;</td><td>Any code point, decimal or hex</td></tr>
+    </tbody>
+  </table>
+  <script>
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+    const rendered = document.getElementById('rendered');
+    const ascii = document.getElementById('ascii');
+
+    function escape(text) {
+      let out = text.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+      if (ascii.checked) {
+        // Spread by code point so emoji become one reference, not two surrogates
+        out = [...out].map((c) => (c.codePointAt(0) > 127 ? `&#x${c.codePointAt(0).toString(16).toUpperCase()};` : c)).join('');
+      }
+      return out;
+    }
+    function decode(html) {
+      // A <template> parses markup without running scripts or loading images
+      const t = document.createElement('template');
+      t.innerHTML = html;
+      return t.content.textContent;
+    }
+    function update() {
+      const mode = document.querySelector('[name=mode]:checked').value;
+      ascii.disabled = mode === 'decode';
+      if (mode === 'escape') {
+        output.textContent = escape(input.value);
+        rendered.innerHTML = output.textContent;
+      } else {
+        output.textContent = decode(input.value);
+        rendered.textContent = output.textContent;
+      }
+    }
+    document.querySelectorAll('input, textarea').forEach((el) => el.addEventListener('input', update));
+    document.querySelectorAll('[name=mode]').forEach((el) => el.addEventListener('change', () => {
+      input.value = output.textContent;
+      update();
+    }));
+    update();
+  </script>
+</body>
+</html>
