@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>13-2 Switching to Right-to-Left</title>
+  <style>
+    .stage { width: min(880px, 100%); align-items: stretch; }
+    .stage > figure { flex: 1 1 340px; margin: 0; }
+    .card { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--surface); display: grid; gap: 10px; }
+    .head { display: flex; align-items: center; gap: 10px; }
+    .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); flex: none; }
+    .card p { margin: 0; }
+    .card .badge { font-size: 12px; background: var(--border); border-radius: 999px; padding: 2px 8px; }
+    .card .next::after { content: '→'; display: inline-block; }
+    /* Physical properties: written for left-to-right only */
+    .physical .note { border-left: 4px solid var(--accent); padding-left: 10px; text-align: left; }
+    .physical .badge { margin-left: auto; }
+    .physical .actions { text-align: right; }
+    /* Logical properties: follow the writing direction */
+    .logical .note { border-inline-start: 4px solid var(--accent); padding-inline-start: 10px; text-align: start; }
+    .logical .badge { margin-inline-start: auto; }
+    .logical .actions { text-align: end; }
+    .logical .next:dir(rtl)::after { transform: scaleX(-1); }
+    figcaption { text-align: center; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">dir
+      <select id="dir"><option>ltr</option><option selected>rtl</option></select>
+    </label>
+    <label class="control">Content
+      <select id="lang"><option value="en">English</option><option value="ar" selected>Arabic</option><option value="he">Hebrew</option></select>
+    </label>
+  </div>
+  <div class="stage">
+    <figure><div class="card physical" id="a"></div><figcaption>margin-left, padding-left, text-align: left</figcaption></figure>
+    <figure><div class="card logical" id="b"></div><figcaption>margin-inline-start, padding-inline-start, text-align: start</figcaption></figure>
+  </div>
+  <script>
+    const text = {
+      en: ['Mei Lin', 'New', 'The ridge path is open again. Bring water and a warm layer.', 'Read more'],
+      ar: ['مي لين', 'جديد', 'أُعيد فتح طريق التلال. أحضر الماء وطبقة دافئة.', 'اقرأ المزيد'],
+      he: ['מיי לין', 'חדש', 'שביל הרכס נפתח מחדש. הביאו מים ושכבה חמה.', 'קראו עוד']
+    };
+    function render() {
+      const dir = document.getElementById('dir').value, lang = document.getElementById('lang').value;
+      const [name, badge, note, more] = text[lang];
+      for (const id of ['a', 'b']) {
+        const card = document.getElementById(id);
+        card.dir = dir;
+        card.lang = lang;
+        card.innerHTML = `<div class="head"><span class="avatar"></span><strong>${name}</strong><span class="badge">${badge}</span></div>
+          <p class="note">${note}</p><p class="actions"><a href="#a" class="next">${more} </a></p>`;
+      }
+    }
+    document.querySelector('.controls').addEventListener('change', render);
+    render();
+  </script>
+</body>
+</html>

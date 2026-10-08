@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>13-3 Ruby Annotations</title>
+  <style>
+    .stage { width: min(820px, 100%); display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+    .sample { font-size: 32px; line-height: 2.2; margin: 0; text-align: center; }
+    rt { font-size: 45%; color: var(--accent); }
+    .under ruby { ruby-position: under; }
+    .no-ruby rt { display: none; }
+    .no-ruby rp { display: inline; }
+    .stage code { font-size: 12px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">ruby-position
+      <select id="pos"><option value="over">over</option><option value="under">under</option></select>
+    </label>
+    <label class="control"><input type="checkbox" id="fallback"> Simulate a browser without ruby support</label>
+  </div>
+  <div class="stage" id="stage">
+    <section class="panel" aria-labelledby="zh-label">
+      <h2 class="label" id="zh-label">Chinese with pinyin</h2>
+      <p class="sample" lang="zh-Hans"><ruby>汉<rp>(</rp><rt>hàn</rt><rp>)</rp>字<rp>(</rp><rt>zì</rt><rp>)</rp></ruby></p>
+      <pre class="code">&lt;ruby&gt;汉&lt;rp&gt;(&lt;/rp&gt;&lt;rt&gt;hàn&lt;/rt&gt;&lt;rp&gt;)&lt;/rp&gt;…&lt;/ruby&gt;</pre>
+    </section>
+    <section class="panel" aria-labelledby="ja-label">
+      <h2 class="label" id="ja-label">Japanese with furigana</h2>
+      <p class="sample" lang="ja"><ruby>東京<rp>(</rp><rt>とうきょう</rt><rp>)</rp></ruby>へ<ruby>行<rp>(</rp><rt>い</rt><rp>)</rp></ruby>く</p>
+      <pre class="code">&lt;ruby&gt;東京&lt;rp&gt;(&lt;/rp&gt;&lt;rt&gt;とうきょう&lt;/rt&gt;&lt;rp&gt;)&lt;/rp&gt;&lt;/ruby&gt;</pre>
+    </section>
+    <section class="panel" aria-labelledby="en-label">
+      <h2 class="label" id="en-label">Not only for East Asian text</h2>
+      <p class="sample" lang="en" style="font-size:24px"><ruby>HTML<rp>(</rp><rt>HyperText Markup Language</rt><rp>)</rp></ruby></p>
+      <pre class="code">&lt;ruby&gt;HTML&lt;rp&gt;(&lt;/rp&gt;&lt;rt&gt;HyperText…&lt;/rt&gt;&lt;rp&gt;)&lt;/rp&gt;&lt;/ruby&gt;</pre>
+    </section>
+  </div>
+  <script>
+    const stage = document.getElementById('stage');
+    document.getElementById('pos').addEventListener('change', (e) => stage.classList.toggle('under', e.target.value === 'under'));
+    document.getElementById('fallback').addEventListener('change', (e) => stage.classList.toggle('no-ruby', e.target.checked));
+  </script>
+</body>
+</html>
