@@ -48,8 +48,10 @@
     }
 
     msg.addEventListener('keydown', (e) => {
-      // isComposing: Enter is confirming an IME candidate (Chinese, Japanese…), not sending
-      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+      // Enter that confirms an IME candidate (Chinese, Japanese…) must not send.
+      // Safari reports it with isComposing false but keyCode 229.
+      const composing = e.isComposing || e.keyCode === 229;
+      if (e.key === 'Enter' && !e.shiftKey && !composing) {
         e.preventDefault();
         form.requestSubmit();
       }
