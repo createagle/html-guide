@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 10-2 · Final</title>
+  <style>
+    article { width: min(600px, 100%); }
+    .comment { border-left: 3px solid var(--border); padding-left: 12px; margin: 12px 0; }
+    h1, h2, h3 { margin: 12px 0 6px; }
+    p { margin: 0 0 6px; }
+    .meta { font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body class="demo">
+  <div class="panel" style="width:min(640px,100%)">
+    <article>
+      <header>
+        <h1>Packing for a two-day walk</h1>
+        <p class="meta">By Mei Lin, <time datetime="2026-10-06">6 October 2026</time></p>
+      </header>
+      <section aria-labelledby="essentials">
+        <h2 id="essentials">The essentials</h2>
+        <p>Water, a warm layer, a head torch and a paper map.</p>
+      </section>
+      <section aria-labelledby="nice">
+        <h2 id="nice">Nice to have</h2>
+        <p>A flask, a sit mat and a small first-aid kit.</p>
+      </section>
+      <footer>
+        <address class="meta">Questions about this guide? Write to <a href="mailto:mei@example.com">mei@example.com</a>.</address>
+      </footer>
+      <section aria-labelledby="comments">
+        <h2 id="comments">Comments</h2>
+        <article class="comment">
+          <footer class="meta">Sam, <time datetime="2026-10-07">7 October 2026</time></footer>
+          <p>I would add spare socks!</p>
+        </article>
+        <article class="comment">
+          <footer class="meta">Ana, <time datetime="2026-10-08">8 October 2026</time></footer>
+          <p>Great list, thanks.</p>
+        </article>
+      </section>
+    </article>
+  </div>
+</body>
+</html>

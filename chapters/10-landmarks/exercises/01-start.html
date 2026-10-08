@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 10-1 · Starter</title>
+  <style>
+    .page { display: grid; gap: 10px; width: min(640px, 100%); }
+    .cols { display: grid; grid-template-columns: 1fr 180px; gap: 10px; }
+    .page .box { border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+    .menu { display: flex; gap: 12px; list-style: none; margin: 0; padding: 0; }
+    h1, h2 { margin: 0 0 6px; font-size: 16px; }
+    p { margin: 0 0 6px; }
+  </style>
+</head>
+<body class="demo">
+  <!-- Every block here is a div. Replace them with the elements that say what each block is, so a screen reader can jump between them. -->
+  <div class="page">
+    <div class="header box">
+      <strong>Trail Notes</strong>
+      <div class="nav"><ul class="menu"><li><a href="#top">Home</a></li><li><a href="#top">Trips</a></li><li><a href="#top">About</a></li></ul></div>
+    </div>
+    <div class="cols">
+      <div class="main box">
+        <div class="post">
+          <h1>Weekend in the Hills</h1>
+          <p>We reached the ridge just before sunset.</p>
+        </div>
+      </div>
+      <div class="sidebar box"><h2>Newsletter</h2><p>One email a month, no spam.</p></div>
+    </div>
+    <div class="footer box">© 2026 Trail Notes · <a href="mailto:hello@example.com">hello@example.com</a></div>
+  </div>
+</body>
+</html>

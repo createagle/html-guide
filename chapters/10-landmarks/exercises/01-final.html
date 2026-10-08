@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Exercise 10-1 · Final</title>
+  <style>
+    .page { display: grid; gap: 10px; width: min(640px, 100%); }
+    .cols { display: grid; grid-template-columns: 1fr 180px; gap: 10px; }
+    .page .box { border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+    .menu { display: flex; gap: 12px; list-style: none; margin: 0; padding: 0; }
+    h1, h2 { margin: 0 0 6px; font-size: 16px; }
+    p { margin: 0 0 6px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="page">
+    <header class="box">
+      <strong>Trail Notes</strong>
+      <nav aria-label="Main"><ul class="menu"><li><a href="#top">Home</a></li><li><a href="#top">Trips</a></li><li><a href="#top">About</a></li></ul></nav>
+    </header>
+    <div class="cols">
+      <main class="box">
+        <article>
+          <h1>Weekend in the Hills</h1>
+          <p>We reached the ridge just before sunset.</p>
+        </article>
+      </main>
+      <aside class="box" aria-labelledby="newsletter"><h2 id="newsletter">Newsletter</h2><p>One email a month, no spam.</p></aside>
+    </div>
+    <footer class="box">© 2026 Trail Notes · <address><a href="mailto:hello@example.com">hello@example.com</a></address></footer>
+  </div>
+</body>
+</html>

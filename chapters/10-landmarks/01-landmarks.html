@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>10-1 Landmarks Made Visible</title>
+  <style>
+    .stage { width: min(960px, 100%); align-items: flex-start; }
+    #site { flex: 1 1 560px; border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: grid; gap: 10px; font-size: 14px; background: var(--surface); }
+    #site .row { display: grid; grid-template-columns: 1fr 200px; gap: 10px; }
+    @media (max-width: 720px) { #site .row { grid-template-columns: 1fr; } }
+    #site h1, #site h2, #site h3 { margin: 0 0 4px; font-size: 15px; }
+    #site p { margin: 0 0 6px; }
+    #site ul { margin: 0; padding-left: 18px; }
+    #site .menu { display: flex; gap: 12px; list-style: none; padding: 0; }
+    #site .box { border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+    #site form { display: flex; gap: 8px; align-items: end; }
+    #site form label { flex: 1; display: grid; gap: 2px; }
+    #site.show [data-role] { outline: 2px solid var(--c); outline-offset: 2px; position: relative; padding-top: 22px; }
+    #site.show [data-role]::before { content: attr(data-role); position: absolute; top: 2px; left: 4px; background: var(--c); color: #fff; font: 600 11px/16px var(--mono); padding: 0 5px; border-radius: 4px; z-index: 1; }
+    .show .none { outline: 1px dashed var(--muted); outline-offset: 2px; }
+    #list { flex: 0 1 260px; }
+    #list ol { margin: 0; padding-left: 20px; font-size: 13px; }
+    #list li span { color: var(--muted); }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="show" checked> Show landmarks</label>
+    <label class="control"><input type="checkbox" id="soup"> Rewrite with divs only</label>
+  </div>
+  <div class="stage">
+    <div id="site"></div>
+    <section class="panel" id="list" aria-labelledby="list-label">
+      <h2 class="label" id="list-label">Landmarks a screen reader lists</h2>
+      <ol id="items"></ol>
+    </section>
+  </div>
+  <template id="semantic">
+    <header class="box"><strong>Daily Trail</strong>
+      <nav aria-label="Main"><ul class="menu"><li><a href="#site">News</a></li><li><a href="#site">Guides</a></li><li><a href="#site">Gear</a></li></ul></nav>
+    </header>
+    <search class="box"><form><label>Search articles <input type="search" name="q"></label> <button type="submit">Search</button></form></search>
+    <div class="row">
+      <main class="box">
+        <article>
+          <header><h1>Ridge path reopens after repairs</h1><p>By Mei Lin · <time datetime="2026-10-06">6 October</time></p></header>
+          <p>The northern ridge path is open again after a summer of work on the steepest section.</p>
+          <section aria-labelledby="what-changed"><h2 id="what-changed">What changed</h2><p>New steps, a handrail and two benches near the top.</p></section>
+          <footer><p>Filed under Trails</p></footer>
+        </article>
+      </main>
+      <aside class="box" aria-labelledby="popular"><h2 id="popular">Popular</h2><ul><li><a href="#site">Three easy walks</a></li><li><a href="#site">Packing list</a></li></ul></aside>
+    </div>
+    <footer class="box"><nav aria-label="Footer"><ul class="menu"><li><a href="#site">About</a></li><li><a href="#site">Contact</a></li></ul></nav>
+      <address>Questions? <a href="mailto:desk@example.com">desk@example.com</a></address>
+    </footer>
+  </template>
+  <script>
+    const site = document.getElementById('site');
+    const semantic = document.getElementById('semantic').content;
+    const colors = { banner: '#2563eb', navigation: '#7c3aed', search: '#0891b2', main: '#16a34a', region: '#ca8a04', complementary: '#db2777', contentinfo: '#475569' };
+    const nameOf = (el) => el.getAttribute('aria-label') || (el.getAttribute('aria-labelledby') && document.getElementById(el.getAttribute('aria-labelledby'))?.textContent) || '';
+    // The element-to-role mapping from HTML-AAM, simplified to the landmark cases
+    function roleOf(el) {
+      const scoped = el.parentElement.closest('article, aside, main, nav, section');
+      switch (el.localName) {
+        case 'header': return scoped ? null : 'banner';
+        case 'footer': return scoped ? null : 'contentinfo';
+        case 'nav': return 'navigation';
+        case 'main': return 'main';
+        case 'search': return 'search';
+        case 'aside': return (scoped && !nameOf(el)) ? null : 'complementary';
+        case 'section': return nameOf(el) ? 'region' : null;
+        case 'form': return nameOf(el) ? 'form' : null;
+        default: return null;
+      }
+    }
+    // Swap every sectioning element for a div with a class, the way old layouts were written
+    function toSoup(root) {
+      for (const el of [...root.querySelectorAll('header, nav, search, main, article, section, aside, footer, address')].reverse()) {
+        const div = document.createElement('div');
+        div.className = (el.className + ' ' + el.localName).trim();
+        div.append(...el.childNodes);
+        el.replaceWith(div);
+      }
+    }
+    function render() {
+      site.replaceChildren(semantic.cloneNode(true));
+      if (document.getElementById('soup').checked) toSoup(site);
+      site.classList.toggle('show', document.getElementById('show').checked);
+      const items = [];
+      for (const el of site.querySelectorAll('*')) {
+        const role = roleOf(el);
+        if (role) {
+          el.dataset.role = role + (nameOf(el) ? ` "${nameOf(el)}"` : '');
+          el.style.setProperty('--c', colors[role]);
+          items.push(`<li>${role}${nameOf(el) ? ` <span>“${nameOf(el)}”</span>` : ''}</li>`);
+        } else if (['header', 'footer', 'section', 'article', 'aside'].includes(el.localName)) {
+          el.classList.add('none');
+        }
+      }
+      document.getElementById('items').innerHTML = items.join('') || '<li>(none: nothing to jump to)</li>';
+    }
+    document.querySelector('.controls').addEventListener('change', render);
+    render();
+  </script>
+</body>
+</html>

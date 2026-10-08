@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>10-2 article, section, aside or div?</title>
+  <style>
+    .stage { width: min(900px, 100%); display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+    .card { display: grid; gap: 8px; align-content: start; }
+    .card p { margin: 0; font-size: 14px; }
+    .choices { display: flex; flex-wrap: wrap; gap: 6px; border: 0; padding: 0; margin: 0; }
+    .choices label { font: 13px var(--mono); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+    .choices label:has(:checked) { border-color: var(--accent); }
+    .verdict { font-size: 13px; margin: 0; }
+    .verdict.right { color: var(--good); }
+    .verdict.wrong { color: var(--bad); }
+    .flow { max-width: 760px; font-size: 14px; }
+    .flow ol { margin: 4px 0 0; }
+    #score { font-weight: 600; }
+  </style>
+</head>
+<body class="demo">
+  <section class="panel flow" aria-labelledby="flow-label">
+    <h2 class="label" id="flow-label">Ask in this order</h2>
+    <ol>
+      <li>Would it still make sense on its own, copied to another site or a feed reader? → <code>article</code></li>
+      <li>Is it only loosely related to the content around it? → <code>aside</code></li>
+      <li>Is it a part of a larger whole that deserves its own heading? → <code>section</code></li>
+      <li>Is it just a box for styling or layout? → <code>div</code></li>
+    </ol>
+  </section>
+  <div class="controls"><span class="control">Score: <output id="score">0 / 8</output></span></div>
+  <div class="stage" id="cards"></div>
+  <script>
+    const items = [
+      ['A blog post with its title, author and body.', 'article', 'A complete, self-contained piece: it would make sense in a feed reader.'],
+      ['One reader comment under that blog post.', 'article', 'Comments are self-contained too. Nest them as articles inside the post’s article.'],
+      ['The “Installation” chapter of a long manual, with a heading.', 'section', 'It is a part of the manual, not something you would publish alone.'],
+      ['A box of “Related posts” beside an article.', 'aside', 'Useful, but only tangentially related to the article it sits next to.'],
+      ['A wrapper that centres the page and sets a max width.', 'div', 'Pure layout: no meaning to add, so no semantic element.'],
+      ['A product card in a shop grid: image, name, price, “Add to basket”.', 'article', 'Each card stands on its own and could appear in a feed or a comparison.'],
+      ['A pull quote repeating a sentence from the story in large type.', 'aside', 'It repeats content for emphasis; the story reads fine without it.'],
+      ['The three tab panels of a settings page, each with a heading.', 'section', 'Each panel is a themed part of one page; none is meant to stand alone.']
+    ];
+    const cards = document.getElementById('cards');
+    items.forEach(([text, answer, why], i) => {
+      const card = document.createElement('section');
+      card.className = 'panel card';
+      card.setAttribute('aria-labelledby', `q${i}`);
+      card.innerHTML = `<p id="q${i}">${text}</p><fieldset class="choices"><legend class="label">Your pick</legend>` +
+        ['article', 'section', 'aside', 'div'].map((c) => `<label><input type="radio" name="q${i}" value="${c}"> ${c}</label>`).join('') +
+        `</fieldset><p class="verdict" aria-live="polite"></p>`;
+      card.addEventListener('change', (e) => {
+        const right = e.target.value === answer;
+        const v = card.querySelector('.verdict');
+        v.className = 'verdict ' + (right ? 'right' : 'wrong');
+        v.textContent = (right ? '✓ ' : `✗ Better: ${answer}. `) + why;
+        card.dataset.right = right;
+        document.getElementById('score').value = `${cards.querySelectorAll('[data-right="true"]').length} / ${items.length}`;
+      });
+      cards.append(card);
+    });
+  </script>
+</body>
+</html>
