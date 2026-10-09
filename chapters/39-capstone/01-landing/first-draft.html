@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Home</title>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    "name": "Open Web Day",
+    "startDate": "14/11/2026"
+  }
+  </script>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #f7f3ee; color: #1d1a2b; }
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; border-bottom: 1px solid #ddd; }
+    .header a { margin-left: 16px; color: #1d1a2b; }
+    .content { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+    .hero { width: 100%; border-radius: 14px; margin-top: 16px; }
+    .title { font-size: 56px; font-weight: bold; margin: 16px 0 4px; }
+    .grey { color: #a29e98; }
+    .btn { display: inline-block; background: #b4381f; color: #fff; padding: 10px 20px; border-radius: 999px; cursor: pointer; }
+    .speakers { display: flex; gap: 30px; flex-wrap: wrap; text-align: center; }
+    .speakers img { width: 160px; border-radius: 50%; }
+    .row { margin: 10px 0; }
+    input, select, textarea { width: 100%; max-width: 480px; padding: 8px; font-size: 16px; }
+    .modal { position: fixed; inset: 30% 30% auto; background: #fff; padding: 24px; border-radius: 14px; box-shadow: 0 10px 40px rgb(0 0 0 / .4); }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <a href="./"><img src="img/logo.svg"></a>
+    <div>
+      <a href="#schedule">Schedule</a>
+      <a href="#speakers">Speakers</a>
+      <a href="#register">Register</a>
+    </div>
+  </div>
+
+  <div class="content">
+    <img class="hero" src="img/hero-wide-1920.jpg" loading="lazy">
+    <div class="title">Open Web Day 2026</div>
+    <p>A free, one-day community conference about building for the web with HTML.</p>
+    <p class="grey">Saturday 14 November 2026 · Millbrook and online</p>
+    <span class="btn" onclick="location.hash = 'register'">Register free</span>
+
+    <h3 id="schedule">Schedule</h3>
+    <p>10:15 Forms that forgive<br>11:00 Images at every width<br>12:00 Dialogs without the drama<br>16:00 Metadata people actually see</p>
+
+    <h3 id="speakers">Speakers</h3>
+    <div class="speakers">
+      <div><img src="img/speaker-mira-320.webp"><h5>Mira Okafor</h5></div>
+      <div><img src="img/speaker-tomas-320.webp"><h5>Tomás Reyes</h5></div>
+      <div><img src="img/speaker-wei-320.webp"><h5>Wei Lin</h5></div>
+      <div><img src="img/speaker-sara-320.webp"><h5>Sara Lindqvist</h5></div>
+    </div>
+
+    <h3>Venue</h3>
+    <img src="img/map.svg">
+
+    <h3 id="register">Register</h3>
+    <form id="form">
+      <div class="row"><input type="text" placeholder="Full name"></div>
+      <div class="row"><input type="text" id="email" placeholder="Email"></div>
+      <div class="row">How will you attend? <input type="radio" name="attend"> In person <input type="radio" name="attend"> Online</div>
+      <div class="row"><input type="checkbox" id="email"> I agree to the code of conduct (<a href="#">click here</a>)</div>
+      <div class="row"><span class="btn" onclick="document.getElementById('modal').style.display = 'block'">Register</span></div>
+    </form>
+  </div>
+
+  <div class="modal" id="modal" style="display: none">
+    <b>You’re registered!</b>
+    <p><span class="btn" onclick="this.closest('.modal').style.display = 'none'">OK</span></p>
+  </div>
+</body>
+</html>

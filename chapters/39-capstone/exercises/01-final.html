@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>39 Exercise 1 · Final</title>
+  <style>
+    .stage { width: min(720px, 100%); flex-direction: column; align-items: stretch; flex-wrap: nowrap; }
+    .hero img { display: block; inline-size: 100%; height: auto; border-radius: 14px; }
+    .hero h1 { font-size: clamp(2rem, 6vw, 3rem); margin: 16px 0 4px; }
+    .hero p { margin: 0; font-size: 1.1rem; }
+    dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 14px; }
+    dt { color: var(--muted); }
+    dd { margin: 0; overflow-wrap: anywhere; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <section class="hero">
+      <picture>
+        <source media="(max-width: 39.99em)" type="image/avif"
+                srcset="../01-landing/img/hero-narrow-480.avif 480w, ../01-landing/img/hero-narrow-960.avif 960w"
+                sizes="calc(100vw - 32px)" width="960" height="720">
+        <source media="(max-width: 39.99em)"
+                srcset="../01-landing/img/hero-narrow-480.jpg 480w, ../01-landing/img/hero-narrow-960.jpg 960w"
+                sizes="calc(100vw - 32px)" width="960" height="720">
+        <source type="image/avif"
+                srcset="../01-landing/img/hero-wide-960.avif 960w, ../01-landing/img/hero-wide-1440.avif 1440w, ../01-landing/img/hero-wide-1920.avif 1920w"
+                sizes="(min-width: 47em) 720px, calc(100vw - 32px)">
+        <img src="../01-landing/img/hero-wide-960.jpg"
+             srcset="../01-landing/img/hero-wide-960.jpg 960w, ../01-landing/img/hero-wide-1440.jpg 1440w, ../01-landing/img/hero-wide-1920.jpg 1920w"
+             sizes="(min-width: 47em) 720px, calc(100vw - 32px)"
+             width="1920" height="640" alt="" fetchpriority="high">
+      </picture>
+      <h1>Open Web Day 2026</h1>
+      <p>A free, one-day community conference about building for the web with HTML.</p>
+    </section>
+    <section class="panel" aria-labelledby="report-h">
+      <h2 class="label" id="report-h">What this browser did</h2>
+      <dl id="report"></dl>
+    </section>
+  </div>
+  <script src="hero-report.js"></script>
+</body>
+</html>

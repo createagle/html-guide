@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>39 Exercise 2 · Start</title>
+  <style>
+    .stage { width: min(520px, 100%); flex-direction: column; align-items: stretch; flex-wrap: nowrap; }
+    .row { margin: 0 0 12px; }
+    input[type="text"] { inline-size: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+    .btn { display: inline-block; padding: 8px 18px; border-radius: 999px; background: #b4381f; color: #fff; font-weight: 600; cursor: pointer; }
+    .modal { position: fixed; inset: 30% 10% auto; max-inline-size: 360px; margin: auto; padding: 20px; border-radius: 12px; background: var(--bg); box-shadow: 0 10px 40px rgb(0 0 0 / .4); }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="panel">
+      <h2>Register</h2>
+      <form id="form">
+        <div class="row"><input type="text" placeholder="Full name"></div>
+        <div class="row"><input type="text" placeholder="Email"></div>
+        <div class="row">How will you attend?
+          <input type="radio" name="attend"> In person
+          <input type="radio" name="attend"> Online
+        </div>
+        <div class="row"><input type="checkbox"> I agree to the code of conduct</div>
+        <span class="btn" onclick="document.getElementById('modal').style.display = 'block'">Register</span>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="modal" style="display: none">
+    <b>You’re registered!</b>
+    <p><span class="btn" onclick="this.closest('.modal').style.display = 'none'">OK</span></p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <style>
+    .land { fill: #f4f1ea; } .park { fill: #d9ead3; } .water { stroke: #9cc7e6; }
+    .road { stroke: #ffffff; } .edge { stroke: #d6d0c4; } .bldg { fill: #e4ddd0; }
+    .rail { stroke: #8a8378; } .txt { fill: #4a4540; } .route { stroke: #c2410c; } .pin { fill: #c2410c; }
+    @media (prefers-color-scheme: dark) {
+      .land { fill: #26231f; } .park { fill: #2c3a2a; } .water { stroke: #2f5675; }
+      .road { stroke: #4a453e; } .edge { stroke: #3a362f; } .bldg { fill: #3a352e; }
+      .rail { stroke: #9a9388; } .txt { fill: #e7e2d9; } .route { stroke: #fb923c; } .pin { fill: #fb923c; }
+    }
+  </style>
+  <rect class="land" width="640" height="400"/>
+  <path class="park" d="M500 20 h130 v100 h-130 z"/>
+  <path class="water" d="M-10 150 C 120 120, 220 190, 340 160 S 560 120, 650 170" fill="none" stroke-width="26"/>
+  <g fill="none" stroke-linecap="round">
+    <g class="edge" stroke-width="20">
+      <path d="M0 210 C 140 190, 260 240, 400 215 S 560 200, 640 220"/>
+      <path d="M300 400 L 330 0"/>
+      <path d="M90 60 L 140 400"/>
+      <path d="M470 400 L 500 170"/>
+    </g>
+    <g class="road" stroke-width="16">
+      <path d="M0 210 C 140 190, 260 240, 400 215 S 560 200, 640 220"/>
+      <path d="M300 400 L 330 0"/>
+      <path d="M90 60 L 140 400"/>
+      <path d="M470 400 L 500 170"/>
+    </g>
+  </g>
+  <rect x="352" y="246" width="96" height="60" rx="4" class="bldg"/>
+  <rect x="164" y="70" width="80" height="50" rx="4" class="bldg"/>
+  <rect x="180" y="300" width="96" height="56" rx="4" class="bldg"/>
+  <g class="rail" stroke-width="3" fill="none">
+    <path d="M0 372 H 640"/><path d="M0 382 H 640"/>
+    <path d="M0 377 H 640" stroke-width="10" stroke-dasharray="2 10"/>
+  </g>
+  <rect x="200" y="322" width="190" height="40" rx="6" fill="#1e3a8a"/>
+  <text x="295" y="347" text-anchor="middle" font-size="15" font-weight="600" fill="#ffffff">Central Station</text>
+    <rect x="352" y="84" width="120" height="52" rx="6" class="bldg"/>
+  <path class="pin" d="M412 34 c-14 0 -24 10 -24 23 c0 18 24 39 24 39 s24 -21 24 -39 c0 -13 -10 -23 -24 -23 z"/>
+  <circle cx="412" cy="57" r="8" fill="#ffffff"/>
+  <path class="route" d="M306 320 L 319 140 Q 322 112 350 112" fill="none" stroke-width="4" stroke-dasharray="8 7" stroke-linecap="round"/>
+  <g class="txt">
+    <text x="412" y="24" text-anchor="middle" font-size="15" font-weight="700">Old Tram Depot</text>
+    <text x="40" y="136" font-size="12" font-style="italic">Mill Canal</text>
+    <text x="545" y="242" font-size="12">Canal Road</text>
+    <text x="292" y="262" font-size="13" font-weight="600" text-anchor="end">5 min walk</text>
+    <text transform="translate(116 280) rotate(82)" font-size="12">Mill Lane</text>
+    <text transform="translate(338 302) rotate(-86)" font-size="12">Station Street</text>
+    <text x="565" y="74" font-size="12" text-anchor="middle">Wharf Park</text>
+  </g>
+  <g class="txt" transform="translate(600 300)">
+    <path d="M0 -26 L 9 4 L 0 -2 L -9 4 Z"/>
+    <text y="22" font-size="13" font-weight="700" text-anchor="middle">N</text>
+  </g>
+  <g class="txt" transform="translate(30 340)">
+    <rect width="80" height="5"/>
+    <text y="-6" font-size="12">200 m</text>
+  </g>
+</svg>

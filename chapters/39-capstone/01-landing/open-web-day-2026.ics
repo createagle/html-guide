@@ -1,0 +1,17 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Millbrook Web Collective//Open Web Day//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:open-web-day-2026@example.org
+DTSTAMP:20261001T090000Z
+DTSTART:20261114T093000Z
+DTEND:20261114T173000Z
+SUMMARY:Open Web Day 2026
+DESCRIPTION:A free\, one-day community conference about building for the w
+ eb with HTML. Talks\, workshops and lightning talks.
+LOCATION:Old Tram Depot\, 40 Canal Road\, Millbrook MB1 4AB
+URL:https://createagle.github.io/html-guide/chapters/39-capstone/01-landing/
+END:VEVENT
+END:VCALENDAR

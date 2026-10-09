@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>39-3 Launch Checklist</title>
+  <style>
+    .stage { width: min(1080px, 100%); align-items: flex-start; }
+    .checks-col { flex: 1 1 460px; display: grid; gap: 12px; min-inline-size: 0; }
+    .preview-col { flex: 1 1 340px; display: grid; gap: 12px; min-inline-size: 0; }
+    .checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+    .checks li { display: grid; grid-template-columns: 3.4em 1fr; gap: 0 8px; font-size: 14px; }
+    .checks .badge { grid-row: span 2; align-self: start; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; border-radius: 4px; padding: 2px 0; color: #fff; }
+    .checks .pass .badge { background: #15803d; }
+    .checks .fail .badge { background: #b91c1c; }
+    .checks small { color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
+    .panel h2 .count { font-weight: 400; text-transform: none; letter-spacing: 0; }
+    .serp p { margin: 0; }
+    .serp .crumb { font-size: 12px; color: var(--muted); }
+    .serp .title { font-size: 18px; color: #1a0dab; line-height: 1.3; margin: 2px 0; }
+    .serp .desc { font-size: 13px; }
+    .share { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .share img, .share .noimg { display: block; inline-size: 100%; block-size: auto; aspect-ratio: 1200 / 630; object-fit: cover; }
+    .share .noimg { display: grid; place-items: center; background: var(--surface); color: var(--muted); font-size: 13px; padding: 12px; text-align: center; }
+    .share div { padding: 8px 12px; font-size: 13px; }
+    .share .host { font-size: 11px; text-transform: uppercase; color: var(--muted); margin: 0; }
+    .share strong { display: block; font-size: 15px; }
+    .share p { margin: 2px 0 0; }
+    .event { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 0; font-size: 14px; }
+    .event dt { color: var(--muted); }
+    .event dd { margin: 0; }
+    /* In the viewport but invisible, so lazy images in the page's first screen still load */
+    #page { position: fixed; left: 0; top: 0; width: 1280px; height: 800px; border: 0; visibility: hidden; pointer-events: none; }
+    @media (prefers-color-scheme: dark) { .serp .title { color: #8ab4f8; } }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">Page
+      <select id="target">
+        <option value="01-landing/index.html">Open Web Day: finished page</option>
+        <option value="01-landing/first-draft.html">Open Web Day: first draft</option>
+      </select>
+    </label>
+    <output id="total" for="target"></output>
+  </div>
+  <div class="stage">
+    <div class="checks-col" id="groups"></div>
+    <div class="preview-col">
+      <section class="panel" aria-labelledby="serp-h">
+        <h2 class="label" id="serp-h">Search result</h2>
+        <div class="serp" id="serp"></div>
+      </section>
+      <section class="panel" aria-labelledby="share-h">
+        <h2 class="label" id="share-h">Link preview (Open Graph)</h2>
+        <div class="share" id="share"></div>
+      </section>
+      <section class="panel" aria-labelledby="event-h">
+        <h2 class="label" id="event-h">Event details (JSON-LD)</h2>
+        <dl class="event" id="event"></dl>
+      </section>
+    </div>
+  </div>
+  <iframe id="page" title="The page being checked" tabindex="-1"></iframe>
+  <script>
+    const iframe = document.getElementById('page');
+    const select = document.getElementById('target');
+    const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(Z|[+-]\d{2}:\d{2})$/;
+    const SITE = 'https://createagle.github.io/html-guide/';
+
+    const meta = (doc, key) => doc.querySelector(`meta[name="${key}"], meta[property="${key}"]`)?.content.trim() || '';
+    const list = items => items.slice(0, 4).join(', ') + (items.length > 4 ? ` and ${items.length - 4} more` : '');
+    const describe = el => {
+      const src = el.currentSrc || el.getAttribute('src');
+      const name = el.id ? `#${el.id}` : el.getAttribute('name') ? `[name=${el.getAttribute('name')}]` : src ? src.split('/').pop() : '';
+      return `<${el.tagName.toLowerCase()}>${name ? ' ' + name : ''}`;
+    };
+    function accName(el) {
+      if (el.getAttribute('aria-label')) return el.getAttribute('aria-label').trim();
+      const by = el.getAttribute('aria-labelledby');
+      if (by) return by.split(' ').map(id => el.ownerDocument.getElementById(id)?.textContent || '').join(' ').trim();
+      if (el.labels && el.labels.length) return [...el.labels].map(l => l.textContent).join(' ').trim();
+      return '';
+    }
+    const linkText = a => (a.getAttribute('aria-label') || a.textContent + [...a.querySelectorAll('img[alt]')].map(i => i.alt).join(' ')).trim();
+    function eventData(doc) {
+      for (const s of doc.querySelectorAll('script[type="application/ld+json"]')) {
+        try {
+          const data = [].concat(JSON.parse(s.textContent));
+          const ev = data.find(d => d['@type'] === 'Event');
+          if (ev) return ev;
+        } catch { return { error: true }; }
+      }
+      return null;
+    }
+    function mediaRules(doc, feature) {
+      const found = [];
+      for (const sheet of doc.styleSheets) {
+        let rules; try { rules = sheet.cssRules; } catch { continue; }
+        for (const r of rules) if (r.media && r.media.mediaText.includes(feature)) found.push(r);
+      }
+      return found.length > 0;
+    }
+
+    // Each check returns [passed, detail]
+    const groups = [
+      ['Head and metadata', [
+        ['The page language is set', d => [!!d.documentElement.lang, d.documentElement.lang ? `lang="${d.documentElement.lang}"` : 'No lang on <html>']],
+        ['<meta charset> comes first in <head>', d => { const f = d.head.firstElementChild; const ok = f?.matches('meta[charset]'); return [ok, ok ? 'utf-8' : `The first element is <${f?.tagName.toLowerCase()}>`]; }],
+        ['A responsive viewport is declared', d => { const v = meta(d, 'viewport'); return [v.includes('width=device-width'), v || 'No viewport meta: phones render a 980 px page and zoom out']; }],
+        ['The title says what and when', d => { const t = d.title.trim(); return [t.length >= 15 && t.length <= 65, `“${t}” (${t.length} characters)`]; }],
+        ['There is a meta description', d => { const m = meta(d, 'description'); return [m.length >= 50 && m.length <= 160, m ? `${m.length} characters` : 'Missing']; }],
+        ['A canonical URL is set', d => { const c = d.querySelector('link[rel="canonical"]')?.getAttribute('href') || ''; return [/^https:\/\//.test(c), c || 'Missing']; }],
+        ['Open Graph tags are complete', d => { const miss = ['og:title', 'og:description', 'og:image', 'og:url'].filter(k => !meta(d, k)); return [!miss.length, miss.length ? 'Missing ' + list(miss) : 'og:title, og:description, og:image, og:url']; }],
+        ['There is an icon', d => { const i = d.querySelector('link[rel~="icon"]'); return [!!i, i ? i.getAttribute('href') : 'No <link rel="icon">: the browser requests /favicon.ico']; }],
+        ['Event structured data is complete', d => {
+          const ev = eventData(d);
+          if (!ev) return [false, 'No JSON-LD Event'];
+          if (ev.error) return [false, 'The JSON-LD does not parse'];
+          const problems = ['name', 'startDate', 'endDate', 'location', 'eventAttendanceMode', 'offers'].filter(k => !ev[k]);
+          if (ev.startDate && !ISO.test(ev.startDate)) problems.push(`startDate “${ev.startDate}” is not an ISO 8601 date and time`);
+          return [!problems.length, problems.length ? 'Missing or wrong: ' + list(problems) : `${ev['@type']} · ${ev.startDate}`];
+        }],
+        ['The structured date matches the page', d => {
+          const ev = eventData(d);
+          const shown = [...d.querySelectorAll('time[datetime]')].map(t => t.dateTime).find(x => ISO.test(x));
+          if (!shown) return [false, 'No <time datetime> with a full date on the page'];
+          const same = ev && !ev.error && ISO.test(ev.startDate || '') && new Date(ev.startDate).getTime() === new Date(shown).getTime();
+          return [same, same ? `Both say ${new Date(shown).toISOString().slice(0, 16).replace('T', ' ')} UTC` : `The page says ${shown}, the data says ${ev?.startDate || 'nothing'}`];
+        }],
+      ]],
+      ['Structure', [
+        ['Exactly one <h1>', d => { const n = d.querySelectorAll('h1').length; return [n === 1, `${n} found`]; }],
+        ['Heading levels do not skip', d => {
+          let prev = 0; const skips = [];
+          for (const h of d.querySelectorAll('h1, h2, h3, h4, h5, h6')) {
+            const lvl = +h.tagName[1];
+            if (lvl > prev + 1) skips.push(`h${prev || '–'} → h${lvl} “${h.textContent.trim().slice(0, 24)}”`);
+            prev = lvl;
+          }
+          return [!skips.length, skips.length ? list(skips) : 'Every heading is at most one level deeper than the last'];
+        }],
+        ['Landmarks: header, nav, main, footer', d => { const miss = ['header', 'nav', 'main', 'footer'].filter(t => !d.querySelector(t)); return [!miss.length && d.querySelectorAll('main').length === 1, miss.length ? 'Missing <' + miss.join('>, <') + '>' : 'All four, one <main>']; }],
+        ['A skip link leads to the main content', d => { const a = d.querySelector('a[href]'); const t = a && a.hash && d.getElementById(a.hash.slice(1)); return [!!t && t.matches('main, main *'), a ? `First link: “${linkText(a) || '(no text)'}”` : 'No links']; }],
+        ['Every link has a meaningful name', d => { const bad = [...d.querySelectorAll('a[href]')].filter(a => /^(|click here|here|read more|more)$/i.test(linkText(a))); return [!bad.length, bad.length ? bad.map(a => `“${linkText(a) || 'empty'}” → ${a.getAttribute('href')}`).join(', ') : 'No empty or “click here” links']; }],
+        ['Buttons are real buttons', d => { const fake = [...d.querySelectorAll('[onclick]')].filter(el => !el.matches('button, a[href], input')); return [!fake.length, fake.length ? `${fake.length} clickable ${fake[0].tagName.toLowerCase()}s that keyboards cannot reach` : 'No click handlers on non-interactive elements']; }],
+        ['ids are unique', d => { const seen = {}; for (const el of d.querySelectorAll('[id]')) seen[el.id] = (seen[el.id] || 0) + 1; const dup = Object.keys(seen).filter(k => seen[k] > 1); return [!dup.length, dup.length ? 'Duplicated: ' + list(dup.map(k => '#' + k)) : `${Object.keys(seen).length} ids`]; }],
+      ]],
+      ['Images', [
+        ['Every image has an alt attribute', d => { const bad = [...d.images].filter(i => !i.hasAttribute('alt')); return [!bad.length, bad.length ? 'Missing on ' + list(bad.map(describe)) : `${d.images.length} images, ${[...d.images].filter(i => i.alt === '').length} of them decorative (alt="")`]; }],
+        ['Every image reserves its space', d => { const bad = [...d.images].filter(i => !(i.getAttribute('width') && i.getAttribute('height'))); return [!bad.length, bad.length ? 'No width and height: ' + list(bad.map(describe)) : 'width and height on every <img>']; }],
+        ['Large images offer several sizes', d => { const bad = [...d.images].filter(i => i.getBoundingClientRect().width > 480 && !i.srcset && !/\.svg$/.test(i.getAttribute('src'))); return [!bad.length, bad.length ? 'One file for every screen: ' + list(bad.map(describe)) : 'srcset on every raster image wider than 480 px']; }],
+        ['The first screen is not lazy-loaded', d => { const bad = [...d.images].filter(i => i.loading === 'lazy' && i.getBoundingClientRect().top < 800); return [!bad.length, bad.length ? 'loading="lazy" above the fold: ' + list(bad.map(describe)) : 'Images in the first 800 px load right away']; }],
+        ['The hero image has priority', d => { const big = [...d.images].filter(i => i.getBoundingClientRect().top < 800).sort((a, b) => b.getBoundingClientRect().width * b.getBoundingClientRect().height - a.getBoundingClientRect().width * a.getBoundingClientRect().height)[0]; return [big?.fetchPriority === 'high', big ? `${describe(big)}: fetchpriority="${big.getAttribute('fetchpriority') || 'auto'}"` : 'No image in the first screen']; }],
+        ['Images further down are lazy-loaded', d => { const bad = [...d.images].filter(i => i.loading !== 'lazy' && i.getBoundingClientRect().top >= 800); return [!bad.length, bad.length ? 'Loaded right away: ' + list(bad.map(describe)) : 'loading="lazy" below the fold']; }],
+      ]],
+      ['Form and dialog', [
+        ['Every field has a label', d => { const bad = [...d.querySelectorAll('input:not([type=hidden], [type=submit], [type=button]), select, textarea')].filter(el => !accName(el)); return [!bad.length, bad.length ? 'No label: ' + list(bad.map(el => describe(el) + (el.placeholder ? ` (placeholder “${el.placeholder}”)` : ''))) : 'Every input, select and textarea is labelled']; }],
+        ['Radio buttons are grouped with a legend', d => { const bad = [...d.querySelectorAll('input[type=radio]')].filter(r => !r.closest('fieldset')?.querySelector('legend')); return [!bad.length, bad.length ? `${bad.length} radio buttons outside a <fieldset>` : 'Each group is a <fieldset> with a <legend>']; }],
+        ['Email fields are type=email with autocomplete', d => { const bad = [...d.querySelectorAll('input')].filter(i => /e-?mail/i.test(i.id + i.name + i.placeholder + accName(i)) && i.type !== 'checkbox' && (i.type !== 'email' || !i.autocomplete)); return [!bad.length, bad.length ? list(bad.map(i => `${describe(i)}: type="${i.type}", autocomplete="${i.autocomplete}"`)) : 'type="email" autocomplete="email"']; }],
+        ['The form has a submit button', d => { const f = d.querySelector('form'); const b = f?.querySelector('button:not([type=button], [type=reset]), input[type=submit]'); return [!!b, b ? `“${b.textContent.trim() || b.value}”` : f ? 'Enter does nothing and the form never submits' : 'No <form>']; }],
+        ['The confirmation is a <dialog> with a name', d => { const dl = d.querySelector('dialog'); const fake = d.querySelector('.modal, [role=dialog]:not(dialog)'); return [!!dl && !fake && !!accName(dl), dl ? `<dialog> “${accName(dl) || 'no name'}”` : fake ? 'A <div> styled as a modal: no focus handling, Esc or inert background' : 'No dialog']; }],
+      ]],
+      ['Preferences', [
+        ['A dark color scheme is provided', d => { const ok = mediaRules(d, 'prefers-color-scheme'); return [ok, ok ? '@media (prefers-color-scheme: dark)' : 'Light only']; }],
+        ['Motion respects the user’s setting', d => { const ok = mediaRules(d, 'prefers-reduced-motion'); return [ok, ok ? '@media (prefers-reduced-motion: …)' : 'No prefers-reduced-motion rules']; }],
+      ]],
+    ];
+
+    function render(doc) {
+      let pass = 0, total = 0;
+      document.getElementById('groups').replaceChildren(...groups.map(([title, checks]) => {
+        const section = document.createElement('section');
+        section.className = 'panel';
+        const h = document.createElement('h2');
+        h.className = 'label';
+        const ul = document.createElement('ul');
+        ul.className = 'checks';
+        let groupPass = 0;
+        for (const [label, test] of checks) {
+          let ok, detail;
+          try { [ok, detail] = test(doc); } catch (e) { ok = false; detail = e.message; }
+          ok = !!ok; total++; if (ok) { pass++; groupPass++; }
+          const li = document.createElement('li');
+          li.className = ok ? 'pass' : 'fail';
+          const badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = ok ? 'Pass' : 'Fail';
+          const name = document.createElement('span'); name.textContent = label;
+          const small = document.createElement('small'); small.textContent = detail;
+          li.append(badge, name, small);
+          ul.append(li);
+        }
+        h.innerHTML = `${title} <span class="count">· ${groupPass} of ${checks.length}</span>`;
+        section.append(h, ul);
+        return section;
+      }));
+      document.getElementById('total').textContent = `${pass} of ${total} checks pass`;
+      previews(doc);
+    }
+
+    // The page's absolute URLs point at the published site; load them from wherever this demo runs
+    const local = url => url.startsWith(SITE) ? new URL('../../' + url.slice(SITE.length), location.href).href : url;
+
+    function previews(doc) {
+      const page = new URL(iframe.src);
+      const canonical = doc.querySelector('link[rel="canonical"]')?.href || page.href;
+      const u = new URL(canonical);
+      const desc = meta(doc, 'description');
+      document.getElementById('serp').innerHTML = '';
+      const crumb = document.createElement('p'); crumb.className = 'crumb'; crumb.textContent = u.host + u.pathname.replace(/\/$/, '').replaceAll('/', ' › ');
+      const title = document.createElement('p'); title.className = 'title'; title.textContent = doc.title;
+      const p = document.createElement('p'); p.className = 'desc'; p.textContent = desc || doc.body.innerText.replace(/\s+/g, ' ').slice(0, 150) + '…';
+      if (!desc) p.classList.add('bad');
+      document.getElementById('serp').append(crumb, title, p);
+
+      const share = document.getElementById('share');
+      share.innerHTML = '';
+      const image = meta(doc, 'og:image');
+      if (image) {
+        const img = document.createElement('img');
+        img.src = local(image); img.alt = meta(doc, 'og:image:alt'); img.width = 1200; img.height = 630;
+        share.append(img);
+      } else {
+        const no = document.createElement('p'); no.className = 'noimg'; no.textContent = 'No og:image: most apps show a plain link or pick any image they find';
+        share.append(no);
+      }
+      const box = document.createElement('div');
+      const host = document.createElement('p'); host.className = 'host'; host.textContent = u.host;
+      const strong = document.createElement('strong'); strong.textContent = meta(doc, 'og:title') || doc.title;
+      const d2 = document.createElement('p'); d2.textContent = meta(doc, 'og:description') || desc || '';
+      box.append(host, strong, d2);
+      share.append(box);
+
+      const ev = eventData(doc);
+      const rows = [];
+      if (!ev || ev.error) rows.push(['Event', ev ? 'JSON-LD does not parse' : 'No structured data']);
+      else {
+        const start = ISO.test(ev.startDate || '') ? new Date(ev.startDate) : null;
+        const fmt = new Intl.DateTimeFormat('en-GB', { dateStyle: 'full', timeStyle: 'short', timeZone: 'Europe/London' });
+        const place = [].concat(ev.location || []).map(l => l['@type'] === 'VirtualLocation' ? 'Online' : [l.name, l.address?.addressLocality].filter(Boolean).join(', '));
+        const offer = [].concat(ev.offers || [])[0];
+        rows.push(['Name', ev.name || '—'], ['Starts', start ? fmt.format(start) : `“${ev.startDate || ''}” (not a date a search engine can read)`], ['Where', place.join(' · ') || '—'], ['Price', offer ? (+offer.price === 0 ? 'Free' : `${offer.price} ${offer.priceCurrency}`) : '—']);
+      }
+      document.getElementById('event').replaceChildren(...rows.flatMap(([k, v]) => {
+        const dt = document.createElement('dt'), dd = document.createElement('dd');
+        dt.textContent = k; dd.textContent = v; return [dt, dd];
+      }));
+    }
+
+    // Check again whenever an image arrives: until then it takes up no space and the fold is in the wrong place
+    iframe.addEventListener('load', () => {
+      const doc = iframe.contentDocument;
+      render(doc);
+      doc.addEventListener('load', e => {
+        if (e.target.tagName !== 'IMG') return;
+        clearTimeout(render.t);
+        render.t = setTimeout(() => render(doc), 100);
+      }, true);
+    });
+    select.addEventListener('change', () => { iframe.src = select.value; });
+    iframe.src = select.value;
+  </script>
+</body>
+</html>

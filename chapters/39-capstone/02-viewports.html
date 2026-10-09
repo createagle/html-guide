@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>39-2 The Landing Page at Every Width</title>
+  <style>
+    .controls { max-width: 760px; }
+    .presets { display: flex; gap: 6px; flex-wrap: wrap; }
+    .presets button { padding: 5px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--fg); font-size: 13px; cursor: pointer; }
+    .presets button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+    #w { inline-size: 220px; }
+    .stage { width: min(1040px, 100%); align-items: flex-start; }
+    .frame { flex: 1 1 380px; max-inline-size: 520px; block-size: 600px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; position: relative; background: var(--surface); }
+    .frame iframe { position: absolute; inset: 0 auto auto 0; border: 0; transform-origin: 0 0; background: #fff; }
+    .side { flex: 1 1 380px; display: grid; gap: 12px; min-inline-size: 0; }
+    .steps { margin: 0; padding-left: 20px; font-size: 14px; display: grid; gap: 4px; }
+    .steps code { overflow-wrap: anywhere; }
+    table { inline-size: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 4px 8px 4px 0; text-align: start; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+    th { color: var(--muted); font-weight: 600; }
+    tr.mine td { font-weight: 700; }
+    dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 14px; }
+    dt { color: var(--muted); }
+    dd { margin: 0; }
+    .note { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <div class="presets" role="group" aria-label="Preset widths">
+      <button type="button" data-w="360">Phone 360</button>
+      <button type="button" data-w="768">Tablet 768</button>
+      <button type="button" data-w="1280">Laptop 1280</button>
+      <button type="button" data-w="1600">Desktop 1600</button>
+    </div>
+    <label class="control">Viewport width <input type="range" id="w" min="320" max="1600" step="8" value="360"></label>
+    <output id="w-out" for="w">360 px</output>
+  </div>
+  <div class="stage">
+    <div class="frame" id="frame">
+      <iframe id="page" src="01-landing/index.html" title="Open Web Day landing page"></iframe>
+    </div>
+    <div class="side">
+      <section class="panel" aria-labelledby="hero-h">
+        <h2 class="label" id="hero-h">Hero image</h2>
+        <ol class="steps" id="hero-steps"></ol>
+        <table>
+          <caption class="note" id="dpr-cap"></caption>
+          <thead><tr><th scope="col">Screen</th><th scope="col">Needs</th><th scope="col">Picks</th></tr></thead>
+          <tbody id="dpr"></tbody>
+        </table>
+        <p class="note" id="cache-note" hidden></p>
+      </section>
+      <section class="panel" aria-labelledby="layout-h">
+        <h2 class="label" id="layout-h">Layout at this width</h2>
+        <dl id="layout"></dl>
+      </section>
+    </div>
+  </div>
+  <script>
+    const frame = document.getElementById('frame');
+    const iframe = document.getElementById('page');
+    const range = document.getElementById('w');
+    const out = document.getElementById('w-out');
+    const dpr = window.devicePixelRatio || 1;
+    let width = 360;
+
+    function fit() {
+      const scale = Math.min(1, frame.clientWidth / width);
+      const height = frame.clientHeight / scale;
+      Object.assign(iframe.style, { width: width + 'px', height: height + 'px', transform: `scale(${scale})` });
+    }
+
+    function setWidth(w) {
+      width = w;
+      range.value = w;
+      out.textContent = w + ' px';
+      for (const b of document.querySelectorAll('.presets button')) b.setAttribute('aria-pressed', String(+b.dataset.w === w));
+      fit();
+      clearTimeout(setWidth.t);
+      setWidth.t = setTimeout(report, 400);
+    }
+
+    const file = url => url.split('/').pop();
+    const parseSrcset = s => s.split(',').map(c => c.trim().split(/\s+/)).map(([url, d]) => ({ url, w: parseFloat(d) }));
+
+    // Resolve a sizes list the way the browser does: the first matching media condition wins
+    function slotWidth(win, sizes) {
+      for (const part of sizes.split(',')) {
+        const m = part.trim().match(/^(\(.*\))\s+(.+)$/);
+        if (m && !win.matchMedia(m[1]).matches) continue;
+        const probe = win.document.createElement('div');
+        probe.style.cssText = `position:absolute;visibility:hidden;font-size:medium;width:${m ? m[2] : part.trim()}`;
+        win.document.body.append(probe);
+        const px = probe.getBoundingClientRect().width;
+        probe.remove();
+        return { px, rule: m ? `${m[1]} ${m[2]}` : part.trim() };
+      }
+    }
+
+    // The smallest file that is at least as wide as the slot times the pixel ratio
+    function pick(candidates, needed) {
+      const sorted = [...candidates].sort((a, b) => a.w - b.w);
+      return sorted.find(c => c.w >= needed) || sorted.at(-1);
+    }
+
+    function li(html) { const el = document.createElement('li'); el.innerHTML = html; return el; }
+
+    function report() {
+      const win = iframe.contentWindow, doc = iframe.contentDocument;
+      if (!doc || !doc.querySelector('.hero img')) return;
+      const img = doc.querySelector('.hero img');
+      const loaded = file(img.currentSrc);
+      const options = [...img.parentElement.querySelectorAll('source'), img];
+      const used = options.find(el => (el.srcset || '').split(',').some(c => file(c.trim().split(/\s+/)[0]) === loaded));
+      const media = used.getAttribute('media');
+      const slot = slotWidth(win, used.getAttribute('sizes'));
+      const candidates = parseSrcset(used.getAttribute('srcset'));
+      const mine = pick(candidates, slot.px * dpr);
+
+      document.getElementById('hero-steps').replaceChildren(
+        li(media ? `<code>media="${media}"</code> matches, so the narrow crop’s <code>&lt;source&gt;</code> is used.` : 'No narrow <code>media</code> matches, so the wide crop is used.'),
+        li(used.tagName === 'SOURCE' && used.type ? `The browser supports <code>${used.type}</code>.` : 'No supported <code>type</code> was found earlier, so this is the JPEG fallback.'),
+        li(`<code>sizes</code> → <code>${slot.rule}</code> = <strong>${Math.round(slot.px)} px</strong>.`),
+        li(`Loaded <strong><code>${loaded}</code></strong>, rendered ${Math.round(img.getBoundingClientRect().width)} × ${Math.round(img.getBoundingClientRect().height)} CSS px.`)
+      );
+      document.getElementById('dpr-cap').textContent = `What the srcset rule picks on other screens (this one is ${dpr}×)`;
+      document.getElementById('dpr').replaceChildren(...[1, 2, 3].map(r => {
+        const tr = document.createElement('tr');
+        if (r === Math.round(dpr)) tr.className = 'mine';
+        const c = pick(candidates, slot.px * r);
+        for (const text of [`${r}×`, `${Math.round(slot.px * r)} px`, file(c.url)]) {
+          const td = document.createElement('td'); td.textContent = text; tr.append(td);
+        }
+        return tr;
+      }));
+      const note = document.getElementById('cache-note');
+      note.hidden = file(mine.url) === loaded;
+      note.textContent = `The rule says ${file(mine.url)}, but the browser kept ${loaded}: it already had a larger file and may reuse it instead of downloading a smaller one.`;
+
+      const header = doc.querySelector('.site-header');
+      const links = [...header.querySelectorAll('nav a')];
+      const rows = new Set(links.map(a => Math.round(a.getBoundingClientRect().top))).size;
+      const speakers = [...doc.querySelectorAll('.speakers li')];
+      const perRow = speakers.filter(s => Math.round(s.getBoundingClientRect().top) === Math.round(speakers[0].getBoundingClientRect().top)).length;
+      const venue = win.getComputedStyle(doc.querySelector('.venue')).gridTemplateColumns.split(' ').length;
+      const avatar = file(doc.querySelector('.speakers img').currentSrc || '') || 'not loaded yet (lazy)';
+      const facts = [
+        ['Header', win.getComputedStyle(header).position === 'sticky' ? 'Sticks to the top' : 'Scrolls away with the page'],
+        ['Section links', rows === 1 ? 'One row' : `Wrap onto ${rows} rows`],
+        ['Speakers', `${perRow} per row`],
+        ['Speaker photo', `${avatar} (x descriptors: 1× → 160, 2× → 320)`],
+        ['Venue', venue > 1 ? 'Text and map side by side' : 'Map below the text'],
+      ];
+      document.getElementById('layout').replaceChildren(...facts.flatMap(([k, v]) => {
+        const dt = document.createElement('dt'), dd = document.createElement('dd');
+        dt.textContent = k; dd.textContent = v; return [dt, dd];
+      }));
+    }
+
+    range.addEventListener('input', () => setWidth(+range.value));
+    document.querySelector('.presets').addEventListener('click', e => {
+      const b = e.target.closest('button');
+      if (b) setWidth(+b.dataset.w);
+    });
+    iframe.addEventListener('load', () => {
+      iframe.contentDocument.addEventListener('load', e => { if (e.target.closest?.('.hero')) report(); }, true);
+      report();
+    });
+    new ResizeObserver(fit).observe(frame);
+    setWidth(360);
+  </script>
+</body>
+</html>
