@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>38-1 Manifest builder</title>
+  <style>
+    .stage { inline-size: min(1060px, 100%); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 14px; align-items: start; }
+    .stage > * { min-width: 0; }
+    .fields { display: grid; gap: 10px; }
+    .fields label, fieldset { font-size: 14px; }
+    .field { display: grid; gap: 4px; }
+    .field input, .field select { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .colors { display: flex; gap: 16px; }
+    .colors label { display: flex; gap: 8px; align-items: center; }
+    .colors input { inline-size: 40px; block-size: 28px; padding: 0; border: 0; background: none; }
+    fieldset { border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px 10px; margin: 0; display: grid; gap: 4px; }
+    legend { font-weight: 600; padding: 0 4px; }
+    pre.code { font-size: 12px; }
+    .checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
+    .checks li { display: grid; grid-template-columns: 1.4em 1fr; }
+    .checks code { font-size: 12px; }
+    .previews { display: grid; gap: 14px; }
+    .mock { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .dialog { padding: 14px; display: grid; grid-template-columns: 48px 1fr; gap: 6px 12px; align-items: center; }
+    .dialog img, .splash img { inline-size: 48px; block-size: 48px; }
+    .dialog strong { font-size: 16px; }
+    .dialog small { color: var(--muted); grid-column: 2; }
+    .dialog .buttons { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; }
+    .dialog span.btn { padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border); font-size: 13px; }
+    .dialog span.btn.main { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .window .bar { display: flex; align-items: center; gap: 8px; padding: 6px 10px; font-size: 13px; }
+    .window .bar img { inline-size: 16px; block-size: 16px; }
+    .window .body { block-size: 70px; padding: 10px; font-size: 13px; color: var(--muted); }
+    .splash { block-size: 170px; display: grid; place-content: center; justify-items: center; gap: 10px; font-weight: 600; }
+    .splash img { inline-size: 72px; block-size: 72px; }
+    .none { padding: 14px; font-size: 14px; color: var(--muted); margin: 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <section class="panel" aria-labelledby="f-h">
+      <h2 class="label" id="f-h">Manifest fields</h2>
+      <div class="fields" id="form">
+        <label class="field">name <input type="text" name="name" value="Packing List"></label>
+        <label class="field">short_name <input type="text" name="short_name" value="Packing"></label>
+        <label class="field">start_url <input type="text" name="start_url" value="./"></label>
+        <label class="field">display
+          <select name="display">
+            <option>fullscreen</option>
+            <option selected>standalone</option>
+            <option>minimal-ui</option>
+            <option>browser</option>
+          </select>
+        </label>
+        <div class="colors">
+          <label>theme_color <input type="color" name="theme_color" value="#0f766e"></label>
+          <label>background_color <input type="color" name="background_color" value="#f0fdfa"></label>
+        </div>
+        <fieldset>
+          <legend>icons</legend>
+          <label><input type="checkbox" name="icon" value="192" checked> icon-192.png (192×192)</label>
+          <label><input type="checkbox" name="icon" value="512" checked> icon-512.png (512×512)</label>
+          <label><input type="checkbox" name="icon" value="maskable" checked> icon-maskable-512.png (maskable)</label>
+          <label><input type="checkbox" name="icon" value="svg"> icon.svg (any size)</label>
+        </fieldset>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="j-h">
+      <h2 class="label" id="j-h">manifest.webmanifest</h2>
+      <pre class="code" id="json"></pre>
+      <h2 class="label" id="c-h" style="margin-top: 14px">Can Chromium install it?</h2>
+      <ul class="checks" id="checks" aria-labelledby="c-h"></ul>
+    </section>
+
+    <section class="previews" aria-labelledby="p-h">
+      <h2 class="label" id="p-h">How it shows up</h2>
+      <div class="mock" id="dialog"></div>
+      <div class="mock window" id="window"></div>
+      <div class="mock splash" id="splash"></div>
+    </section>
+  </div>
+
+  <script>
+    const ICONS = {
+      192: { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
+      512: { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
+      maskable: { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      svg: { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml' },
+    };
+    const APP = '02-app/';   // the icon files live next to the example app
+    const form = document.getElementById('form');
+    const $ = (id) => document.getElementById(id);
+
+    function manifest() {
+      const f = (name) => form.querySelector(`[name="${name}"]`).value.trim();
+      const m = {};
+      for (const key of ['name', 'short_name', 'start_url']) if (f(key)) m[key] = f(key);
+      m.display = f('display');
+      m.theme_color = f('theme_color');
+      m.background_color = f('background_color');
+      const icons = [...form.querySelectorAll('[name="icon"]:checked')].map((box) => ICONS[box.value]);
+      if (icons.length) m.icons = icons;
+      return m;
+    }
+
+    // The same checks Chromium 141 reported through Page.getInstallabilityErrors (no service worker needed)
+    function checks(m) {
+      const big = (m.icons || []).some((icon) => (icon.purpose || 'any').split(' ').includes('any')
+        && (icon.sizes === 'any' || icon.sizes.split(' ').some((s) => parseInt(s, 10) >= 144)));
+      return [
+        [Boolean(m.name || m.short_name), 'name or short_name', 'manifest-missing-name-or-short-name'],
+        [Boolean(m.start_url), 'start_url', 'start-url-not-valid'],
+        [m.display !== 'browser', 'display is not browser', 'manifest-display-not-supported'],
+        [big, 'an icon of at least 144 px, purpose "any" (PNG, or SVG with sizes "any")', 'manifest-missing-suitable-icon'],
+        [location.protocol === 'https:' || location.hostname === 'localhost', 'served over HTTPS (or localhost)', 'not-from-secure-origin'],
+      ];
+    }
+
+    function img(src, size) {
+      const el = document.createElement('img');
+      el.src = APP + src;
+      el.alt = '';
+      el.width = el.height = size;
+      return el;
+    }
+    const anyIcon = (m) => (m.icons || []).find((icon) => !icon.purpose) || null;
+
+    function render() {
+      const m = manifest();
+      $('json').textContent = JSON.stringify(m, null, 2);
+      const results = checks(m);
+      $('checks').replaceChildren(...results.map(([ok, text, id]) => {
+        const li = document.createElement('li');
+        li.className = ok ? 'good' : 'bad';
+        const mark = document.createElement('span');
+        mark.textContent = ok ? '✓' : '✗';
+        mark.setAttribute('aria-hidden', 'true');
+        const body = document.createElement('span');
+        body.append(text);
+        if (!ok) { const code = document.createElement('code'); code.textContent = ` ${id}`; body.append(code); }
+        li.append(mark, body);
+        return li;
+      }));
+      const installable = results.every(([ok]) => ok);
+      const icon = anyIcon(m);
+      const title = m.name || m.short_name || location.host;
+
+      // Install dialog
+      const dialog = $('dialog');
+      if (installable) {
+        const strong = document.createElement('strong');
+        strong.textContent = `Install ${title}?`;
+        const small = document.createElement('small');
+        small.textContent = location.host || 'localhost';
+        const buttons = document.createElement('div');
+        buttons.className = 'buttons';
+        for (const [text, cls] of [['Cancel', 'btn'], ['Install', 'btn main']]) {
+          const span = document.createElement('span');
+          span.className = cls;
+          span.textContent = text;
+          buttons.append(span);
+        }
+        dialog.className = 'mock dialog';
+        dialog.replaceChildren(icon ? img(icon.src, 48) : document.createElement('span'), strong, small, buttons);
+      } else {
+        dialog.className = 'mock';
+        const p = document.createElement('p');
+        p.className = 'none';
+        p.textContent = 'No install prompt: the browser only offers to open the page as a shortcut.';
+        dialog.replaceChildren(p);
+      }
+
+      // Standalone window with the theme colour in the title bar
+      const win = $('window');
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      bar.style.background = m.display === 'browser' ? 'var(--surface)' : m.theme_color;
+      bar.style.color = m.display === 'browser' ? 'var(--fg)' : '#fff';
+      if (icon) bar.append(img(icon.src, 16));
+      bar.append(m.display === 'browser' ? `${location.host}/… (a normal tab)` : `${title}${m.display === 'minimal-ui' ? '   ← ⟳ (minimal controls)' : ''}`);
+      const body = document.createElement('div');
+      body.className = 'body';
+      body.textContent = { fullscreen: 'fullscreen: no title bar at all', standalone: 'standalone: own window, no address bar', 'minimal-ui': 'minimal-ui: own window with back and reload', browser: 'browser: opens in a tab' }[m.display];
+      win.replaceChildren(bar, body);
+
+      // Splash screen (Android builds it from name, background_color and the icon)
+      const splash = $('splash');
+      splash.style.background = m.background_color;
+      splash.style.color = '#1c1917';
+      const name = document.createElement('span');
+      name.textContent = title;
+      splash.replaceChildren(...(icon ? [img(icon.src, 72)] : []), name);
+    }
+
+    form.addEventListener('input', render);
+    form.addEventListener('change', render);
+    render();
+  </script>
+</body>
+</html>

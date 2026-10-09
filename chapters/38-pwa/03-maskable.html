@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>38-3 Maskable icons</title>
+  <style>
+    .stage { inline-size: min(860px, 100%); display: grid; gap: 14px; }
+    .row { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 16px 12px; }
+    .row figure { margin: 0; display: grid; justify-items: center; gap: 6px; }
+    .row figcaption { font-size: 12px; color: var(--muted); text-align: center; }
+    .icon { position: relative; inline-size: 96px; block-size: 96px; }
+    .icon .ghost { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; opacity: 0; transition: opacity .2s; }
+    .show-ghost .icon .ghost { opacity: .25; }
+    .icon .masked { position: absolute; inset: 0; overflow: hidden; display: grid; place-items: center; }
+    .icon .masked img { inline-size: 100%; block-size: 100%; display: block; }
+    /* A launcher shrinks a non-maskable icon onto a white plate */
+    .icon .masked.plate { background: #fff; }
+    .icon .masked.plate img { inline-size: 70%; block-size: 70%; }
+    .icon .safe { position: absolute; inset: 10%; border-radius: 50%; border: 2px dashed #f43f5e; pointer-events: none; display: none; }
+    .show-safe .icon .safe { display: block; }
+    .mask-none { border-radius: 0; }
+    .mask-circle { border-radius: 50%; }
+    .mask-squircle { border-radius: 32%; }
+    .mask-rounded { border-radius: 18%; }
+    .mask-teardrop { border-radius: 50% 50% 50% 14%; }
+    .mask-pebble { border-radius: 46% 54% 42% 58% / 52% 44% 56% 48%; }
+    h2.label { margin: 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control"><input type="checkbox" id="safe" checked> Show the safe zone (a circle 80% wide)</label>
+    <label class="control"><input type="checkbox" id="ghost"> Show what gets cut off</label>
+  </div>
+  <div class="stage" id="stage">
+    <section class="panel" aria-labelledby="m-h">
+      <h2 class="label" id="m-h">purpose: "maskable" · full-bleed artwork, glyph inside the safe zone</h2>
+      <div class="row" data-src="02-app/icon-maskable-512.png" data-kind="maskable"></div>
+    </section>
+    <section class="panel" aria-labelledby="a-h">
+      <h2 class="label" id="a-h">purpose: "any" · used as is, then shrunk onto a plate by launchers that need a mask</h2>
+      <div class="row" data-src="02-app/icon-512.png" data-kind="any"></div>
+    </section>
+    <section class="panel" aria-labelledby="w-h">
+      <h2 class="label" id="w-h">Wrong: a logo that fills the canvas, declared as maskable</h2>
+      <div class="row" data-src="logo-edge.svg" data-kind="maskable"></div>
+    </section>
+  </div>
+
+  <script>
+    const MASKS = [['none', 'No mask'], ['circle', 'Circle'], ['squircle', 'Squircle'], ['rounded', 'Rounded square'], ['teardrop', 'Teardrop'], ['pebble', 'Pebble']];
+    for (const row of document.querySelectorAll('.row')) {
+      const { src, kind } = row.dataset;
+      for (const [mask, label] of MASKS) {
+        const figure = document.createElement('figure');
+        const icon = document.createElement('div');
+        icon.className = 'icon';
+        const ghost = document.createElement('img');
+        ghost.className = 'ghost';
+        ghost.src = src;
+        ghost.alt = '';
+        const masked = document.createElement('div');
+        // "No mask" shows the file itself; every other shape crops it like a launcher would
+        masked.className = `masked mask-${mask}${kind === 'any' && mask !== 'none' ? ' plate' : ''}`;
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = `${label} mask`;
+        masked.append(img);
+        const safe = document.createElement('span');
+        safe.className = 'safe';
+        icon.append(ghost, masked, safe);
+        const caption = document.createElement('figcaption');
+        caption.textContent = label;
+        figure.append(icon, caption);
+        row.append(figure);
+      }
+    }
+    const stage = document.getElementById('stage');
+    const sync = () => {
+      stage.classList.toggle('show-safe', document.getElementById('safe').checked);
+      stage.classList.toggle('show-ghost', document.getElementById('ghost').checked);
+    };
+    document.getElementById('safe').addEventListener('change', sync);
+    document.getElementById('ghost').addEventListener('change', sync);
+    sync();
+  </script>
+</body>
+</html>

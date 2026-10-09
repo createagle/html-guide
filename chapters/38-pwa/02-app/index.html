@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="description" content="A packing list that works offline and can be installed.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Packing List</title>
+  <style>
+    .stage { inline-size: min(440px, 100%); display: grid; gap: 14px; }
+    header { display: flex; align-items: center; gap: 12px; }
+    header img { inline-size: 44px; block-size: 44px; }
+    header h1 { margin: 0; font-size: 1.5rem; }
+    form { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
+    form label { display: grid; gap: 4px; font-size: 14px; flex: 1; }
+    input[type="text"] { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+    button { padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); cursor: pointer; }
+    button.primary { background: #0f766e; border-color: #0f766e; color: #fff; font-weight: 600; }
+    #items { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+    #items li { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; }
+    #items label { flex: 1; display: flex; gap: 10px; align-items: center; }
+    #items input:checked + span { text-decoration: line-through; color: var(--muted); }
+    #items button { padding: 2px 8px; font-size: 13px; }
+    dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 14px; }
+    dt { color: var(--muted); }
+    dd { margin: 0; }
+    .update { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+    .update p { margin: 0; }
+  </style>
+</head>
+<body class="demo">
+  <main class="stage">
+    <header>
+      <img src="icon.svg" alt="" width="44" height="44">
+      <h1>Packing List</h1>
+    </header>
+
+    <form id="add">
+      <label>Add an item <input type="text" name="item" autocomplete="off" required></label>
+      <button type="submit" class="primary">Add</button>
+    </form>
+    <ul id="items"></ul>
+
+    <section class="panel" aria-labelledby="status-h">
+      <h2 class="label" id="status-h">Status</h2>
+      <dl>
+        <dt>Connection</dt><dd id="online"></dd>
+        <dt>Service worker</dt><dd id="sw">Not supported</dd>
+        <dt>Cached files</dt><dd id="cached">–</dd>
+        <dt>Running as</dt><dd id="mode"></dd>
+      </dl>
+    </section>
+
+    <div class="panel update" id="update" hidden>
+      <p>A new version is ready.</p>
+      <button type="button" class="primary" id="reload">Reload</button>
+    </div>
+    <button type="button" class="primary" id="install" hidden>Install Packing List</button>
+
+    <p><a href="tips.html">Packing tips</a> (not saved for offline use until you open it once)</p>
+  </main>
+
+  <script>
+    // ----- The list, kept in localStorage -----
+    const KEY = 'packing-list';
+    const list = document.getElementById('items');
+    let items;
+    try { items = JSON.parse(localStorage.getItem(KEY)) || null; } catch { items = null; }
+    items ??= [{ text: 'Tent', done: false }, { text: 'Sleeping bag', done: true }, { text: 'Headlamp', done: false }];
+    const save = () => { try { localStorage.setItem(KEY, JSON.stringify(items)); } catch { /* private mode: keep it in memory */ } };
+
+    function render() {
+      list.replaceChildren(...items.map((item, i) => {
+        const li = document.createElement('li');
+        const label = document.createElement('label');
+        const box = document.createElement('input');
+        box.type = 'checkbox';
+        box.checked = item.done;
+        box.addEventListener('change', () => { item.done = box.checked; save(); });
+        const span = document.createElement('span');
+        span.textContent = item.text;
+        label.append(box, span);
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.textContent = 'Remove';
+        remove.setAttribute('aria-label', `Remove ${item.text}`);
+        remove.addEventListener('click', () => { items.splice(i, 1); save(); render(); });
+        li.append(label, remove);
+        return li;
+      }));
+    }
+    document.getElementById('add').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const input = e.target.elements.item;
+      items.push({ text: input.value.trim(), done: false });
+      input.value = '';
+      save();
+      render();
+    });
+    render();
+
+    // ----- Status -----
+    const online = document.getElementById('online');
+    const showOnline = () => { online.textContent = navigator.onLine ? 'Online' : 'Offline'; };
+    addEventListener('online', showOnline);
+    addEventListener('offline', showOnline);
+    showOnline();
+
+    const standalone = matchMedia('(display-mode: standalone)');
+    const showMode = () => { document.getElementById('mode').textContent = standalone.matches ? 'Installed app (standalone)' : 'Browser tab'; };
+    standalone.addEventListener('change', showMode);
+    showMode();
+
+    async function showCache() {
+      if (!('caches' in window)) return;
+      let count = 0;
+      for (const key of await caches.keys()) count += (await (await caches.open(key)).keys()).length;
+      document.getElementById('cached').textContent = `${count}`;
+    }
+
+    // ----- Service worker -----
+    if ('serviceWorker' in navigator) {
+      const sw = document.getElementById('sw');
+      const describe = (reg) => {
+        const worker = reg.active || reg.waiting || reg.installing;
+        sw.textContent = worker ? `${worker.state}${navigator.serviceWorker.controller ? ', controls this page' : ''}` : 'Not registered';
+      };
+      navigator.serviceWorker.register('sw.js').then((reg) => {
+        describe(reg);
+        const offerUpdate = () => { if (reg.waiting && navigator.serviceWorker.controller) document.getElementById('update').hidden = false; };
+        offerUpdate();
+        reg.addEventListener('updatefound', () => {
+          reg.installing.addEventListener('statechange', () => { describe(reg); offerUpdate(); showCache(); });
+        });
+        document.getElementById('reload').addEventListener('click', () => reg.waiting?.postMessage('skip-waiting'));
+      });
+      let reloading = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (document.getElementById('update').hidden || reloading) {
+          navigator.serviceWorker.ready.then(describe);
+          showCache();
+          return;
+        }
+        reloading = true;
+        location.reload();
+      });
+      navigator.serviceWorker.ready.then((reg) => { describe(reg); showCache(); });
+    }
+
+    // ----- Install button (Chromium browsers fire beforeinstallprompt) -----
+    let deferred;
+    const install = document.getElementById('install');
+    addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferred = e;
+      install.hidden = false;
+    });
+    install.addEventListener('click', async () => {
+      install.hidden = true;
+      await deferred?.prompt();
+      deferred = null;
+    });
+    addEventListener('appinstalled', () => { install.hidden = true; });
+  </script>
+</body>
+</html>

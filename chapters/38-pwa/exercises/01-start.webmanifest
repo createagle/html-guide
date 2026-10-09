@@ -1,0 +1,7 @@
+{
+  "short_name": "",
+  "display": "browser",
+  "icons": [
+    { "src": "icons/timer-96.png", "sizes": "96x96", "type": "image/png" }
+  ]
+}

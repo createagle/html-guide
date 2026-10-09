@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Trail Conditions · Exercise 38-2 (start)</title>
+  <style>
+    .stage { inline-size: min(420px, 100%); display: grid; gap: 14px; }
+    .stage h1 { margin: 0; font-size: 1.4rem; }
+    dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; }
+    dt { color: var(--muted); }
+    dd { margin: 0; font-weight: 600; }
+    .sw { font-size: 13px; color: var(--muted); margin: 0; }
+  </style>
+</head>
+<body class="demo">
+  <main class="stage">
+    <h1 id="title">Trail conditions today</h1>
+    <div class="panel">
+      <dl id="conditions"></dl>
+    </div>
+    <p id="other"></p>
+    <p class="sw" id="sw" role="status"></p>
+  </main>
+  <script>
+    const SW = '02-start-sw.js';
+    const tomorrow = new URLSearchParams(location.search).get('day') === 'tomorrow';
+    const data = tomorrow
+      ? { Weather: 'Rain from noon', Trail: 'Muddy on the north side', Wind: '35 km/h gusts' }
+      : { Weather: 'Sunny, 14 °C', Trail: 'Dry', Wind: '10 km/h' };
+    document.getElementById('title').textContent = `Trail conditions ${tomorrow ? 'tomorrow' : 'today'}`;
+    document.getElementById('conditions').replaceChildren(...Object.entries(data).flatMap(([k, v]) => {
+      const dt = document.createElement('dt'); dt.textContent = k;
+      const dd = document.createElement('dd'); dd.textContent = v;
+      return [dt, dd];
+    }));
+    const other = document.createElement('a');
+    other.href = tomorrow ? location.pathname : '?day=tomorrow';
+    other.textContent = tomorrow ? 'Back to today' : 'See tomorrow’s forecast';
+    document.getElementById('other').append(other);
+
+    // The service worker only controls this page (its scope is the page's own address)
+    if ('serviceWorker' in navigator) {
+      const status = document.getElementById('sw');
+      navigator.serviceWorker.register(SW, { scope: `./${SW.replace('-sw.js', '')}` })
+        .then(() => navigator.serviceWorker.ready)
+        .then(() => { status.textContent = `Service worker ready${navigator.serviceWorker.controller ? ' and controlling this page' : ' (reload to let it control the page)'}`; })
+        .catch((e) => { status.textContent = `Service worker failed: ${e.message}`; });
+    }
+  </script>
+</body>
+</html>

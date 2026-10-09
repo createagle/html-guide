@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="01-start.webmanifest">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Trail Timer · Exercise 38-1 (start)</title>
+  <style>
+    .stage { inline-size: min(440px, 100%); display: grid; gap: 14px; }
+    .timer { text-align: center; }
+    .timer output { display: block; font: 600 3rem/1.2 var(--mono); margin-block: 8px 12px; }
+    .timer button { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--fg); cursor: pointer; }
+    .timer button.primary { background: #c2410c; border-color: #c2410c; color: #fff; font-weight: 600; }
+    dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 0 0 10px; font-size: 13px; }
+    dt { color: var(--muted); font-family: var(--mono); }
+    dd { margin: 0; overflow-wrap: anywhere; }
+    .checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 14px; }
+  </style>
+</head>
+<body class="demo">
+  <main class="stage">
+    <section class="panel timer" aria-labelledby="t-h">
+      <h1 class="label" id="t-h">Trail Timer</h1>
+      <output id="time" aria-live="off">00:00</output>
+      <button type="button" class="primary" id="toggle">Start</button>
+      <button type="button" id="reset">Reset</button>
+    </section>
+    <section class="panel" aria-labelledby="m-h">
+      <h2 class="label" id="m-h">Manifest, as the browser reads it</h2>
+      <dl id="fields"></dl>
+      <ul class="checks" id="checks"></ul>
+    </section>
+  </main>
+  <script>
+    // The timer
+    const out = document.getElementById('time');
+    const toggle = document.getElementById('toggle');
+    let started = 0, elapsed = 0, tick;
+    const show = () => {
+      const s = Math.floor((elapsed + (tick ? Date.now() - started : 0)) / 1000);
+      out.textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+    };
+    toggle.addEventListener('click', () => {
+      if (tick) { elapsed += Date.now() - started; clearInterval(tick); tick = null; toggle.textContent = 'Start'; }
+      else { started = Date.now(); tick = setInterval(show, 250); toggle.textContent = 'Stop'; }
+      show();
+    });
+    document.getElementById('reset').addEventListener('click', () => { elapsed = 0; started = Date.now(); show(); });
+
+    // A small stand-in for DevTools > Application > Manifest: load the manifest and check the install criteria
+    (async () => {
+      const link = document.querySelector('link[rel="manifest"]');
+      const m = await (await fetch(link.href)).json();
+      const fields = document.getElementById('fields');
+      for (const key of ['name', 'short_name', 'start_url', 'display', 'theme_color', 'icons']) {
+        const dt = document.createElement('dt');
+        dt.textContent = key;
+        const dd = document.createElement('dd');
+        dd.textContent = key === 'icons' ? (m.icons || []).map((i) => `${i.src} (${i.sizes}${i.purpose ? `, ${i.purpose}` : ''})`).join(', ') || '–' : m[key] || '–';
+        fields.append(dt, dd);
+      }
+      const bigIcon = (m.icons || []).some((i) => (i.purpose || 'any').split(' ').includes('any') && i.sizes.split(' ').some((s) => s === 'any' || parseInt(s, 10) >= 144));
+      const checks = [
+        [Boolean(m.name || m.short_name), 'name or short_name'],
+        [Boolean(m.start_url), 'start_url'],
+        [m.display && m.display !== 'browser', 'display is standalone, fullscreen or minimal-ui'],
+        [bigIcon, 'an icon of at least 144 px with purpose "any"'],
+      ];
+      document.getElementById('checks').replaceChildren(...checks.map(([ok, text]) => {
+        const li = document.createElement('li');
+        li.className = ok ? 'good' : 'bad';
+        li.textContent = `${ok ? '✓' : '✗'} ${text}`;
+        return li;
+      }));
+    })();
+  </script>
+</body>
+</html>
