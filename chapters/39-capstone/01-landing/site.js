@@ -72,14 +72,6 @@ function showSummary(problems) {
   errors.focus();
 }
 
-// A fragment link scrolls to the field but does not focus it
-errors.addEventListener('click', e => {
-  const link = e.target.closest('a');
-  if (!link) return;
-  e.preventDefault();
-  document.getElementById(link.hash.slice(1)).focus();
-});
-
 form.addEventListener('change', e => {
   if (e.target.name === 'attend') extras.disabled = e.target.value === 'online';
   if (form.dataset.checked) check();
