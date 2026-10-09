@@ -40,7 +40,7 @@
     </header>
 
     <form id="add">
-      <label>Add an item <input type="text" name="item" autocomplete="off" required></label>
+      <label>Add an item <input type="text" name="entry" autocomplete="off" required></label>
       <button type="submit" class="primary">Add</button>
     </form>
     <ul id="items"></ul>
@@ -95,7 +95,7 @@
     }
     document.getElementById('add').addEventListener('submit', (e) => {
       e.preventDefault();
-      const input = e.target.elements.item;
+      const input = e.target.elements.entry;
       items.push({ text: input.value.trim(), done: false });
       input.value = '';
       save();
