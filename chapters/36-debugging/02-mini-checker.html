@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>36-2 A tiny HTML checker</title>
+  <style>
+    .stage { inline-size: min(1000px, 100%); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 14px; align-items: start; }
+    .stage > * { min-width: 0; }
+    textarea { display: block; inline-size: 100%; block-size: 34em; font: 13px/1.55 var(--mono); padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); resize: vertical; tab-size: 2; white-space: pre; }
+    .summary { margin: 0 0 10px; font-weight: 600; }
+    ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+    ol button { inline-size: 100%; display: grid; grid-template-columns: 4.5em 1fr; gap: 6px; align-items: baseline; text-align: start; border: 0; border-radius: 6px; padding: 6px 8px; background: none; color: var(--fg); cursor: pointer; font-size: 14px; }
+    ol button:hover, ol button:focus-visible { background: var(--surface); }
+    .pos { font: 12px var(--mono); color: var(--muted); }
+    .rule { display: block; font: 12px var(--mono); color: var(--muted); }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <button type="button" data-load="broken">Load the page with mistakes</button>
+    <button type="button" data-load="fixed">Load the fixed page</button>
+  </div>
+  <div class="stage">
+    <div>
+      <label class="label" for="src">Source (edit it, the checker reruns as you type)</label>
+      <textarea id="src" spellcheck="false" aria-describedby="summary"></textarea>
+    </div>
+    <section class="panel" aria-labelledby="msgs-h">
+      <h2 class="label" id="msgs-h">Problems</h2>
+      <p class="summary" id="summary" role="status"></p>
+      <ol id="msgs"></ol>
+    </section>
+  </div>
+
+  <script>
+    const SAMPLES = {
+      broken: `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Spring Workshop</title>
+</head>
+<body>
+  <header>
+    <h1>Spring Workshop</h1>
+    <center>12 April · Room 4</center>
+  </header>
+  <main>
+    <p>Bring a laptop. <div class="note">Seats are limited.</div></p>
+    <h3>Schedule</h3>
+    <ul>
+      <li>10:00 Welcome
+      <li>10:30 <b><i>Hands-on</b></i>
+    </ul>
+    <img src="room.jpg">
+    <form>
+      <label for="mail">Email</label>
+      <input type="email" id="email" name="email">
+      <a href="/terms"><button type="button">Terms</button></a>
+      <button type="submit" type="button">Sign up</button>
+    </form>
+    <p id="note">Questions? Ask us.<br></br></p>
+    <p id="note">See you there!</p>
+  </main>
+</body>
+</html>`,
+      fixed: `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Spring Workshop</title>
+</head>
+<body>
+  <header>
+    <h1>Spring Workshop</h1>
+    <p class="when">12 April · Room 4</p>
+  </header>
+  <main>
+    <p>Bring a laptop.</p>
+    <div class="note">Seats are limited.</div>
+    <h2>Schedule</h2>
+    <ul>
+      <li>10:00 Welcome
+      <li>10:30 <b><i>Hands-on</i></b>
+    </ul>
+    <img src="room.jpg" alt="Room 4 set up with long tables">
+    <form>
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email">
+      <a href="/terms">Terms</a>
+      <button type="submit">Sign up</button>
+    </form>
+    <p id="questions">Questions? Ask us.</p>
+    <p id="see-you">See you there!</p>
+  </main>
+</body>
+</html>`,
+    };
+
+    const VOID = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr']);
+    // End tags the spec lets you leave out: closing them implicitly is not an error
+    const OPTIONAL_END = new Set(['html', 'head', 'body', 'p', 'li', 'dt', 'dd', 'option', 'optgroup', 'tr', 'td', 'th', 'thead', 'tbody', 'tfoot', 'colgroup', 'rt', 'rp']);
+    // Starting one of these inside an open <p> closes the paragraph
+    const CLOSES_P = new Set(['address', 'article', 'aside', 'blockquote', 'details', 'dialog', 'div', 'dl', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'main', 'menu', 'nav', 'ol', 'p', 'pre', 'section', 'table', 'ul']);
+    const SIBLING_CLOSES = { li: ['li'], dt: ['dt', 'dd'], dd: ['dt', 'dd'], option: ['option'], tr: ['tr', 'td', 'th'], td: ['td', 'th'], th: ['td', 'th'] };
+    const OBSOLETE = new Set(['center', 'font', 'big', 'tt', 'strike', 'marquee', 'frame', 'frameset', 'acronym', 'applet']);
+    const INTERACTIVE = new Set(['a', 'button']);
+    const RAW_TEXT = new Set(['script', 'style', 'textarea', 'title']);
+
+    function check(src) {
+      const problems = [];
+      const report = (rule, at, length, message) => problems.push({ rule, at, length, message });
+      const ids = new Map(), labels = [];
+      const stack = [];
+      let doctype = false, title = false, lastHeading = 0;
+      const token = /<!--[\s\S]*?-->|<!doctype[^>]*>|<\/([a-zA-Z][\w-]*)\s*>|<([a-zA-Z][\w-]*)((?:\s+[^\s"'>\/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?)*)\s*\/?>/gi;
+      let m;
+      while ((m = token.exec(src))) {
+        const at = m.index;
+        if (m[0].startsWith('<!--')) continue;
+        if (/^<!doctype/i.test(m[0])) { doctype = true; continue; }
+        if (m[1]) { endTag(m[1].toLowerCase(), at, m[0].length); continue; }
+        const name = m[2].toLowerCase();
+        const attrs = parseAttrs(m[3], at + 1 + m[2].length);
+        startTag(name, attrs, at, m[0].length);
+        if (RAW_TEXT.has(name)) {
+          const close = src.toLowerCase().indexOf(`</${name}`, token.lastIndex);
+          token.lastIndex = close < 0 ? src.length : close;
+        }
+      }
+      for (const el of stack) {
+        if (!OPTIONAL_END.has(el.name)) report('close-order', el.at, el.length, `Unclosed element <${el.name}>`);
+      }
+      if (!doctype) report('doctype', 0, 0, 'Missing <!doctype html> at the start');
+      if (!title) report('title', 0, 0, 'The document has no <title>');
+      for (const { value, at, length } of labels) {
+        if (!ids.has(value)) report('label-for', at, length, `<label for="${value}"> points to an id that does not exist`);
+      }
+      return problems.sort((a, b) => a.at - b.at);
+
+      function parseAttrs(text, offset) {
+        const attrs = new Map();
+        const re = /([^\s"'>\/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+        let a;
+        while ((a = re.exec(text))) {
+          const key = a[1].toLowerCase();
+          const at = offset + a.index;
+          if (attrs.has(key)) report('no-dup-attr', at, a[0].length, `Duplicate attribute "${key}"`);
+          else attrs.set(key, { value: a[2] ?? a[3] ?? a[4] ?? '', at, length: a[0].length });
+        }
+        return attrs;
+      }
+
+      function startTag(name, attrs, at, length) {
+        const top = stack.at(-1);
+        if (top?.name === 'p' && CLOSES_P.has(name)) {
+          if (name !== 'p') report('p-closed', at, length, `<${name}> cannot go inside <p>: the paragraph ends here`);
+          stack.pop();
+        } else if (top && SIBLING_CLOSES[name]?.includes(top.name)) {
+          stack.pop();
+        }
+        if (OBSOLETE.has(name)) report('obsolete', at, length, `<${name}> is obsolete: use CSS instead`);
+        if (INTERACTIVE.has(name)) {
+          const outer = stack.findLast((el) => INTERACTIVE.has(el.name));
+          if (outer && (name === 'button' || attrs.has('href') || outer.name === 'a')) {
+            report('nested-interactive', at, length, `<${name}> cannot go inside <${outer.name}>`);
+          }
+        }
+        if (name === 'html' && !attrs.has('lang')) report('html-lang', at, length, '<html> needs a lang attribute');
+        if (name === 'title') title = true;
+        if (name === 'img' && !attrs.has('alt')) report('img-alt', at, length, '<img> needs an alt attribute');
+        if (name === 'label' && attrs.has('for')) labels.push(attrs.get('for'));
+        const id = attrs.get('id');
+        if (id) {
+          if (ids.has(id.value)) report('no-dup-id', id.at, id.length, `Duplicate id "${id.value}"`);
+          else ids.set(id.value, id.at);
+        }
+        const level = /^h([1-6])$/.exec(name)?.[1];
+        if (level) {
+          if (level > lastHeading + 1) report('heading-level', at, length, `<h${level}> skips a level after <h${lastHeading || '–'}>`);
+          lastHeading = Number(level);
+        }
+        if (!VOID.has(name)) stack.push({ name, at, length });
+      }
+
+      function endTag(name, at, length) {
+        if (VOID.has(name)) {
+          report('void-end', at, length, `<${name}> is a void element and has no end tag`);
+          return;
+        }
+        const i = stack.findLastIndex((el) => el.name === name);
+        if (i < 0) {
+          report('close-order', at, length, `Stray end tag </${name}>`);
+          return;
+        }
+        for (const el of stack.slice(i + 1)) {
+          if (!OPTIONAL_END.has(el.name)) report('close-order', at, length, `</${name}> seen while <${el.name}> is still open`);
+        }
+        stack.length = i;
+      }
+    }
+
+    const src = document.getElementById('src');
+    const list = document.getElementById('msgs');
+    const summary = document.getElementById('summary');
+
+    function lineCol(at) {
+      const before = src.value.slice(0, at).split('\n');
+      return `${before.length}:${before.at(-1).length + 1}`;
+    }
+
+    function run() {
+      const problems = check(src.value);
+      summary.className = `summary ${problems.length ? 'bad' : 'good'}`;
+      summary.textContent = problems.length
+        ? `${problems.length} problem${problems.length === 1 ? '' : 's'}`
+        : 'No problems found';
+      list.replaceChildren(...problems.map((p) => {
+        const li = document.createElement('li');
+        const button = document.createElement('button');
+        button.type = 'button';
+        const pos = document.createElement('span');
+        pos.className = 'pos';
+        pos.textContent = lineCol(p.at);
+        const text = document.createElement('span');
+        const rule = document.createElement('span');
+        rule.className = 'rule';
+        rule.textContent = p.rule;
+        text.append(p.message, rule);
+        button.append(pos, text);
+        button.addEventListener('click', () => {
+          src.focus();
+          src.setSelectionRange(p.at, p.at + p.length);
+        });
+        li.append(button);
+        return li;
+      }));
+    }
+
+    let timer;
+    src.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(run, 250); });
+    for (const button of document.querySelectorAll('[data-load]')) {
+      button.addEventListener('click', () => { src.value = SAMPLES[button.dataset.load]; run(); });
+    }
+    src.value = SAMPLES.broken;
+    run();
+  </script>
+</body>
+</html>

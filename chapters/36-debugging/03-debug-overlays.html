@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>36-3 Debugging overlays</title>
+  <style>
+    .stage { inline-size: min(1000px, 100%); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); gap: 14px; align-items: start; }
+    .stage > * { min-width: 0; }
+    fieldset { border: 1px solid var(--border); border-radius: 10px; padding: 6px 14px 10px; margin: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; justify-content: center; }
+    legend { font-weight: 600; font-size: 14px; padding: 0 4px; }
+    fieldset .control { color: var(--fg); }
+    .swatch { inline-size: 10px; block-size: 10px; border-radius: 3px; display: inline-block; }
+    iframe { display: block; inline-size: 100%; block-size: 520px; border: 2px solid var(--border); border-radius: 10px; background: #fff; }
+    .report { display: grid; gap: 14px; }
+    .report section > .label { margin-block-end: 6px; }
+    .report ol, .report ul { margin: 0; padding-inline-start: 22px; font-size: 14px; display: grid; gap: 3px; }
+    .report code { font-size: 12px; }
+    .tag { font: 12px var(--mono); color: var(--muted); }
+    .empty { margin: 0; font-size: 14px; color: var(--muted); }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <fieldset id="toggles">
+      <legend>Overlays</legend>
+      <label class="control"><input type="checkbox" value="outline"> <span class="swatch" style="background:#64748b"></span> Outline every element</label>
+      <label class="control"><input type="checkbox" value="landmarks"> <span class="swatch" style="background:#c2410c"></span> Landmarks</label>
+      <label class="control"><input type="checkbox" value="headings"> <span class="swatch" style="background:#15803d"></span> Headings</label>
+      <label class="control"><input type="checkbox" value="tab"> <span class="swatch" style="background:#1d4ed8"></span> Tab order</label>
+      <label class="control"><input type="checkbox" value="names"> <span class="swatch" style="background:#7e22ce"></span> Accessible names</label>
+      <label class="control"><input type="checkbox" value="checks" checked> <span class="swatch" style="background:#dc2626"></span> Automated checks</label>
+    </fieldset>
+  </div>
+  <div class="stage">
+    <iframe id="frame" title="Sample page under inspection"></iframe>
+    <div class="report" id="report" aria-live="polite"></div>
+  </div>
+
+  <script>
+    const SAMPLE = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Ridge Runners</title>
+<style>
+  :root { color-scheme: light; }
+  body { margin: 0; font: 15px/1.5 system-ui, sans-serif; color: #1c1917; background: #fff; }
+  header, main, footer { padding: 12px 20px; }
+  header { display: flex; justify-content: space-between; align-items: center; background: #14532d; color: #fff; }
+  header a { color: #fff; }
+  nav a { margin-inline-start: 12px; }
+  h1 { margin: 0 0 4px; font-size: 1.6rem; }
+  h3 { margin: 16px 0 4px; }
+  .meta { color: #a8a29e; margin: 0 0 8px; }
+  form { display: flex; gap: 8px; margin: 12px 0; }
+  input { padding: 6px 8px; border: 1px solid #a8a29e; border-radius: 6px; }
+  button, .btn { display: inline-flex; align-items: center; padding: 6px 10px; border: 0; border-radius: 6px; background: #14532d; color: #fff; cursor: pointer; }
+  footer { border-top: 1px solid #e7e5e4; color: #78716c; font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <strong>Ridge Runners</strong>
+  <nav aria-label="Main"><a href="#runs">Runs</a><a href="#routes">Routes</a><a href="#join">Join</a></nav>
+</header>
+<main>
+  <h1>Ridge Runners</h1>
+  <h3 id="next">Next run</h3>
+  <p class="meta">Saturday 7:00 · Pine Gate car park</p>
+  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 90'%3E%3Crect width='320' height='90' fill='%23bae6fd'/%3E%3Cpath d='M0 90 70 30l50 40 60-55 70 60 70-35v50z' fill='%2316a34a'/%3E%3C/svg%3E" width="320" height="90">
+  <div class="btn">Share</div>
+  <form>
+    <input type="email" placeholder="Email for updates">
+    <button type="submit"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h10M8 4l4 4-4 4" stroke="currentColor" stroke-width="2" fill="none"/></svg></button>
+  </form>
+  <p>Questions? <a href="#contact" tabindex="3">Write to us</a></p>
+  <p id="next">Bring a headlamp in winter.</p>
+</main>
+<footer><p>© Ridge Runners running club</p></footer>
+<script>document.querySelector('.btn').addEventListener('click', (e) => { e.target.textContent = 'Link copied'; });<\/script>
+</body>
+</html>`;
+
+    const COLORS = { outline: '#64748b', landmarks: '#c2410c', headings: '#15803d', tab: '#1d4ed8', names: '#7e22ce', checks: '#dc2626' };
+    const frame = document.getElementById('frame');
+    const report = document.getElementById('report');
+    const toggles = [...document.querySelectorAll('#toggles input')];
+    let doc;
+
+    // ---------- What the overlays need to know about the page ----------
+    const visible = (el) => el.getClientRects().length > 0 && doc.defaultView.getComputedStyle(el).visibility !== 'hidden';
+    const text = (el) => el.textContent.replace(/\s+/g, ' ').trim();
+
+    // A simplified accessible name: enough for this page, not the full algorithm
+    function accessibleName(el) {
+      const by = el.getAttribute('aria-labelledby');
+      if (by) return [by.split(/\s+/).map((id) => text(doc.getElementById(id) || doc.createElement('i'))).join(' '), 'aria-labelledby'];
+      if (el.getAttribute('aria-label')) return [el.getAttribute('aria-label').trim(), 'aria-label'];
+      if (el.labels?.length) return [[...el.labels].map(text).join(' '), '<label>'];
+      if (el.localName === 'img') return el.hasAttribute('alt') ? [el.alt, 'alt'] : ['', 'no alt'];
+      if (['a', 'button', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(el.localName)) {
+        const clone = el.cloneNode(true);
+        clone.querySelectorAll('[aria-hidden="true"]').forEach((n) => n.remove());
+        if (text(clone)) return [text(clone), 'content'];
+      }
+      if (el.title) return [el.title, 'title'];
+      if (el.placeholder) return [el.placeholder, 'placeholder'];
+      return ['', 'nothing'];
+    }
+
+    const LANDMARKS = { header: 'banner', nav: 'navigation', main: 'main', footer: 'contentinfo', aside: 'complementary' };
+    function landmarks() {
+      return [...doc.querySelectorAll('header, nav, main, footer, aside, [role]')]
+        .filter((el) => el.getAttribute('role') || LANDMARKS[el.localName])
+        .map((el) => ({ el, label: `${el.getAttribute('role') || LANDMARKS[el.localName]}${el.getAttribute('aria-label') ? ` “${el.getAttribute('aria-label')}”` : ''}` }));
+    }
+
+    function headings() {
+      return [...doc.querySelectorAll('h1, h2, h3, h4, h5, h6')].map((el) => ({ el, level: Number(el.localName[1]), label: `h${el.localName[1]} ${text(el)}` }));
+    }
+
+    // Sequential focus order: positive tabindex values first (ascending), then everything else in source order
+    function tabOrder() {
+      const focusable = [...doc.querySelectorAll('a[href], button, input, select, textarea, [tabindex]')]
+        .filter((el) => !el.disabled && el.tabIndex >= 0 && visible(el));
+      const positive = focusable.filter((el) => el.tabIndex > 0).sort((a, b) => a.tabIndex - b.tabIndex);
+      return [...positive, ...focusable.filter((el) => el.tabIndex === 0)].map((el, i) => ({ el, label: `${i + 1}`, text: `<${el.localName}> ${accessibleName(el)[0] || '(no name)'}` }));
+    }
+
+    function names() {
+      return [...doc.querySelectorAll('a[href], button, input, select, textarea, img, [role="button"]')].map((el) => {
+        const [name, from] = accessibleName(el);
+        return { el, name, from, label: name ? `“${name}”` : '(no name)' };
+      });
+    }
+
+    function luminance(rgb) {
+      const [r, g, b] = rgb.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    }
+    const parse = (color) => color.match(/[\d.]+/g).map(Number);
+    function background(el) {
+      for (let node = el; node; node = node.parentElement) {
+        const c = parse(doc.defaultView.getComputedStyle(node).backgroundColor);
+        if (c.length === 3 || c[3] > 0) return c.slice(0, 3);
+      }
+      return [255, 255, 255];
+    }
+
+    // The same kinds of rules axe-core runs, in miniature
+    function checks() {
+      const found = [];
+      const add = (rule, el, message) => found.push({ rule, el, message });
+      if (!doc.documentElement.lang) add('html-has-lang', doc.documentElement, '<html> has no lang attribute');
+      for (const img of doc.querySelectorAll('img')) if (!img.hasAttribute('alt')) add('image-alt', img, 'Image has no alt attribute');
+      for (const el of doc.querySelectorAll('button, [role="button"]')) if (!accessibleName(el)[0]) add('button-name', el, 'Button has no accessible name');
+      for (const el of doc.querySelectorAll('a[href]')) if (!accessibleName(el)[0]) add('link-name', el, 'Link has no accessible name');
+      for (const el of doc.querySelectorAll('input:not([type="hidden"]), select, textarea')) if (!accessibleName(el)[0]) add('label', el, 'Form field has no accessible name');
+      let last = 0;
+      for (const { el, level } of headings()) {
+        if (last && level > last + 1) add('heading-order', el, `Heading jumps from h${last} to h${level}`);
+        last = level;
+      }
+      for (const el of doc.querySelectorAll('[tabindex]')) if (el.tabIndex > 0) add('tabindex', el, `tabindex="${el.getAttribute('tabindex')}" is greater than zero`);
+      for (const el of doc.body.querySelectorAll('*')) {
+        if (!visible(el) || ![...el.childNodes].some((n) => n.nodeType === Node.TEXT_NODE && n.data.trim())) continue;
+        const style = doc.defaultView.getComputedStyle(el);
+        const [a, b] = [luminance(parse(style.color).slice(0, 3)), luminance(background(el))];
+        const ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+        const size = parseFloat(style.fontSize), bold = Number(style.fontWeight) >= 700;
+        const need = size >= 24 || (bold && size >= 18.66) ? 3 : 4.5;
+        if (ratio < need) add('color-contrast', el, `Contrast ${ratio.toFixed(2)}:1, needs ${need}:1`);
+      }
+      return found.map((f, i) => ({ ...f, label: `${i + 1}` }));
+    }
+
+    // ---------- Drawing ----------
+    const OVERLAY_CSS = `
+      #dbg-layer { position: absolute; inset: 0 auto auto 0; pointer-events: none; z-index: 2147483647; }
+      #dbg-layer span { position: absolute; font: 600 11px/1 system-ui, sans-serif; color: #fff; padding: 3px 5px; border-radius: 4px; white-space: nowrap; transform: translateY(-60%); }
+      #dbg-layer .tab { transform: translate(-70%, -60%); }
+      #dbg-layer .names { transform: translateY(-30%); }
+      html.dbg-outline * { outline: 1px solid ${COLORS.outline}88; }
+      [data-dbg] { outline: 2px solid var(--dbg-color) !important; outline-offset: 1px; }`;
+
+    function draw() {
+      if (!doc?.body) return;
+      const on = Object.fromEntries(toggles.map((t) => [t.value, t.checked]));
+      doc.querySelectorAll('[data-dbg]').forEach((el) => { el.removeAttribute('data-dbg'); el.style.removeProperty('--dbg-color'); });
+      doc.getElementById('dbg-layer')?.remove();
+      doc.documentElement.classList.toggle('dbg-outline', on.outline);
+      if (!doc.getElementById('dbg-style')) {
+        const style = doc.createElement('style');
+        style.id = 'dbg-style';
+        style.textContent = OVERLAY_CSS;
+        doc.head.append(style);
+      }
+      const layer = doc.createElement('div');
+      layer.id = 'dbg-layer';
+      const view = doc.defaultView;
+      const mark = (kind, el, label) => {
+        el.setAttribute('data-dbg', kind);
+        el.style.setProperty('--dbg-color', COLORS[kind]);
+        const r = el.getBoundingClientRect();
+        const badge = doc.createElement('span');
+        badge.textContent = label;
+        badge.style.background = COLORS[kind];
+        // Tab numbers sit on the top-right corner and names under the element, so overlays can be combined
+        const x = kind === 'tab' ? r.right : r.left;
+        const y = kind === 'names' ? r.bottom : r.top;
+        badge.className = kind;
+        badge.style.left = `${Math.max(0, x + view.scrollX)}px`;
+        badge.style.top = `${Math.max(6, y + view.scrollY)}px`;
+        layer.append(badge);
+      };
+
+      const sections = [];
+      if (on.landmarks) {
+        const items = landmarks();
+        items.forEach((x) => mark('landmarks', x.el, x.label));
+        sections.push(['Landmarks', items.map((x) => x.label)]);
+      }
+      if (on.headings) {
+        const items = headings();
+        items.forEach((x) => mark('headings', x.el, `h${x.level}`));
+        sections.push(['Headings', items.map((x) => `${'  '.repeat(x.level - 1)}${x.label}`)]);
+      }
+      if (on.names) {
+        const items = names();
+        items.forEach((x) => mark('names', x.el, x.label));
+        sections.push(['Accessible names', items.map((x) => `<${x.el.localName}> ${x.label} — from ${x.from}`)]);
+      }
+      if (on.tab) {
+        const items = tabOrder();
+        items.forEach((x) => mark('tab', x.el, x.label));
+        sections.push(['Tab order', items.map((x) => x.text), 'ol']);
+      }
+      if (on.checks) {
+        const items = checks();
+        items.forEach((x) => mark('checks', x.el === doc.documentElement ? doc.body : x.el, x.label));
+        sections.push(['Automated checks', items.map((x) => [x.rule, x.message]), 'ol']);
+      }
+      doc.body.append(layer);
+      renderReport(sections);
+    }
+
+    function renderReport(sections) {
+      report.replaceChildren(...sections.map(([title, items, tag = 'ul']) => {
+        const section = document.createElement('section');
+        section.className = 'panel';
+        const h = document.createElement('h2');
+        h.className = 'label';
+        h.textContent = `${title} (${items.length})`;
+        section.append(h);
+        if (!items.length) {
+          const p = document.createElement('p');
+          p.className = 'empty';
+          p.textContent = 'Nothing found';
+          section.append(p);
+          return section;
+        }
+        const list = document.createElement(tag);
+        for (const item of items) {
+          const li = document.createElement('li');
+          if (Array.isArray(item)) {
+            const code = document.createElement('code');
+            code.textContent = item[0];
+            li.append(code, ` ${item[1]}`);
+          } else {
+            li.textContent = item.trim();
+            if (title === 'Headings') li.style.marginInlineStart = `${(item.length - item.trimStart().length) * 0.5}em`;
+          }
+          list.append(li);
+        }
+        section.append(list);
+        return section;
+      }));
+      if (!sections.length) {
+        const p = document.createElement('p');
+        p.className = 'empty';
+        p.textContent = 'Turn on an overlay to inspect the page.';
+        report.append(p);
+      }
+    }
+
+    frame.addEventListener('load', () => {
+      doc = frame.contentDocument;
+      draw();
+      new ResizeObserver(draw).observe(frame);
+      doc.addEventListener('click', () => requestAnimationFrame(draw));
+    });
+    for (const t of toggles) t.addEventListener('change', draw);
+    frame.srcdoc = SAMPLE;
+  </script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Coding Night · Exercise 36-1 (start)</title>
+  <style>
+    .stage { inline-size: min(560px, 100%); display: block; }
+    .card { border: 1px solid var(--border); border-radius: 12px; padding: 4px 20px 20px; }
+    .card img { display: block; inline-size: 100%; block-size: auto; border-radius: 8px; }
+    table { inline-size: 100%; border-collapse: collapse; margin-block: 8px; }
+    caption { text-align: start; color: var(--muted); font-size: 13px; caption-side: bottom; padding-block-start: 6px; }
+    th, td { text-align: start; padding: 6px 8px 6px 0; border-block-end: 1px solid var(--border); }
+    form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    input { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .register { display: inline-block; padding: 8px 14px; border-radius: 8px; background: var(--accent); color: var(--bg); text-decoration: none; font-weight: 600; border: 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <article class="card">
+      <h1>Coding Night <h2>Build a tiny web app in one evening</h2></h1>
+      <img src=night.svg alt=Laptops on a long table width="520" height="160">
+      <p>What to bring:
+        <ul>
+          <li>A laptop
+          <li>A charger
+        </ul>
+      </p>
+      <table>
+        <tr><th>Time</th><th>Session</th></tr>
+        <tr><td>18:00</td><td>Doors open</td></tr>
+        <tr><td>18:30</td><td>Team up and <b><i>build</b></i></td></tr>
+        <tr><td>21:00</td><td>Demos</td></tr>
+        All times are local.
+      </table>
+      <form>
+        <label for="nickname">Nickname</label>
+        <input type="text" id="nick" name="nick">
+        <a href="#register"><button type="button" class="register">Register</button></a>
+      </form>
+      <p id="note">Free entry.</br>Snacks provided.</p>
+      <p id="note">Questions? Ask at the front desk.</p>
+    </article>
+  </div>
+</body>
+</html>

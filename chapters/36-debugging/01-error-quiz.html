@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>36-1 Common errors self-test</title>
+  <style>
+    .stage { inline-size: min(760px, 100%); display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+    .stage > * { min-width: 0; }
+    textarea { inline-size: 100%; min-block-size: 7em; font: 13px/1.55 var(--mono); padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); resize: vertical; }
+    details.panel > summary { cursor: pointer; font-weight: 600; }
+    details.panel[open] > summary { margin-block-end: 12px; }
+    .answer { display: grid; gap: 14px; }
+    .answer section > .label { margin-block-end: 6px; }
+    .msgs { margin: 0; padding-inline-start: 20px; font-size: 14px; display: grid; gap: 4px; }
+    .msgs code { font-size: 12px; }
+    .none { margin: 0; font-size: 14px; }
+    select { max-inline-size: 100%; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <button type="button" id="prev" aria-label="Previous case">←</button>
+    <label class="control">Case <select id="pick"></select></label>
+    <button type="button" id="next" aria-label="Next case">→</button>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="src-h">
+      <h2 class="label" id="src-h">Source</h2>
+      <pre class="code" id="src"></pre>
+      <textarea id="own" aria-labelledby="src-h" spellcheck="false" hidden>&lt;p&gt;Edit me &lt;div&gt;and watch the tree&lt;/div&gt;&lt;/p&gt;</textarea>
+    </section>
+    <details class="panel" id="reveal">
+      <summary id="reveal-text">Show the answer</summary>
+      <div class="answer">
+        <section id="nu-box" aria-labelledby="nu-h">
+          <h3 class="label" id="nu-h">Nu Validator</h3>
+          <div id="nu"></div>
+        </section>
+        <section id="hv-box" aria-labelledby="hv-h">
+          <h3 class="label" id="hv-h">html-validate (recommended preset)</h3>
+          <div id="hv"></div>
+        </section>
+        <section aria-labelledby="tree-h">
+          <h3 class="label" id="tree-h">What the parser built</h3>
+          <pre class="code" id="tree"></pre>
+        </section>
+        <section id="fix-box" aria-labelledby="fix-h">
+          <h3 class="label" id="fix-h">A valid version</h3>
+          <pre class="code" id="fix"></pre>
+        </section>
+      </div>
+    </details>
+  </div>
+
+  <script>
+    // Messages copied from the Nu Html Checker (vnu 26.10.7) and html-validate 9.7.1 for each snippet.
+    const CASES = [
+      { title: 'Block inside a paragraph', src: '<p>Intro <div>Box</div></p>',
+        nu: ['No “p” element in scope but a “p” end tag seen.'],
+        hv: [['no-implicit-close', 'Element <p> is implicitly closed by adjacent <div>'], ['close-order', "Stray end tag '</p>'"]],
+        fix: '<div>\n  <p>Intro</p>\n  <div>Box</div>\n</div>' },
+      { title: 'Text directly in a table', src: '<table><tr><td>A</td></tr>Note</table>',
+        nu: ['Misplaced non-space characters inside a table.', 'Cannot recover after last error. Any further errors will be ignored.'],
+        hv: [['prefer-tbody', 'Prefer to wrap <tr> elements in <tbody>']],
+        fix: '<table>\n  <caption>Note</caption>\n  <tbody><tr><td>A</td></tr></tbody>\n</table>' },
+      { title: 'Link inside a link', src: '<a href="/a">One <a href="/b">Two</a></a>',
+        nu: ['Start tag “a” seen but an element of the same type was already open.', 'Stray end tag “a”.'],
+        hv: [['element-permitted-content', '<a> element is not permitted as a descendant of <a>']],
+        fix: '<a href="/a">One</a> <a href="/b">Two</a>' },
+      { title: 'Misnested inline tags', src: '<b><i>Bold italic</b> rest</i>',
+        nu: ['End tag “b” violates nesting rules.'],
+        hv: [['close-order', "Unclosed element '<i>'"], ['close-order', "End tag '</b>' seen but there were open elements"]],
+        fix: '<b><i>Bold italic</i></b><i> rest</i>' },
+      { title: 'Unquoted value with a space', src: '<img src=photo.jpg alt=A photo>',
+        nu: ['Attribute “photo” not allowed on element “img” at this point.'],
+        hv: [['attr-quotes', 'Attribute "src" using unquoted value'], ['attr-quotes', 'Attribute "alt" using unquoted value']],
+        fix: '<img src="photo.jpg" alt="A photo">' },
+      { title: 'Link inside a button', src: '<button type="button"><a href="/">Go</a></button>',
+        nu: ['The element “a” with the attribute “href” must not appear as a descendant of the “button” element.'],
+        hv: [['element-permitted-content', '<a> element is not permitted as a descendant of <button>']],
+        fix: '<a href="/" class="button">Go</a>' },
+      { title: 'Heading inside a heading', src: '<h1>Title<h2>Sub</h2></h1>',
+        nu: ['Heading cannot be a child of another heading.', 'Stray end tag “h1”.'],
+        hv: [['element-permitted-content', '<h2> element is not permitted as content under <h1>']],
+        fix: '<hgroup>\n  <h1>Title</h1>\n  <p>Sub</p>\n</hgroup>' },
+      { title: 'Duplicate id', src: '<div id="x">A</div><div id="x">B</div>',
+        nu: ['Duplicate ID “x”.'],
+        hv: [['no-dup-id', 'Duplicate ID "x"']],
+        fix: '<div id="x">A</div><div id="y">B</div>' },
+      { title: 'Label pointing at a missing id', src: '<label for="nope">Name</label> <input type="text" id="name">',
+        nu: ['The value of the “for” attribute of the “label” element must be the ID of a non-hidden form control.'],
+        hv: [],
+        fix: '<label for="name">Name</label> <input type="text" id="name">' },
+      { title: 'Image without alt', src: '<img src="map.png">',
+        nu: ['An “img” element must have an “alt” attribute, except under certain conditions. For details, consult guidance on providing text alternatives for images.'],
+        hv: [['wcag/h37', '<img> is missing required "alt" attribute']],
+        fix: '<img src="map.png" alt="Map of the venue">' },
+      { title: 'End tag on a void element', src: '<p>One<br></br>Two</p>',
+        nu: ['End tag “br”.'],
+        hv: [['void-content', 'End tag for <br> must be omitted']],
+        fix: '<p>One<br>Two</p>' },
+      { title: 'Unclosed element', src: '<div><span>Text</div>',
+        nu: ['End tag “div” seen, but there were open elements.', 'Unclosed element “span”.'],
+        hv: [['close-order', "Unclosed element '<span>'"], ['close-order', "End tag '</div>' seen but there were open elements"]],
+        fix: '<div><span>Text</span></div>' },
+      { title: 'List items without end tags', src: '<ul><li>One<li>Two</ul>',
+        nu: [],
+        hv: [['no-implicit-close', 'Element <li> is implicitly closed by sibling'], ['no-implicit-close', 'Element <li> is implicitly closed by parent </ul>']],
+        fix: '<ul><li>One</li><li>Two</li></ul>' },
+    ];
+
+    const $ = (id) => document.getElementById(id);
+    const pick = $('pick'), reveal = $('reveal'), own = $('own');
+    CASES.forEach((c, i) => pick.add(new Option(`${i + 1}. ${c.title}`, i)));
+    pick.add(new Option('Your own HTML', 'own'));
+
+    // An indented outline of the nodes the parser created, attributes included
+    function outline(parent, depth = 0, lines = []) {
+      for (const node of parent.childNodes) {
+        const pad = '  '.repeat(depth);
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const attrs = [...node.attributes].map((a) => ` ${a.name}="${a.value}"`).join('');
+          lines.push(`${pad}<${node.localName}${attrs}>`);
+          outline(node.content || node, depth + 1, lines);
+        } else if (node.nodeType === Node.TEXT_NODE) {
+          lines.push(`${pad}${JSON.stringify(node.data)}`);
+        } else if (node.nodeType === Node.COMMENT_NODE) {
+          lines.push(`${pad}<!--${node.data}-->`);
+        }
+      }
+      return lines;
+    }
+
+    function showTree(html) {
+      const body = new DOMParser().parseFromString(`<!DOCTYPE html><body>${html}`, 'text/html').body;
+      const lines = outline(body);
+      $('tree').textContent = lines.length ? lines.join('\n') : '(nothing)';
+    }
+
+    function list(box, items, render) {
+      box.replaceChildren();
+      if (!items.length) {
+        const p = document.createElement('p');
+        p.className = 'none good';
+        p.textContent = 'No errors';
+        box.append(p);
+        return;
+      }
+      const ul = document.createElement('ul');
+      ul.className = 'msgs';
+      for (const item of items) {
+        const li = document.createElement('li');
+        render(li, item);
+        ul.append(li);
+      }
+      box.append(ul);
+    }
+
+    function show() {
+      const mine = pick.value === 'own';
+      $('src').hidden = mine;
+      own.hidden = !mine;
+      for (const id of ['nu-box', 'hv-box', 'fix-box']) $(id).hidden = mine;
+      reveal.open = mine;
+      $('reveal-text').textContent = mine ? 'Result' : 'Show the answer';
+      if (mine) { showTree(own.value); return; }
+      const c = CASES[pick.value];
+      $('src').textContent = c.src;
+      list($('nu'), c.nu, (li, text) => { li.className = 'bad'; li.textContent = text; });
+      list($('hv'), c.hv, (li, [rule, text]) => {
+        const code = document.createElement('code');
+        code.textContent = rule;
+        li.append(code, ` ${text}`);
+      });
+      $('fix').textContent = c.fix;
+      showTree(c.src);
+    }
+
+    const step = (d) => {
+      const n = pick.options.length;
+      pick.selectedIndex = (pick.selectedIndex + d + n) % n;
+      show();
+    };
+    $('prev').addEventListener('click', () => step(-1));
+    $('next').addEventListener('click', () => step(1));
+    pick.addEventListener('change', show);
+    own.addEventListener('input', () => showTree(own.value));
+    show();
+  </script>
+</body>
+</html>
