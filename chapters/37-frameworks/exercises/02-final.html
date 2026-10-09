@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>Cart · Exercise 37-2 (final)</title>
+  <style>
+    .stage { inline-size: min(460px, 100%); display: block; }
+    .cart { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+    .item { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
+    .item h2 { font-size: 1rem; margin: 0; }
+    .qty label { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+    .qty input { inline-size: 4.5em; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .qty input:focus { outline: 3px solid var(--accent); outline-offset: 1px; }
+    .hint { grid-column: 1 / -1; margin: 0; font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <ul class="cart" id="cart"></ul>
+  </div>
+
+  <!-- The component: one cart row -->
+  <template id="cart-item">
+    <li class="item">
+      <h2 class="name">Product name</h2>
+      <div class="qty">
+        <label>Quantity
+          <input type="number" min="1" max="5" value="1" aria-describedby="hint">
+        </label>
+      </div>
+      <p class="hint" id="hint">You can order up to 5.</p>
+    </li>
+  </template>
+
+  <script>
+    const template = document.getElementById('cart-item');
+    let instances = 0;
+    // Like useId() in React and Vue: every instance gets its own prefix for the ids it uses
+    function CartItem(name) {
+      const uid = `cart-item-${++instances}`;
+      const row = template.content.cloneNode(true);
+      row.querySelector('.name').textContent = name;
+      for (const el of row.querySelectorAll('[id]')) el.id = `${uid}-${el.id}`;
+      for (const el of row.querySelectorAll('[aria-describedby]')) el.setAttribute('aria-describedby', `${uid}-${el.getAttribute('aria-describedby')}`);
+      return row;
+    }
+    const cart = document.getElementById('cart');
+    for (const name of ['Trail Tent 2', 'Down Sleeping Bag', 'Camp Stove']) cart.append(CartItem(name));
+  </script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>37-2 HTML to JSX</title>
+  <style>
+    .stage { inline-size: min(1040px, 100%); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; align-items: start; }
+    .stage > * { min-width: 0; }
+    textarea { display: block; inline-size: 100%; block-size: 22em; font: 13px/1.55 var(--mono); padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); resize: vertical; white-space: pre; tab-size: 2; }
+    pre.code { white-space: pre; overflow-x: auto; word-break: normal; min-block-size: 22em; font-size: 13px; }
+    .changes-h { margin: 14px 0 0; }
+    .changes { margin: 6px 0 0; padding-inline-start: 20px; font-size: 14px; display: grid; gap: 3px; }
+    .changes code { font-size: 12px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">Example
+      <select id="pick">
+        <option value="form">Signup form</option>
+        <option value="svg">SVG icon</option>
+        <option value="table">Table and comment</option>
+        <option value="choices">Select and textarea</option>
+      </select>
+    </label>
+  </div>
+  <div class="stage">
+    <div>
+      <label class="label" for="src">HTML (edit it)</label>
+      <textarea id="src" spellcheck="false"></textarea>
+    </div>
+    <section class="panel" aria-labelledby="out-h">
+      <h2 class="label" id="out-h">JSX</h2>
+      <pre class="code" id="out"></pre>
+      <h3 class="label changes-h" id="changes-h">What changed</h3>
+      <ul class="changes" id="changes" aria-labelledby="changes-h"></ul>
+    </section>
+  </div>
+
+  <script>
+    const EXAMPLES = {
+      form: `<form class="signup" onsubmit="save(event)">
+  <label for="email">Email</label>
+  <input type="email" id="email" value="ana@example.com" autocomplete="email" required>
+  <label><input type="checkbox" name="news" checked> Send me news</label>
+  <button class="primary" tabindex="0" style="margin-top: 8px; background-color: #2563eb">
+    Sign up
+  </button>
+</form>`,
+      svg: `<svg class="icon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+  <path d="M4 12h16M12 4v16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+</svg>`,
+      table: `<!-- Prices change every {season} -->
+<table>
+  <caption>Plans</caption>
+  <tr><th>Plan</th><th colspan="2">Price</th></tr>
+  <tr><td>Basic</td><td>5&nbsp;€</td><td>per month</td></tr>
+</table>
+<p>Questions? Write to
+<a href="mailto:hi@example.com">hi@example.com</a>
+or call us.</p>`,
+      choices: `<label for="size">Size</label>
+<select id="size" name="size">
+  <option>Small</option>
+  <option selected>Medium</option>
+  <option>Large</option>
+</select>
+<label for="note">Note</label>
+<textarea id="note" rows="3" maxlength="200">Leave at the door</textarea>`,
+    };
+
+    const VOID = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr']);
+    const INLINE = new Set(['a', 'abbr', 'b', 'bdi', 'bdo', 'br', 'button', 'cite', 'code', 'data', 'dfn', 'em', 'i', 'img', 'input', 'kbd', 'label', 'mark', 'output', 'q', 's', 'samp', 'select', 'small', 'span', 'strong', 'sub', 'sup', 'textarea', 'time', 'u', 'var']);
+    // HTML attribute name → React prop name (the ones that differ by more than hyphens)
+    const RENAME = {
+      class: 'className', for: 'htmlFor', tabindex: 'tabIndex', readonly: 'readOnly', maxlength: 'maxLength', minlength: 'minLength',
+      colspan: 'colSpan', rowspan: 'rowSpan', autocomplete: 'autoComplete', autofocus: 'autoFocus', crossorigin: 'crossOrigin',
+      enctype: 'encType', novalidate: 'noValidate', formaction: 'formAction', accesskey: 'accessKey', contenteditable: 'contentEditable',
+      srcset: 'srcSet', datetime: 'dateTime', spellcheck: 'spellCheck', inputmode: 'inputMode', enterkeyhint: 'enterKeyHint',
+      fetchpriority: 'fetchPriority', referrerpolicy: 'referrerPolicy', allowfullscreen: 'allowFullScreen', playsinline: 'playsInline',
+      usemap: 'useMap', charset: 'charSet', 'http-equiv': 'httpEquiv', popovertarget: 'popoverTarget', popovertargetaction: 'popoverTargetAction',
+      'xlink:href': 'xlinkHref', 'xml:lang': 'xmlLang',
+    };
+    const EVENTS = { dblclick: 'DoubleClick', mouseover: 'MouseOver', mouseout: 'MouseOut', mousedown: 'MouseDown', mouseup: 'MouseUp', keydown: 'KeyDown', keyup: 'KeyUp', focusin: 'FocusIn', focusout: 'FocusOut' };
+    const camel = (s) => s.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+
+    function convert(html) {
+      const template = document.createElement('template');
+      template.innerHTML = html;
+      const changes = new Map();
+      const note = (key) => changes.set(key, (changes.get(key) || 0) + 1);
+
+      const text = (s) => s.replace(/[{}<> ]/g, (c) => {
+        note(c === ' ' ? 'nbsp' : 'braces');
+        return c === ' ' ? '&nbsp;' : `{'${c}'}`;
+      });
+      const value = (v) => (/["\\\n]/.test(v) ? `{${JSON.stringify(v)}}` : `"${v}"`);
+
+      function styleObject(css) {
+        const pairs = css.split(';').map((d) => d.trim()).filter(Boolean).map((d) => {
+          const i = d.indexOf(':');
+          const prop = d.slice(0, i).trim(), val = d.slice(i + 1).trim();
+          const key = prop.startsWith('--') ? `'${prop}'` : camel(prop.replace(/^-(webkit|moz|ms)-/, (_, v) => `${v[0].toUpperCase()}${v.slice(1)}-`));
+          return `${key}: ${JSON.stringify(val).replace(/^"|"$/g, "'")}`;
+        });
+        return `{{ ${pairs.join(', ')} }}`;
+      }
+
+      function attrs(el) {
+        const out = [];
+        for (const { name, value: v } of el.attributes) {
+          if (name === 'class' || name === 'for') note(name);
+          if (name === 'style') { note('style'); out.push(`style=${styleObject(v)}`); continue; }
+          if (name.startsWith('on')) {
+            const ev = name.slice(2);
+            note('events');
+            out.push(`on${EVENTS[ev] || ev[0].toUpperCase() + ev.slice(1)}={(event) => { ${v} }}`);
+            continue;
+          }
+          if ((name === 'value' && ['input', 'textarea', 'select'].includes(el.localName)) || name === 'checked') {
+            note('defaults');
+            out.push(`${name === 'checked' ? 'defaultChecked' : 'defaultValue'}${name === 'checked' ? '' : `=${value(v)}`}`);
+            continue;
+          }
+          if (name === 'selected' && el.localName === 'option') continue;
+          let prop = RENAME[name] || name;
+          if (!RENAME[name] && el.namespaceURI === 'http://www.w3.org/2000/svg' && /[-:]/.test(name) && !name.startsWith('aria-') && !name.startsWith('data-')) prop = camel(name.replace(':', '-'));
+          if (prop !== name && name !== 'class' && name !== 'for') note('renamed');
+          out.push(v === '' && el.namespaceURI !== 'http://www.w3.org/2000/svg' && !['alt', 'value'].includes(name) ? prop : `${prop}=${value(v)}`);
+        }
+        if (el.localName === 'select') {
+          const chosen = [...el.options].find((o) => o.hasAttribute('selected'));
+          if (chosen) { note('selected'); out.push(`defaultValue=${value(chosen.value)}`); }
+        }
+        if (el.localName === 'textarea' && el.value) { note('textarea'); out.push(`defaultValue=${value(el.value)}`); }
+        return out.length ? ` ${out.join(' ')}` : '';
+      }
+
+      const isInline = (node) => node?.nodeType === Node.ELEMENT_NODE && INLINE.has(node.localName);
+
+      function children(parent) {
+        let s = '';
+        for (const node of parent.childNodes) {
+          if (node.nodeType === Node.COMMENT_NODE) { note('comment'); s += `{/*${node.data}*/}`; continue; }
+          if (node.nodeType === Node.TEXT_NODE) {
+            let t = node.data;
+            // JSX drops whitespace that contains a line break; HTML turns it into a space. Keep that space explicitly.
+            if (t.includes('\n')) {
+              const lead = /^\s*\n\s*/.exec(t)?.[0] || '', trail = /\s*\n\s*$/.exec(t)?.[0] || '';
+              if (!t.trim()) {
+                if (isInline(node.previousSibling) && isInline(node.nextSibling)) { note('space'); s += `{' '}${t}`; } else s += t;
+                continue;
+              }
+              const body = t.slice(lead.length, t.length - trail.length);
+              const keepLead = lead && isInline(node.previousSibling), keepTrail = trail && isInline(node.nextSibling);
+              if (keepLead) note('space');
+              if (keepTrail) note('space');
+              s += `${lead}${keepLead ? "{' '}" : ''}${text(body)}${keepTrail ? "{' '}" : ''}${trail}`;
+              continue;
+            }
+            s += text(t);
+            continue;
+          }
+          s += element(node);
+        }
+        return s;
+      }
+
+      function element(el) {
+        const tag = el.localName === 'template' ? 'template' : el.tagName.includes(':') ? el.tagName : el.namespaceURI === 'http://www.w3.org/2000/svg' ? el.tagName : el.localName;
+        if (VOID.has(tag)) { note('void'); return `<${tag}${attrs(el)} />`; }
+        const inner = el.localName === 'textarea' ? '' : children(el.localName === 'template' ? el.content : el);
+        if (!inner && el.namespaceURI === 'http://www.w3.org/2000/svg') { note('void'); return `<${tag}${attrs(el)} />`; }
+        return `<${tag}${attrs(el)}>${inner}</${tag}>`;
+      }
+
+      // The parser adds <tbody> around bare <tr> rows; the JSX must contain it too, or hydration fails (example 37-3)
+      if (template.content.querySelector('tbody') && !/<tbody/i.test(html)) note('tbody');
+      let body = children(template.content).trim();
+      const roots = [...template.content.childNodes].filter((n) => n.nodeType !== Node.TEXT_NODE || n.data.trim());
+      if (roots.length > 1) { note('fragment'); body = `<>\n${body.split('\n').map((l) => `  ${l}`).join('\n')}\n</>`; }
+      const jsx = `export default function Component() {\n  return (\n${body.split('\n').map((l) => `    ${l}`).join('\n')}\n  );\n}`;
+      return { jsx, changes };
+    }
+
+    const LABELS = {
+      class: ['class', 'className'], for: ['for', 'htmlFor'], renamed: ['other attributes', 'camelCase props'],
+      style: ['style string', 'style object'], events: ['inline handler', 'function prop (check the code by hand)'],
+      defaults: ['value / checked', 'defaultValue / defaultChecked'], selected: ['option selected', 'defaultValue on <select>'],
+      textarea: ['<textarea> content', 'defaultValue'], void: ['void or empty element', 'self-closing tag'],
+      comment: ['<!-- comment -->', '{/* comment */}'], braces: ['{ } < > in text', "{'{'} and friends"],
+      nbsp: ['no-break space', '&nbsp;'], space: ['line break between inline content', "{' '}"], tbody: ['<tr> directly in <table>', '<tbody> added, as the parser does'], fragment: ['several root nodes', '<> fragment </>'],
+    };
+
+    const src = document.getElementById('src');
+    function run() {
+      const { jsx, changes } = convert(src.value);
+      document.getElementById('out').textContent = jsx;
+      document.getElementById('changes').replaceChildren(...[...changes].map(([key, n]) => {
+        const li = document.createElement('li');
+        const [from, to] = LABELS[key];
+        const a = document.createElement('code'), b = document.createElement('code');
+        a.textContent = from;
+        b.textContent = to;
+        li.append(a, ' → ', b, n > 1 ? ` (${n})` : '');
+        return li;
+      }));
+    }
+    const pick = document.getElementById('pick');
+    pick.addEventListener('change', () => { src.value = EXAMPLES[pick.value]; run(); });
+    src.addEventListener('input', run);
+    src.value = EXAMPLES.form;
+    run();
+  </script>
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>37-3 Hydration mismatches</title>
+  <style>
+    .stage { inline-size: min(1000px, 100%); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; align-items: start; }
+    .stage > * { min-width: 0; }
+    .wide { grid-column: 1 / -1; }
+    fieldset { border: 0; padding: 0; margin: 0; display: flex; gap: 14px; align-items: center; }
+    legend { float: left; font-size: 14px; color: var(--muted); margin-inline-end: 4px; }
+    fieldset .control { color: var(--fg); }
+    pre.code { font-size: 12px; }
+    .tree span { display: block; }
+    .tree .hit { background: color-mix(in srgb, var(--bad) 18%, transparent); color: var(--bad); font-weight: 600; border-radius: 3px; }
+    .verdict { margin: 0; font-weight: 600; }
+    .msgs { margin: 0 0 10px; padding-inline-start: 18px; font-size: 13px; display: grid; gap: 6px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .sub { font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">Case
+      <select id="pick">
+        <option value="pdiv">1. A div inside a p</option>
+        <option value="table">2. A tr directly in a table</option>
+        <option value="links">3. A link inside a link</option>
+        <option value="time">4. A clock rendered twice</option>
+      </select>
+    </label>
+    <fieldset>
+      <legend>Component</legend>
+      <label class="control"><input type="radio" name="variant" value="broken" checked> Broken</label>
+      <label class="control"><input type="radio" name="variant" value="fixed"> Fixed</label>
+    </fieldset>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="c-h">
+      <h2 class="label" id="c-h">The component (JSX)</h2>
+      <pre class="code" id="jsx"></pre>
+    </section>
+    <section class="panel" aria-labelledby="s-h">
+      <h2 class="label" id="s-h">1 · HTML sent by the server</h2>
+      <pre class="code" id="html"></pre>
+    </section>
+    <section class="panel" aria-labelledby="d-h">
+      <h2 class="label" id="d-h">2 · DOM the browser built</h2>
+      <pre class="code tree" id="dom"></pre>
+    </section>
+    <section class="panel" aria-labelledby="e-h">
+      <h2 class="label" id="e-h">3 · Tree the client expects</h2>
+      <pre class="code tree" id="expected"></pre>
+    </section>
+    <section class="panel wide" aria-labelledby="v-h">
+      <h2 class="label" id="v-h">4 · Compare</h2>
+      <p class="verdict" id="verdict" role="status"></p>
+    </section>
+    <section class="panel" aria-labelledby="r-h">
+      <h2 class="label" id="r-h">React 19.3 in development mode</h2>
+      <div id="react"></div>
+    </section>
+    <section class="panel" aria-labelledby="vu-h">
+      <h2 class="label" id="vu-h">Vue 3.5 in development mode</h2>
+      <div id="vue"></div>
+    </section>
+  </div>
+
+  <script>
+    // What each component renders: a string, or [tag, attributes, children].
+    // '$time' is the clock at render time: 10:00:00 on the server, 10:00:02 in the browser.
+    const CASES = {
+      pdiv: {
+        jsx: { broken: '<p>Intro <div>Box</div></p>', fixed: '<div>\n  <p>Intro</p>\n  <div>Box</div>\n</div>' },
+        tree: {
+          broken: ['p', {}, ['Intro ', ['div', {}, ['Box']]]],
+          fixed: ['div', {}, [['p', {}, ['Intro']], ['div', {}, ['Box']]]],
+        },
+      },
+      table: {
+        jsx: { broken: '<table>\n  <tr><td>A</td></tr>\n</table>', fixed: '<table>\n  <tbody>\n    <tr><td>A</td></tr>\n  </tbody>\n</table>' },
+        tree: {
+          broken: ['table', {}, [['tr', {}, [['td', {}, ['A']]]]]],
+          fixed: ['table', {}, [['tbody', {}, [['tr', {}, [['td', {}, ['A']]]]]]]],
+        },
+      },
+      links: {
+        jsx: { broken: '<a href="/a">One <a href="/b">Two</a></a>', fixed: '<p>\n  <a href="/a">One</a> <a href="/b">Two</a>\n</p>' },
+        tree: {
+          broken: ['a', { href: '/a' }, ['One ', ['a', { href: '/b' }, ['Two']]]],
+          fixed: ['p', {}, [['a', { href: '/a' }, ['One']], ' ', ['a', { href: '/b' }, ['Two']]]],
+        },
+      },
+      time: {
+        jsx: { broken: '<p>Rendered at {new Date().toLocaleTimeString()}</p>', fixed: '// renderedAt is sent along with the HTML\n<p>Rendered at {renderedAt}</p>' },
+        tree: { broken: ['p', {}, ['Rendered at $time']], fixed: ['p', {}, ['Rendered at 10:00:00']] },
+      },
+    };
+
+    // Recorded by rendering each component with react-dom/server and vue/server-renderer,
+    // then hydrating it in Chromium. Messages are the first lines of the console output.
+    const RECORDED = {
+      "pdiv.broken": {
+        "html": "<p>Intro <div>Box</div></p>",
+        "react": {
+          "msgs": [
+            "In HTML, <div> cannot be a descendant of <p>.\nThis will cause a hydration error.",
+            "Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client."
+          ],
+          "after": "<p>Intro <div>Box</div></p>"
+        },
+        "vue": {
+          "msgs": [
+            "[Vue warn]: Hydration children mismatch on <p>Intro </p>\nServer rendered element contains fewer child nodes than client vdom.",
+            "Hydration completed but contains mismatches."
+          ],
+          "after": "<p>Intro <div>Box</div></p><div>Box</div><p></p>"
+        }
+      },
+      "pdiv.fixed": {
+        "html": "<div><p>Intro</p><div>Box</div></div>",
+        "react": {
+          "msgs": [],
+          "after": "<div><p>Intro</p><div>Box</div></div>"
+        },
+        "vue": {
+          "msgs": [],
+          "after": "<div><p>Intro</p><div>Box</div></div>"
+        }
+      },
+      "table.broken": {
+        "html": "<table><tr><td>A</td></tr></table>",
+        "react": {
+          "msgs": [
+            "In HTML, <tr> cannot be a child of <table>. Add a <tbody>, <thead> or <tfoot> to your code to match the DOM tree generated by the browser.\nThis will cause a hydration error.",
+            "Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client."
+          ],
+          "after": "<table><tr><td>A</td></tr></table>"
+        },
+        "vue": {
+          "msgs": [
+            "[Vue warn]: Hydration node mismatch:\n- rendered on server: <tbody><tr><td>A</td></tr></tbody>\n- expected on client: tr",
+            "Hydration completed but contains mismatches."
+          ],
+          "after": "<table><tr><td>A</td></tr></table>"
+        }
+      },
+      "table.fixed": {
+        "html": "<table><tbody><tr><td>A</td></tr></tbody></table>",
+        "react": {
+          "msgs": [],
+          "after": "<table><tbody><tr><td>A</td></tr></tbody></table>"
+        },
+        "vue": {
+          "msgs": [],
+          "after": "<table><tbody><tr><td>A</td></tr></tbody></table>"
+        }
+      },
+      "links.broken": {
+        "html": "<a href=\"/a\">One <a href=\"/b\">Two</a></a>",
+        "react": {
+          "msgs": [
+            "In HTML, <a> cannot be a descendant of <a>.\nThis will cause a hydration error.",
+            "Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client."
+          ],
+          "after": "<a href=\"/a\">One <a href=\"/b\">Two</a></a>"
+        },
+        "vue": {
+          "msgs": [
+            "[Vue warn]: Hydration children mismatch on <a href=\"/a\">One </a>\nServer rendered element contains fewer child nodes than client vdom.",
+            "Hydration completed but contains mismatches."
+          ],
+          "after": "<a href=\"/a\">One <a href=\"/b\">Two</a></a><a href=\"/b\">Two</a>"
+        }
+      },
+      "links.fixed": {
+        "html": "<p><a href=\"/a\">One</a> <a href=\"/b\">Two</a></p>",
+        "react": {
+          "msgs": [],
+          "after": "<p><a href=\"/a\">One</a> <a href=\"/b\">Two</a></p>"
+        },
+        "vue": {
+          "msgs": [],
+          "after": "<p><a href=\"/a\">One</a> <a href=\"/b\">Two</a></p>"
+        }
+      },
+      "time.broken": {
+        "html": "<p>Rendered at 10:00:00</p>",
+        "react": {
+          "msgs": [
+            "Hydration failed because the server rendered text didn't match the client. As a result this tree will be regenerated on the client."
+          ],
+          "after": "<p>Rendered at 10:00:02</p>"
+        },
+        "vue": {
+          "msgs": [
+            "[Vue warn]: Hydration text mismatch in <p>Rendered at 10:00:00</p>\n  - rendered on server: \"Rendered at 10:00:00\"\n  - expected on client: \"Rendered at 10:00:02\"",
+            "Hydration completed but contains mismatches."
+          ],
+          "after": "<p>Rendered at 10:00:02</p>"
+        }
+      },
+      "time.fixed": {
+        "html": "<p>Rendered at 10:00:00</p>",
+        "react": {
+          "msgs": [],
+          "after": "<p>Rendered at 10:00:00</p>"
+        },
+        "vue": {
+          "msgs": [],
+          "after": "<p>Rendered at 10:00:00</p>"
+        }
+      }
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    // The client's tree as plain objects, with the browser clock filled in
+    const expand = (node) => typeof node === 'string'
+      ? { text: node.replace('$time', '10:00:02') }
+      : { tag: node[0], attrs: node[1], children: node[2].map(expand) };
+
+    // The browser's DOM in the same shape
+    const fromDom = (node) => node.nodeType === Node.TEXT_NODE
+      ? { text: node.data }
+      : { tag: node.localName, attrs: Object.fromEntries([...node.attributes].map((a) => [a.name, a.value])), children: [...node.childNodes].map(fromDom) };
+
+    // Walk both trees together and return the path to the first difference
+    function firstDifference(dom, client, path) {
+      if (!dom || !client) return { path, why: dom ? 'the DOM has a node the client does not expect' : 'the client expects a node the DOM does not have' };
+      if ('text' in dom || 'text' in client) {
+        if (dom.text === client.text) return null;
+        return { path, why: dom.text === undefined || client.text === undefined ? 'an element where text was expected' : `the text is "${dom.text}" in the DOM, "${client.text}" in the client` };
+      }
+      if (dom.tag !== client.tag) return { path, why: `<${dom.tag}> in the DOM, <${client.tag}> in the client` };
+      const shared = Math.min(dom.children.length, client.children.length);
+      for (let i = 0; i < shared; i++) {
+        const diff = firstDifference(dom.children[i], client.children[i], [...path, i]);
+        if (diff) return diff;
+      }
+      if (dom.children.length !== client.children.length) {
+        return { path, why: `<${dom.tag}> has ${dom.children.length} child node(s) in the DOM, ${client.children.length} in the client` };
+      }
+      return null;
+    }
+
+    // Print a tree, highlighting the node at the given path
+    function render(box, roots, hit) {
+      box.replaceChildren();
+      const walk = (node, depth, path) => {
+        const line = document.createElement('span');
+        line.textContent = '  '.repeat(depth) + ('text' in node
+          ? JSON.stringify(node.text)
+          : `<${node.tag}${Object.entries(node.attrs).map(([k, v]) => ` ${k}="${v}"`).join('')}>`);
+        if (hit && path.join() === hit.join()) line.className = 'hit';
+        box.append(line);
+        node.children?.forEach((child, i) => walk(child, depth + 1, [...path, i]));
+      };
+      roots.forEach((node, i) => walk(node, 0, [i]));
+    }
+
+    function outcome(box, result) {
+      box.replaceChildren();
+      if (result.msgs.length) {
+        const list = document.createElement('ul');
+        list.className = 'msgs bad';
+        for (const m of result.msgs) {
+          const li = document.createElement('li');
+          li.textContent = m;
+          list.append(li);
+        }
+        box.append(list);
+      } else {
+        const p = document.createElement('p');
+        p.className = 'verdict good';
+        p.textContent = 'Hydrated without warnings';
+        box.append(p);
+      }
+      const sub = document.createElement('p');
+      sub.className = 'sub';
+      sub.textContent = 'DOM after hydration';
+      const pre = document.createElement('pre');
+      pre.className = 'code';
+      pre.textContent = result.after;
+      box.append(sub, pre);
+    }
+
+    function show() {
+      const name = $('pick').value;
+      const variant = document.querySelector('[name="variant"]:checked').value;
+      const c = CASES[name];
+      const rec = RECORDED[`${name}.${variant}`];
+      $('jsx').textContent = c.jsx[variant];
+      $('html').textContent = rec.html;
+      const body = new DOMParser().parseFromString(`<!DOCTYPE html><body>${rec.html}`, 'text/html').body;
+      // Compare the server's container with the client's: both hold the component's top-level nodes
+      const dom = { tag: 'container', attrs: {}, children: [...body.childNodes].map(fromDom) };
+      const client = { tag: 'container', attrs: {}, children: [expand(c.tree[variant])] };
+      const diff = firstDifference(dom, client, []);
+      const hit = diff && diff.path.length ? diff.path : null;
+      render($('dom'), dom.children, hit);
+      render($('expected'), client.children, hit);
+      $('verdict').className = `verdict ${diff ? 'bad' : 'good'}`;
+      $('verdict').textContent = diff
+        ? `Mismatch: ${diff.path.length ? diff.why : `the container has ${dom.children.length} top-level node(s) in the DOM, the client expects ${client.children.length}`}`
+        : 'The trees match: hydration can reuse every node';
+      outcome($('react'), rec.react);
+      outcome($('vue'), rec.vue);
+    }
+
+    $('pick').addEventListener('change', show);
+    for (const r of document.querySelectorAll('[name="variant"]')) r.addEventListener('change', show);
+    show();
+  </script>
+</body>
+</html>

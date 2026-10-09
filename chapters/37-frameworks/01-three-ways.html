@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>37-1 One component, three syntaxes</title>
+  <style>
+    .stage { inline-size: min(1180px, 100%); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 14px; align-items: start; }
+    .stage > * { min-width: 0; }
+    .controls { max-inline-size: 900px; }
+    fieldset.diffs { border: 1px solid var(--border); border-radius: 10px; padding: 6px 14px 10px; margin: 0; display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: center; }
+    fieldset.diffs legend { font-weight: 600; font-size: 14px; padding: 0 4px; }
+    fieldset.diffs .control { color: var(--fg); }
+    pre.code { white-space: pre; word-break: normal; font-size: 12px; line-height: 1.6; }
+    pre.code span { display: block; min-inline-size: 100%; inline-size: max-content; padding-inline: 4px; margin-inline: -4px; border-radius: 3px; }
+    #dom { white-space: pre-wrap; word-break: break-word; }
+    pre.code .hit { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+    .result { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 14px; }
+    .rsvp { display: grid; gap: 8px; justify-items: start; }
+    .rsvp input[type="text"] { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    .rsvp fieldset { border: 1px solid var(--border); border-radius: 8px; display: flex; gap: 14px; }
+    .rsvp button { padding: 6px 14px; border-radius: 8px; border: 0; background: var(--accent); color: var(--bg); font-weight: 600; }
+    .rsvp button:disabled { opacity: .45; }
+    .rsvp .note { margin: 0; color: var(--good); font-weight: 600; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <fieldset class="diffs">
+      <legend>Highlight a difference</legend>
+      <label class="control"><input type="radio" name="diff" value="class" checked> class</label>
+      <label class="control"><input type="radio" name="diff" value="for"> for</label>
+      <label class="control"><input type="radio" name="diff" value="void"> Void elements</label>
+      <label class="control"><input type="radio" name="diff" value="events"> Events</label>
+      <label class="control"><input type="radio" name="diff" value="state"> Form state</label>
+      <label class="control"><input type="radio" name="diff" value="attrs"> Dynamic attributes</label>
+      <label class="control"><input type="radio" name="diff" value="lists"> Lists</label>
+      <label class="control"><input type="radio" name="diff" value="if"> Conditions</label>
+      <label class="control"><input type="radio" name="diff" value="text"> Text</label>
+    </fieldset>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="h-html">
+      <h2 class="label" id="h-html">HTML + JavaScript</h2>
+      <pre class="code" id="code-html"></pre>
+    </section>
+    <section class="panel" aria-labelledby="h-jsx">
+      <h2 class="label" id="h-jsx">React (JSX)</h2>
+      <pre class="code" id="code-jsx"></pre>
+    </section>
+    <section class="panel" aria-labelledby="h-vue">
+      <h2 class="label" id="h-vue">Vue (single-file component)</h2>
+      <pre class="code" id="code-vue"></pre>
+    </section>
+    <div class="result">
+      <section class="panel" aria-labelledby="h-live">
+        <h2 class="label" id="h-live">The HTML version, running</h2>
+        <form class="rsvp" id="rsvp">
+          <label for="guest-name">Your name</label>
+          <input id="guest-name" type="text" autocomplete="name">
+          <fieldset>
+            <legend>Pick a session</legend>
+            <label><input type="radio" name="session" value="morning" checked> Morning</label>
+            <label><input type="radio" name="session" value="afternoon"> Afternoon</label>
+          </fieldset>
+          <button type="submit" disabled>Reserve</button>
+          <p class="note" hidden></p>
+        </form>
+      </section>
+      <section class="panel" aria-labelledby="h-dom">
+        <h2 class="label" id="h-dom">Its DOM right now</h2>
+        <pre class="code" id="dom"></pre>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // Lines ending in "§key,key" are highlighted for those differences; the marker itself is not shown.
+    const CODE = {
+      html: `<form class="rsvp" id="rsvp"> §class
+  <label for="guest-name">Your name</label> §for
+  <input id="guest-name" type="text" autocomplete="name"> §void,state
+  <fieldset>
+    <legend>Pick a session</legend>
+    <label><input type="radio" name="session" value="morning" checked> Morning</label> §lists,void,state
+    <label><input type="radio" name="session" value="afternoon"> Afternoon</label> §lists,void
+  </fieldset>
+  <button type="submit" disabled>Reserve</button> §attrs
+  <p class="note" hidden></p> §if,class
+</form>
+
+<script>
+  const form = document.getElementById('rsvp');
+  const note = form.querySelector('.note');
+  form.addEventListener('input', () => { §events,state
+    form.querySelector('button').disabled = !form.elements['guest-name'].value; §attrs,state
+  });
+  form.addEventListener('submit', (e) => { §events
+    e.preventDefault(); §events
+    note.textContent = \`Thanks, \${form.elements['guest-name'].value}! See you in the \${form.elements.session.value}.\`; §text,state
+    note.hidden = false; §if
+  });
+<\/script>`,
+      jsx: `import { useState } from 'react';
+
+export default function Rsvp({ sessions }) {
+  const [name, setName] = useState(''); §state
+  const [session, setSession] = useState(sessions[0].id); §state
+  const [sent, setSent] = useState(false); §if
+  return (
+    <form className="rsvp" onSubmit={(e) => { e.preventDefault(); setSent(true); }}> §class,events
+      <label htmlFor="guest-name">Your name</label> §for
+      <input id="guest-name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} /> §void,state,events
+      <fieldset>
+        <legend>Pick a session</legend>
+        {sessions.map((s) => ( §lists
+          <label key={s.id}> §lists
+            <input type="radio" name="session" value={s.id} checked={session === s.id} onChange={() => setSession(s.id)} /> {s.label} §void,state,events,lists,text
+          </label>
+        ))} §lists
+      </fieldset>
+      <button type="submit" disabled={!name}>Reserve</button> §attrs
+      {sent && <p className="note">Thanks, {name}! See you in the {session}.</p>} §if,text,class
+    </form>
+  );
+}`,
+      vue: `<script setup>
+import { ref } from 'vue';
+
+const props = defineProps(['sessions']);
+const name = ref(''); §state
+const session = ref(props.sessions[0].id); §state
+const sent = ref(false); §if
+<\/script>
+
+<template>
+  <form class="rsvp" @submit.prevent="sent = true"> §class,events
+    <label for="guest-name">Your name</label> §for
+    <input id="guest-name" type="text" autocomplete="name" v-model="name"> §void,state
+    <fieldset>
+      <legend>Pick a session</legend>
+      <label v-for="s in sessions" :key="s.id"> §lists
+        <input type="radio" name="session" :value="s.id" v-model="session"> {{ s.label }} §void,state,lists,text,attrs
+      </label>
+    </fieldset>
+    <button type="submit" :disabled="!name">Reserve</button> §attrs
+    <p v-if="sent" class="note">Thanks, {{ name }}! See you in the {{ session }}.</p> §if,text,class
+  </form>
+</template>`,
+    };
+
+    for (const [name, source] of Object.entries(CODE)) {
+      const pre = document.getElementById(`code-${name}`);
+      for (const line of source.split('\n')) {
+        const [text, keys = ''] = line.split(' §');
+        const span = document.createElement('span');
+        span.textContent = text || ' ';
+        span.dataset.keys = keys;
+        pre.append(span);
+      }
+    }
+    function highlight() {
+      const key = document.querySelector('[name="diff"]:checked').value;
+      for (const span of document.querySelectorAll('pre.code span')) {
+        span.classList.toggle('hit', span.dataset.keys.split(',').includes(key));
+      }
+    }
+    for (const radio of document.querySelectorAll('[name="diff"]')) radio.addEventListener('change', highlight);
+    highlight();
+
+    // The HTML version of the component
+    const form = document.getElementById('rsvp');
+    const note = form.querySelector('.note');
+    form.addEventListener('input', () => {
+      form.querySelector('button').disabled = !form.elements['guest-name'].value;
+    });
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      note.textContent = `Thanks, ${form.elements['guest-name'].value}! See you in the ${form.elements.session.value}.`;
+      note.hidden = false;
+    });
+
+    // Show the live DOM, so you can compare it with what each version describes
+    const dom = document.getElementById('dom');
+    const showDom = () => {
+      dom.textContent = form.outerHTML.replace(/\n\s*/g, '\n').replace(/></g, '>\n<').replace(/\n+/g, '\n')
+        + `\n\n// Properties, not attributes:\nname.value = ${JSON.stringify(form.elements['guest-name'].value)}\nsession.value = ${JSON.stringify(form.elements.session.value)}`;
+    };
+    new MutationObserver(showDom).observe(form, { subtree: true, attributes: true, childList: true, characterData: true });
+    form.addEventListener('input', showDom);
+    form.addEventListener('change', showDom);
+    showDom();
+  </script>
+</body>
+</html>
