@@ -61,7 +61,7 @@
       const body = readUntil(']');
       const re = /([^\s=]+)(?:=(?:"([^"]*)"|'([^']*)'|([^\s]*)))?/g;
       let m;
-      while ((m = re.exec(body))) node.attrs.push([m[1], m[2] ?? m[3] ?? m[4] ?? null]);
+      while ((m = re.exec(body))) { node.order.push(['attr', node.attrs.length]); node.attrs.push([m[1], m[2] ?? m[3] ?? m[4] ?? null]); }
     }
     function element() {
       if (peek() === '(') {
@@ -71,11 +71,11 @@
         multiplier(group);
         return group;
       }
-      const node = { name: readName(), id: null, classes: [], attrs: [], text: null, repeat: 1, children: [] };
+      const node = { name: readName(), id: null, classes: [], attrs: [], order: [], text: null, repeat: 1, children: [] };
       for (;;) {
         const c = peek();
-        if (c === '#') { i++; node.id = readName() || fail('Expected an id'); }
-        else if (c === '.') { i++; node.classes.push(/^[\w$@-]+/.exec(src.slice(i))?.[0] || fail('Expected a class')); i += node.classes.at(-1).length; }
+        if (c === '#') { i++; node.id = readName() || fail('Expected an id'); node.order.push(['id']); }
+        else if (c === '.') { i++; if (!node.classes.length) node.order.push(['class']); node.classes.push(/^[\w$@-]+/.exec(src.slice(i))?.[0] || fail('Expected a class')); i += node.classes.at(-1).length; }
         else if (c === '[') { i++; readAttrs(node); }
         else if (c === '{') { i++; node.text = readUntil('}'); }
         else break;
@@ -140,9 +140,12 @@
         const snippet = node.name && SNIPPETS[name];
         if (snippet) { [name, attrs] = [snippet[0], snippet[1].map(a => [...a])]; }
         const set = (k, v) => { const hit = attrs.find(a => a[0] === k); if (hit) hit[1] = v; else attrs.push([k, v]); };
-        if (node.id) set('id', num(node.id));
-        if (node.classes.length) set('class', node.classes.map(num).join(' '));
-        for (const [k, v] of node.attrs) set(k, v === null ? (BOOLEAN.has(k) ? k : '') : num(v));
+        // id, class and [attributes] come out in the order they were written
+        for (const [kind, index] of node.order) {
+          if (kind === 'id') set('id', num(node.id));
+          else if (kind === 'class') set('class', node.classes.map(num).join(' '));
+          else { const [k, v] = node.attrs[index]; set(k, v === null ? (BOOLEAN.has(k) ? k : '') : num(v)); }
+        }
         const el = { name, attrs, children: [] };
         if (node.text !== null) el.children.push({ text: num(node.text) });
         el.children.push(...expandNodes(node.children, name, ctx));
