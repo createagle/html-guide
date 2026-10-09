@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Weather widget</title>
+  <style>
+    :root { color-scheme: light dark; font: 14px/1.5 system-ui, sans-serif; }
+    body { margin: 10px 12px; }
+    p { margin: 0 0 4px; }
+    .warn { color: #dc2626; font-weight: 600; }
+    @media (prefers-color-scheme: dark) { .warn { color: #f87171; } }
+  </style>
+</head>
+<body>
+  <p><strong>Eagle Ridge</strong> · 9 °C, clear</p>
+  <p id="parent"></p>
+  <p id="storage"></p>
+  <script>
+    // A third-party widget that looks around more than it should
+    const show = (id, text, bad) => { const p = document.getElementById(id); p.textContent = text; p.className = bad ? 'warn' : ''; };
+    try { show('parent', `I can read the page around me: "${parent.document.title}"`, true); }
+    catch { show('parent', 'I cannot read the page around me.', false); }
+    try { localStorage.setItem('widget-was-here', '1'); show('storage', 'I wrote to the site\'s localStorage.', true); }
+    catch { show('storage', 'I have no access to the site\'s storage.', false); }
+  </script>
+</body>
+</html>

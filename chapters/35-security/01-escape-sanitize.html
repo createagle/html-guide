@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>35-1 Escaping vs Sanitizing</title>
+  <style>
+    .stage { inline-size: min(900px, 100%); flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 14px; }
+    .input { display: grid; gap: 6px; }
+    .input label { font-weight: 600; font-size: 14px; }
+    .input textarea, .controls select { font: 13px/1.5 var(--mono); padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+    .input textarea { min-block-size: 60px; resize: vertical; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .grid .panel { display: grid; gap: 8px; align-content: start; }
+    .panel h2 { margin: 0; font-size: 14px; }
+    .panel h2 code { font-size: 12px; }
+    .out { min-block-size: 48px; padding: 8px 10px; border: 1px dashed var(--border); border-radius: 6px; font-size: 14px; overflow-wrap: anywhere; }
+    .out img { max-inline-size: 60px; }
+    pre.code { font-size: 11px; min-block-size: 40px; }
+    .ran { margin: 0; padding: 8px 12px; border-radius: 8px; font-size: 14px; background: var(--surface); }
+    .ran.bad { background: color-mix(in srgb, var(--bad) 14%, transparent); }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">Sample
+      <select id="sample">
+        <option value="Great walk! &lt;b&gt;Bring water.&lt;/b&gt;">Formatting</option>
+        <option value="Nice view &lt;img src=&quot;data:,&quot; onerror=&quot;flag('img onerror')&quot;&gt;">Image with onerror</option>
+        <option value="Hello &lt;script&gt;flag('script')&lt;/script&gt;">Script element</option>
+        <option value="&lt;a href=&quot;javascript:flag('javascript: link')&quot;&gt;Click this link&lt;/a&gt;">javascript: link</option>
+        <option value="&lt;p onmouseover=&quot;flag('onmouseover')&quot;&gt;Point at this text&lt;/p&gt;">Event attribute</option>
+      </select>
+    </label>
+  </div>
+  <div class="stage">
+    <div class="input">
+      <label for="text">A comment as a visitor typed it (the samples only run a harmless flag() function)</label>
+      <textarea id="text"></textarea>
+    </div>
+    <div class="grid">
+      <section class="panel" aria-labelledby="h1">
+        <h2 id="h1"><code>textContent</code></h2>
+        <div class="out" id="out-text"></div>
+        <pre class="code" id="dom-text"></pre>
+      </section>
+      <section class="panel" aria-labelledby="h2">
+        <h2 id="h2"><code>escapeHTML()</code> + <code>innerHTML</code></h2>
+        <div class="out" id="out-escape"></div>
+        <pre class="code" id="dom-escape"></pre>
+      </section>
+      <section class="panel" aria-labelledby="h3">
+        <h2 id="h3"><code>innerHTML</code> (unsafe)</h2>
+        <div class="out" id="out-raw"></div>
+        <pre class="code" id="dom-raw"></pre>
+      </section>
+      <section class="panel" aria-labelledby="h4">
+        <h2 id="h4"><span id="sanitizer-name">Sanitized</span></h2>
+        <div class="out" id="out-clean"></div>
+        <pre class="code" id="dom-clean"></pre>
+      </section>
+    </div>
+    <p class="ran" id="ran" role="status">No injected code has run.</p>
+  </div>
+  <script>
+    // The only thing the samples can do: report that injected code ran
+    const runs = [];
+    window.flag = (what) => {
+      runs.push(what);
+      const ran = document.getElementById('ran');
+      ran.textContent = `Injected code ran ${runs.length} ${runs.length === 1 ? 'time' : 'times'}: ${runs.join(', ')}`;
+      ran.classList.add('bad');
+    };
+
+    const escapeHTML = (s) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+    // A small allowlist sanitizer for the demo. In real projects use setHTML() or a maintained library.
+    const ALLOWED = { B: [], STRONG: [], I: [], EM: [], CODE: [], P: [], BR: [], UL: [], OL: [], LI: [], A: ['href'] };
+    const DROP = ['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'TEMPLATE', 'NOSCRIPT'];
+    function sanitize(html) {
+      const doc = new DOMParser().parseFromString(html, 'text/html'); // inert: nothing in it runs or loads
+      const clean = (node) => {
+        for (const child of [...node.childNodes]) {
+          if (child.nodeType === Node.TEXT_NODE) continue;
+          if (child.nodeType !== Node.ELEMENT_NODE || DROP.includes(child.tagName)) { child.remove(); continue; }
+          clean(child);
+          if (!(child.tagName in ALLOWED)) { child.replaceWith(...child.childNodes); continue; }
+          for (const attr of [...child.attributes]) {
+            const safeHref = attr.name === 'href' && /^(https?:|mailto:|#|\/)/i.test(attr.value.trim());
+            if (!ALLOWED[child.tagName].includes(attr.name) || (attr.name === 'href' && !safeHref)) child.removeAttribute(attr.name);
+          }
+        }
+      };
+      clean(doc.body);
+      return doc.body.innerHTML;
+    }
+    const native = 'setHTML' in Element.prototype;
+    document.getElementById('sanitizer-name').innerHTML = native
+      ? '<code>setHTML()</code> (built-in sanitizer)'
+      : 'Allowlist sanitizer (this browser has no <code>setHTML()</code>)';
+
+    const $ = (id) => document.getElementById(id);
+    function render() {
+      const input = $('text').value;
+      $('out-text').textContent = input;
+      $('out-escape').innerHTML = escapeHTML(input);
+      $('out-raw').innerHTML = input;
+      if (native) $('out-clean').setHTML(input);
+      else $('out-clean').innerHTML = sanitize(input);
+      for (const k of ['text', 'escape', 'raw', 'clean']) $(`dom-${k}`).textContent = $(`out-${k}`).innerHTML;
+    }
+    $('sample').addEventListener('change', () => { $('text').value = $('sample').value; render(); });
+    $('text').addEventListener('input', render);
+    $('text').value = $('sample').value;
+    render();
+  </script>
+</body>
+</html>

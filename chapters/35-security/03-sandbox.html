@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>35-3 iframe sandbox</title>
+  <style>
+    .stage { inline-size: min(820px, 100%); display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; align-items: start; }
+    fieldset { border: 1px solid var(--border); border-radius: 10px; padding: 8px 14px 12px; margin: 0; display: grid; gap: 6px; }
+    legend { font-weight: 600; font-size: 14px; padding: 0 4px; }
+    fieldset .control { color: var(--fg); }
+    iframe { inline-size: 100%; block-size: 220px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg); }
+    .side { display: grid; gap: 12px; }
+    pre.code { font-size: 12px; }
+    table { inline-size: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: start; padding: 6px 8px 6px 0; border-block-end: 1px solid var(--border); vertical-align: top; }
+    th { font-weight: 600; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <div class="side">
+      <fieldset id="flags">
+        <legend>Sandbox flags</legend>
+        <label class="control"><input type="checkbox" value="allow-scripts"> <code>allow-scripts</code></label>
+        <label class="control"><input type="checkbox" value="allow-same-origin"> <code>allow-same-origin</code></label>
+        <label class="control"><input type="checkbox" value="allow-forms"> <code>allow-forms</code></label>
+        <label class="control"><input type="checkbox" value="allow-popups"> <code>allow-popups</code></label>
+      </fieldset>
+      <pre class="code" id="markup"></pre>
+      <iframe id="frame" title="Embedded widget" sandbox=""></iframe>
+    </div>
+    <section class="panel" aria-labelledby="results-h">
+      <h2 class="label" id="results-h">What the embedded page could do</h2>
+      <table>
+        <tbody id="results"></tbody>
+      </table>
+    </section>
+  </div>
+
+  <!-- The embedded page. It tests what it is allowed to do and reports to this page with postMessage. -->
+  <template id="widget">
+    <style>
+      :root { color-scheme: light dark; font: 14px/1.5 system-ui, sans-serif; }
+      body { margin: 12px; display: grid; gap: 8px; }
+      p { margin: 0; }
+    </style>
+    <p><strong>Embedded widget</strong></p>
+    <form id="form"><label>Name <input type="text" name="name" value="Ana"></label> <button type="submit">Submit the form</button></form>
+    <p><button type="button" id="popup">Open a popup</button></p>
+    <script>
+      const report = (key, ok, text) => parent.postMessage({ key, ok, text }, '*');
+      report('scripts', true, 'Ran');
+      report('origin', self.origin !== 'null', `self.origin is "${self.origin}"`);
+      try { localStorage.getItem('x'); report('storage', true, 'Available'); }
+      catch (e) { report('storage', false, `${e.name}: no storage without an origin`); }
+      try { report('parent', true, `Read the title "${parent.document.title}"`); }
+      catch (e) { report('parent', false, `${e.name}: blocked`); }
+      document.getElementById('form').addEventListener('submit', (e) => { e.preventDefault(); report('forms', true, 'the submit event fired'); });
+      document.getElementById('popup').addEventListener('click', () => {
+        const w = window.open('about:blank', '_blank', 'width=300,height=200');
+        report('popups', Boolean(w), w ? 'window.open() returned a window' : 'window.open() returned null');
+        w?.close();
+      });
+    </script>
+  </template>
+
+  <script>
+    const frame = document.getElementById('frame');
+    const rows = {
+      scripts: 'Run scripts',
+      origin: 'Keep its origin',
+      storage: 'Use localStorage',
+      parent: 'Read this page',
+      forms: 'Submit a form',
+      popups: 'Open a popup',
+    };
+    const results = document.getElementById('results');
+    const cells = {};
+    for (const [key, label] of Object.entries(rows)) {
+      const tr = results.insertRow();
+      const th = document.createElement('th');
+      th.scope = 'row';
+      th.textContent = label;
+      tr.append(th);
+      cells[key] = tr.insertCell();
+    }
+
+    function load() {
+      const flags = [...document.querySelectorAll('#flags input:checked')].map((i) => i.value);
+      frame.setAttribute('sandbox', flags.join(' ')); // takes effect at the next navigation
+      document.getElementById('markup').textContent = `<iframe src="widget.html" sandbox="${flags.join(' ')}"></iframe>`;
+      for (const key in cells) {
+        cells[key].textContent = {
+          forms: 'No report yet: press the button in the frame. A blocked form never fires its submit event, so nothing is reported.',
+          popups: 'Not tried yet: press the button in the frame',
+        }[key] ?? 'No report: scripts did not run';
+      }
+      frame.srcdoc = document.getElementById('widget').innerHTML;
+    }
+
+    window.addEventListener('message', (e) => {
+      if (e.source !== frame.contentWindow || !(e.data?.key in cells)) return;
+      cells[e.data.key].textContent = `${e.data.ok ? 'Allowed' : 'Blocked'}: ${e.data.text}`;
+    });
+    document.getElementById('flags').addEventListener('change', load);
+    load();
+  </script>
+</body>
+</html>

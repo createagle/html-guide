@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Exercise 35-1 · Final</title>
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <style>
+    .comments { inline-size: min(520px, 100%); display: grid; gap: 12px; }
+    .comments h1 { margin: 0; font-size: 22px; }
+    .alert { margin: 0; padding: 10px 14px; border-radius: 8px; background: color-mix(in srgb, var(--bad) 16%, transparent); color: var(--bad); font-weight: 600; }
+    ol.list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+    ol.list li { padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; }
+    ol.list p { margin: 4px 0 0; }
+    form { display: grid; gap: 8px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; }
+    form label { display: grid; gap: 2px; font-size: 14px; }
+    form input, form textarea { font: inherit; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+    form button { justify-self: start; padding: 6px 14px; }
+  </style>
+</head>
+<body class="demo">
+  <main class="comments">
+    <h1>Comments on the Ridge Loop</h1>
+    <p class="alert" id="alert" hidden>Code hidden in a comment just ran on this page.</p>
+    <ol class="list" id="list"></ol>
+    <form id="form">
+      <label>Name <input type="text" name="name" required></label>
+      <label>Website (optional) <input type="text" name="site"></label>
+      <label>Comment <textarea name="text" rows="2" required></textarea></label>
+      <button type="submit">Post comment</button>
+    </form>
+  </main>
+  <script>
+    // Comments as they come back from the server. The last two were posted by an attacker;
+    // their "payload" only reveals the red warning above.
+    const comments = [
+      { name: 'Ana', site: 'https://ana.example', text: 'The ridge at sunrise was worth the early start.' },
+      { name: 'Tom', site: '', text: 'Muddy after rain, bring <b>proper boots</b>.' },
+      { name: 'Visitor<img src="data:," onerror="document.getElementById(\'alert\').hidden = false">', site: '', text: 'Lovely walk!' },
+      { name: 'Mei', site: 'javascript:document.getElementById(\'alert\').hidden = false', text: 'Click my name for more photos.' },
+    ];
+
+    // Only http and https links are allowed; anything else is shown as plain text
+    function safeUrl(value) {
+      try {
+        const url = new URL(value);
+        return ['http:', 'https:'].includes(url.protocol) ? url.href : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function render() {
+      const items = comments.map((c) => {
+        const li = document.createElement('li');
+        const who = document.createElement('strong');
+        const href = c.site && safeUrl(c.site);
+        if (href) {
+          const a = document.createElement('a');
+          a.href = href;
+          a.rel = 'nofollow ugc';
+          a.textContent = c.name;
+          who.append(a);
+        } else {
+          who.textContent = c.name;
+        }
+        const p = document.createElement('p');
+        p.textContent = c.text;
+        li.append(who, p);
+        return li;
+      });
+      document.getElementById('list').replaceChildren(...items);
+    }
+
+    document.getElementById('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const data = new FormData(e.target);
+      comments.push({ name: data.get('name'), site: data.get('site'), text: data.get('text') });
+      e.target.reset();
+      render();
+    });
+    render();
+  </script>
+</body>
+</html>

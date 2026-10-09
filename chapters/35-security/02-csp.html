@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; require-trusted-types-for 'script'; trusted-types demo">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>35-2 Content Security Policy</title>
+  <style>
+    .stage { inline-size: min(820px, 100%); flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 14px; }
+    pre.code { font-size: 12px; }
+    .tests { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; }
+    .tests button { padding: 8px 12px; text-align: start; }
+    .row { display: flex; gap: 12px; align-items: start; }
+    #out { inline-size: 120px; overflow: hidden; font-size: 12px; min-block-size: 44px; padding: 6px; border: 1px dashed var(--border); border-radius: 6px; }
+    ol.log { flex: 1; margin: 0; padding-inline-start: 22px; font-size: 13px; max-block-size: 220px; overflow: auto; }
+    ol.log li { padding: 2px 0; }
+  </style>
+</head>
+<body class="demo">
+  <div class="stage">
+    <section class="panel" aria-labelledby="policy-h">
+      <h2 class="label" id="policy-h">This page's policy</h2>
+      <pre class="code">default-src 'self';
+script-src 'self';
+style-src 'self' 'unsafe-inline';
+img-src 'self' data:;
+connect-src 'self';
+require-trusted-types-for 'script';
+trusted-types demo</pre>
+    </section>
+    <div class="tests" id="tests">
+      <button type="button" data-test="handler">Insert HTML with an onerror handler</button>
+      <button type="button" data-test="string">Assign a plain string to innerHTML</button>
+      <button type="button" data-test="eval">Run code with eval()</button>
+      <button type="button" data-test="image">Load an image from another site</button>
+      <button type="button" data-test="fetch">fetch() data from another site</button>
+      <button type="button" data-test="sri:good">Load a script with the right integrity hash</button>
+      <button type="button" data-test="sri:bad">Load a script with a wrong integrity hash</button>
+      <button type="button" id="clear">Clear the log</button>
+    </div>
+    <section class="panel" aria-labelledby="log-h">
+      <h2 class="label" id="log-h">What happened (newest first)</h2>
+      <div class="row">
+        <div id="out"></div>
+        <ol class="log" id="log" aria-live="polite"></ol>
+      </div>
+    </section>
+  </div>
+  <script src="csp/demo.js"></script>
+</body>
+</html>
