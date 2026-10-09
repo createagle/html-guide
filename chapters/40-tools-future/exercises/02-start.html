@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>40 Exercise 2 · Start</title>
+  <style>
+    .page { inline-size: min(640px, 100%); display: grid; gap: 12px; }
+    .big { font-size: 1.6rem; font-weight: 700; }
+    .bar { display: flex; gap: 8px; }
+    .bar input { flex: 1; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+    .go { padding: 8px 16px; border-radius: 8px; background: #1d4ed8; color: #fff; cursor: pointer; }
+    .item { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; }
+    .item div { color: var(--muted); font-size: 14px; }
+  </style>
+</head>
+<body class="demo">
+  <div class="page">
+    <div class="big">HTML tools</div>
+    <div class="bar">
+      <input placeholder="Search…" id="q">
+      <div class="go" onclick="find()">Go</div>
+    </div>
+    <div id="list">
+      <div class="item">
+        <b>Nu Html Checker</b>
+        <div>The W3C validator: markup errors against the standard.</div>
+        <a href="https://validator.w3.org/nu/">Click here</a>
+      </div>
+      <div class="item">
+        <b>html-validate</b>
+        <div>An offline validator with extra rules, for editors and CI.</div>
+        <a href="https://html-validate.org/">Click here</a>
+      </div>
+      <div class="item">
+        <b>axe-core</b>
+        <div>Automated accessibility checks, also built into browser tools.</div>
+        <a href="https://github.com/dequelabs/axe-core">Click here</a>
+      </div>
+      <div class="item">
+        <b>MDN: HTML elements</b>
+        <div>Every element with examples, attributes and browser support.</div>
+        <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements">Click here</a>
+      </div>
+      <div class="item">
+        <b>HTML Living Standard</b>
+        <div>The definition of HTML, maintained by WHATWG.</div>
+        <a href="https://html.spec.whatwg.org/multipage/">Click here</a>
+      </div>
+      <div class="item">
+        <b>Baseline</b>
+        <div>What “newly” and “widely available” mean.</div>
+        <a href="https://web.dev/baseline">Click here</a>
+      </div>
+      <div class="item">
+        <b>Can I use</b>
+        <div>Support tables by browser version.</div>
+        <a href="https://caniuse.com/">Click here</a>
+      </div>
+      <div class="item">
+        <b>Web Platform Status</b>
+        <div>Baseline status of every web feature.</div>
+        <a href="https://webstatus.dev/">Click here</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    function find() {
+      const q = document.getElementById('q').value.toLowerCase();
+      for (const item of document.querySelectorAll('.item')) item.style.display = item.textContent.toLowerCase().includes(q) ? '' : 'none';
+    }
+  </script>
+</body>
+</html>

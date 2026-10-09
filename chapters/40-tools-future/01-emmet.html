@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>40-1 Emmet Playground</title>
+  <style>
+    .controls { max-width: 900px; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; align-items: end; }
+    .controls label { display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
+    #abbr { font: 16px/1.4 var(--mono); padding: 8px 10px; border: 2px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); inline-size: 100%; }
+    #abbr[aria-invalid="true"] { border-color: var(--bad); }
+    select { padding: 7px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+    .stage { width: min(900px, 100%); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); gap: 16px; align-items: start; }
+    @media (max-width: 720px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+    .side { display: grid; gap: 16px; }
+    pre.code { white-space: pre; overflow-x: auto; min-block-size: 3em; }
+    #error { margin: 0; }
+    #notes { margin: 0; padding-left: 18px; font-size: 14px; display: grid; gap: 6px; }
+    #notes code { overflow-wrap: anywhere; }
+    iframe { inline-size: 100%; block-size: 180px; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label>Abbreviation
+      <input type="text" id="abbr" value="nav>ul>li*4>a" spellcheck="false" autocapitalize="off" autocomplete="off">
+    </label>
+    <label>Examples
+      <select id="examples">
+        <option value="!">Page skeleton</option>
+        <option value="nav>ul>li*4>a" selected>Navigation</option>
+        <option value="ul>li.item$*3>a[href=#]{Item $}">Numbered items</option>
+        <option value="header>h1{Open Web Day}+nav^main>p">Climbing up with ^</option>
+        <option value="table>(thead>tr>th*3)+tbody>tr*2>td*3">Table with groups</option>
+        <option value="form>label[for=email]{Email}+input#email[type=email name=email]+button{Register}">Form</option>
+        <option value="ul>.item*2">Implicit tag names</option>
+        <option value="img[src=photo-$$.jpg]*3">Zero-padded numbers</option>
+        <option value="section.speakers>h2{Speakers}+ul>li*2>img+h3">Speaker list</option>
+        <option value="dialog>h2+form[method=dialog]>btn">Dialog</option>
+        <option value="iframe">Embedded frame</option>
+      </select>
+    </label>
+  </div>
+  <div class="stage">
+    <section class="panel" aria-labelledby="out-h">
+      <h2 class="label" id="out-h">Expanded HTML</h2>
+      <pre class="code" id="out"></pre>
+      <p class="bad" id="error" hidden></p>
+    </section>
+    <div class="side">
+      <section class="panel" aria-labelledby="notes-h">
+        <h2 class="label" id="notes-h">Check before you use it</h2>
+        <ul id="notes"></ul>
+      </section>
+      <section class="panel" aria-labelledby="view-h">
+        <h2 class="label" id="view-h">Rendered</h2>
+        <iframe id="view" sandbox="" title="The expanded HTML, rendered"></iframe>
+      </section>
+    </div>
+  </div>
+  <script src="emmet-lite.js"></script>
+  <script>
+    const input = document.getElementById('abbr');
+    const examples = document.getElementById('examples');
+    const out = document.getElementById('out');
+    const error = document.getElementById('error');
+    const notes = document.getElementById('notes');
+    const view = document.getElementById('view');
+
+    // Things Emmet leaves for you to finish
+    const rules = [
+      [/<a href="">/, '<code>href=""</code>: the link goes nowhere until you fill it in.'],
+      [/<img [^>]*alt=""/, '<code>alt=""</code> marks an image as decorative. Write real alternative text unless it is.'],
+      [/<img (?![^>]*width)/, 'Add <code>width</code> and <code>height</code> to images so the page does not jump.'],
+      [/for=""/, '<code>for=""</code>: the label is not connected to any field.'],
+      [/action=""/, '<code>action=""</code> submits to the current page. Point it at the server, or leave it out.'],
+      [/name=""/, 'Empty <code>name</code>: the field’s value will not be submitted.'],
+      [/frameborder/, '<code>frameborder</code> is obsolete. Use a CSS border.'],
+      [/<iframe (?![^>]*title)/, 'Give the <code>&lt;iframe&gt;</code> a <code>title</code> that says what it contains.'],
+      [/<form[^]*<button>/, 'A <code>&lt;button&gt;</code> without <code>type</code> inside a form is a submit button.'],
+      [/<title>Document<\/title>/, 'Replace the placeholder <code>&lt;title&gt;</code>.'],
+      [/lang="en"/, 'Change <code>lang="en"</code> if the page is not in English.'],
+      [/src=""/, 'Empty <code>src</code>: the browser requests the current page instead.'],
+    ];
+
+    function update() {
+      let html;
+      try {
+        html = emmetLite.expand(input.value);
+        input.removeAttribute('aria-invalid');
+        error.hidden = true;
+      } catch (e) {
+        input.setAttribute('aria-invalid', 'true');
+        error.textContent = e.message;
+        error.hidden = false;
+        return;
+      }
+      out.textContent = html;
+      const found = rules.filter(([re]) => re.test(html)).map(([, text]) => text);
+      notes.innerHTML = (found.length ? found : ['Nothing obvious. Still read it through.']).map(t => `<li>${t}</li>`).join('');
+      view.srcdoc = `<!doctype html><style>body{font:14px system-ui;margin:8px}table,td,th{border:1px solid #999;border-collapse:collapse;padding:4px 12px}</style>${html}`;
+      const match = [...examples.options].find(o => o.value === input.value);
+      examples.value = match ? match.value : '';
+    }
+
+    input.addEventListener('input', update);
+    examples.addEventListener('change', () => { if (examples.value) { input.value = examples.value; update(); } });
+    update();
+  </script>
+</body>
+</html>

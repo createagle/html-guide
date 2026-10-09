@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Specifications, references, compatibility data, checkers and news sources for writing HTML.">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>HTML Resources</title>
+  <style>
+    body.demo { justify-content: flex-start; }
+    .page { width: min(860px, 100%); display: grid; gap: 20px; }
+    header h1 { margin: 0 0 4px; font-size: 2rem; }
+    header p { margin: 0; color: var(--muted); }
+    search { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+    search label { font-weight: 600; }
+    #filter { flex: 1 1 240px; padding: 8px 10px; border: 2px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+    .jump ul { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+    .jump a { display: block; padding: 3px 10px; border: 1px solid var(--border); border-radius: 999px; font-size: 14px; text-decoration: none; }
+    main { max-width: none; margin: 0; padding: 0; display: grid; gap: 24px; }
+    section h2 { margin: 0 0 8px; font-size: 1.25rem; }
+    section > ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 10px; }
+    section li { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+    section li a { font-weight: 600; }
+    section li p { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
+    mark { background: #fde68a; color: #1c1917; border-radius: 2px; }
+    #none { margin: 0; color: var(--muted); }
+  </style>
+</head>
+<body class="demo">
+  <div class="page">
+    <header>
+      <h1>HTML resources</h1>
+      <p>Where to look things up, check your work and follow what is coming next.</p>
+    </header>
+
+    <search>
+      <label for="filter">Filter</label>
+      <input type="search" id="filter" placeholder="e.g. validator, aria, baseline" autocomplete="off">
+      <output id="count" for="filter"></output>
+    </search>
+
+    <nav class="jump" aria-label="Categories">
+      <ul>
+        <li><a href="#specs">Specifications</a></li>
+        <li><a href="#reference">Reference</a></li>
+        <li><a href="#compat">Compatibility</a></li>
+        <li><a href="#check">Checkers</a></li>
+        <li><a href="#a11y">Accessibility</a></li>
+        <li><a href="#learn">Learning</a></li>
+        <li><a href="#tools">Editors and tools</a></li>
+        <li><a href="#next">What is coming</a></li>
+      </ul>
+    </nav>
+
+    <main>
+      <section id="specs">
+        <h2>Specifications</h2>
+        <ul>
+          <li><a href="https://html.spec.whatwg.org/multipage/">HTML Living Standard</a><p>The definition of HTML, maintained by WHATWG. Look up content models and what an attribute does.</p></li>
+          <li><a href="https://html.spec.whatwg.org/dev/">HTML for web developers</a><p>The same standard without the parts written for browser makers.</p></li>
+          <li><a href="https://dom.spec.whatwg.org/">DOM Standard</a><p>Nodes, elements, events and the tree that scripts work with.</p></li>
+          <li><a href="https://www.w3.org/TR/wai-aria-1.2/">WAI-ARIA 1.2</a><p>Roles, states and properties for accessibility.</p></li>
+          <li><a href="https://www.w3.org/TR/html-aria/">ARIA in HTML</a><p>Which roles and ARIA attributes each HTML element may have.</p></li>
+          <li><a href="https://www.w3.org/TR/WCAG22/">WCAG 2.2</a><p>The accessibility success criteria most laws refer to.</p></li>
+        </ul>
+      </section>
+
+      <section id="reference">
+        <h2>Reference</h2>
+        <ul>
+          <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements">MDN: HTML elements</a><p>Every element with examples, attributes and browser support.</p></li>
+          <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes">MDN: HTML attributes</a><p>Which elements accept each attribute.</p></li>
+          <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes">MDN: global attributes</a><p>Attributes that work on every element.</p></li>
+          <li><a href="https://html.spec.whatwg.org/multipage/indices.html">HTML index</a><p>Tables of all elements, attributes and events in the standard.</p></li>
+        </ul>
+      </section>
+
+      <section id="compat">
+        <h2>Compatibility</h2>
+        <ul>
+          <li><a href="https://web.dev/baseline">Baseline</a><p>What “newly” and “widely available” mean and how to use them.</p></li>
+          <li><a href="https://webstatus.dev/">Web Platform Status</a><p>Baseline status of every web feature, searchable.</p></li>
+          <li><a href="https://caniuse.com/">Can I use</a><p>Support tables by browser version, with usage share.</p></li>
+          <li><a href="https://github.com/web-platform-dx/web-features">web-features</a><p>The data behind Baseline, as an npm package.</p></li>
+          <li><a href="https://github.com/mdn/browser-compat-data">MDN browser-compat-data</a><p>The support data shown on MDN pages.</p></li>
+        </ul>
+      </section>
+
+      <section id="check">
+        <h2>Checkers</h2>
+        <ul>
+          <li><a href="https://validator.w3.org/nu/">Nu Html Checker</a><p>The W3C validator: markup errors against the standard.</p></li>
+          <li><a href="https://html-validate.org/">html-validate</a><p>An offline validator with extra rules, for editors and CI.</p></li>
+          <li><a href="https://github.com/dequelabs/axe-core">axe-core</a><p>Automated accessibility checks, also built into browser tools.</p></li>
+          <li><a href="https://wave.webaim.org/">WAVE</a><p>Accessibility problems shown on top of the page.</p></li>
+          <li><a href="https://developer.chrome.com/docs/lighthouse/overview">Lighthouse</a><p>Performance, accessibility and SEO audits in Chrome.</p></li>
+          <li><a href="https://validator.schema.org/">Schema Markup Validator</a><p>Checks JSON-LD and other structured data.</p></li>
+        </ul>
+      </section>
+
+      <section id="a11y">
+        <h2>Accessibility</h2>
+        <ul>
+          <li><a href="https://www.w3.org/WAI/ARIA/apg/">ARIA Authoring Practices Guide</a><p>Keyboard and ARIA patterns for widgets such as tabs and menus.</p></li>
+          <li><a href="https://webaim.org/">WebAIM</a><p>Articles, screen reader surveys and a contrast checker.</p></li>
+          <li><a href="https://www.a11yproject.com/">The A11Y Project</a><p>A community checklist and plain-language guides.</p></li>
+        </ul>
+      </section>
+
+      <section id="learn">
+        <h2>Learning</h2>
+        <ul>
+          <li><a href="https://web.dev/learn/html">web.dev: Learn HTML</a><p>A free course from semantics to forms and images.</p></li>
+          <li><a href="https://developer.mozilla.org/en-US/docs/Learn_web_development">MDN: Learn web development</a><p>Beginner to intermediate lessons with exercises.</p></li>
+          <li><a href="../../index.html">HTML Complete Guide examples</a><p>All the demos and exercises from this book.</p></li>
+        </ul>
+      </section>
+
+      <section id="tools">
+        <h2>Editors and tools</h2>
+        <ul>
+          <li><a href="https://docs.emmet.io/">Emmet</a><p>Abbreviations that expand into HTML, built into many editors.</p></li>
+          <li><a href="https://code.visualstudio.com/docs/languages/html">VS Code: HTML</a><p>Completion, formatting and Emmet in Visual Studio Code.</p></li>
+          <li><a href="https://prettier.io/">Prettier</a><p>Formats HTML, CSS and JavaScript the same way every time.</p></li>
+        </ul>
+      </section>
+
+      <section id="next">
+        <h2>What is coming</h2>
+        <ul>
+          <li><a href="https://github.com/whatwg/html/pulls">WHATWG HTML pull requests</a><p>Changes to the standard while they are discussed.</p></li>
+          <li><a href="https://open-ui.org/">Open UI</a><p>Where customizable select, popover and invokers were designed.</p></li>
+          <li><a href="https://chromestatus.com/">Chrome Platform Status</a><p>Features in development in Chromium and when they ship.</p></li>
+          <li><a href="https://wpt.fyi/interop">Interop</a><p>The yearly cross-browser project and its scores.</p></li>
+          <li><a href="https://webkit.org/blog/">WebKit blog</a><p>Release notes for each Safari version.</p></li>
+          <li><a href="https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases">Firefox release notes</a><p>What changed for developers in each Firefox version.</p></li>
+        </ul>
+      </section>
+
+      <p id="none" hidden>No resources match. Try a shorter word.</p>
+    </main>
+  </div>
+  <script>
+    const filter = document.getElementById('filter');
+    const items = [...document.querySelectorAll('main li')];
+    const sections = [...document.querySelectorAll('main section')];
+    // Remember each item's original markup so highlights can be removed
+    for (const li of items) li.dataset.html = li.innerHTML;
+
+    function mark(li, words) {
+      li.innerHTML = li.dataset.html;
+      if (!words) return;
+      const walker = document.createTreeWalker(li, NodeFilter.SHOW_TEXT);
+      const hits = [];
+      while (walker.nextNode()) {
+        const i = walker.currentNode.data.toLowerCase().indexOf(words);
+        if (i >= 0) hits.push([walker.currentNode, i]);
+      }
+      for (const [node, i] of hits) {
+        const hit = node.splitText(i);
+        hit.splitText(words.length);
+        const m = document.createElement('mark');
+        hit.replaceWith(m);
+        m.append(hit);
+      }
+    }
+
+    function apply() {
+      const words = filter.value.trim().toLowerCase();
+      let shown = 0;
+      for (const li of items) {
+        const match = !words || li.textContent.toLowerCase().includes(words) || li.querySelector('a').href.toLowerCase().includes(words);
+        li.hidden = !match;
+        mark(li, match ? words : '');
+        if (match) shown++;
+      }
+      for (const s of sections) s.hidden = s.querySelectorAll('li:not([hidden])').length === 0;
+      document.getElementById('none').hidden = shown > 0;
+      document.getElementById('count').textContent = words ? `${shown} of ${items.length} resources` : `${items.length} resources`;
+    }
+    filter.addEventListener('input', apply);
+    apply();
+  </script>
+</body>
+</html>

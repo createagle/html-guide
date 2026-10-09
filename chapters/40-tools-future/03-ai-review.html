@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>40-3 Reviewing AI-Generated HTML</title>
+  <style>
+    .controls { max-width: 1000px; }
+    .controls select { padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+    .stage { width: min(1100px, 100%); display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+    @media (max-width: 800px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+    .editor { display: grid; gap: 6px; }
+    .editor label { font-size: 13px; color: var(--muted); }
+    .code-wrap { display: grid; grid-template-columns: auto minmax(0, 1fr); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
+    #gutter { margin: 0; padding: 10px 8px; font: 12.5px/1.6 var(--mono); color: var(--muted); text-align: end; user-select: none; background: var(--bg); border-inline-end: 1px solid var(--border); overflow: hidden; }
+    #gutter .hit { color: #fff; background: #b91c1c; border-radius: 3px; padding: 0 3px; }
+    #src { font: 12.5px/1.6 var(--mono); padding: 10px; border: 0; background: transparent; color: var(--fg); resize: vertical; min-block-size: 30em; white-space: pre; overflow: auto; tab-size: 2; }
+    #src:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+    .results { display: grid; gap: 10px; }
+    .results section { border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
+    .results h2 { margin: 0; font-size: 14px; display: flex; gap: 8px; align-items: baseline; }
+    .results h2 .n { margin-inline-start: auto; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; background: #15803d; white-space: nowrap; }
+    .results section.has .n { background: #b91c1c; }
+    .results ul { margin: 6px 0 0; padding-left: 18px; font-size: 13.5px; display: grid; gap: 3px; }
+    .results code { overflow-wrap: anywhere; }
+    .line { font: 12px var(--mono); color: var(--muted); }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">Sample
+      <select id="sample">
+        <option value="draft">AI draft: newsletter sign-up</option>
+        <option value="final">After review</option>
+      </select>
+    </label>
+    <output id="total" for="src"></output>
+  </div>
+  <div class="stage">
+    <div class="editor">
+      <label for="src">HTML to review (edit it or paste your own)</label>
+      <div class="code-wrap">
+        <pre id="gutter" aria-hidden="true"></pre>
+        <textarea id="src" spellcheck="false" autocapitalize="off" autocomplete="off" rows="30"></textarea>
+      </div>
+    </div>
+    <div class="results" id="results"></div>
+  </div>
+
+  <script type="text/plain" id="sample-draft">
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Weekly Web Notes</title>
+</head>
+<body>
+  <nav role="navigation">
+    <a href="/">Home</a> | <a href="/archive">Archive</a>
+  </nav>
+  <h1>Weekly Web Notes</h1>
+  <div class="card">
+    <h4 class="card-title">Join the newsletter</h4>
+    <img src="envelope.png" alt="image of an envelope icon">
+    <p>One short email a week. No spam.</p>
+    <form>
+      <input type="text" placeholder="Your name">
+      <label for="e-mail">Email <span aria-label="required">*</span></label>
+      <input type="emailaddress" id="email" name="email" required="false">
+      <input type="checkbox" id="email" checked="false"> <span>Also send the monthly digest</span>
+      <div class="btn" role="button" onclick="subscribe()">Subscribe</div>
+    </form>
+    <button aria-role="close" tabindex="3" onclick="closeCard()"><i class="icon-x"></i></button>
+    <center><font size="2">Unsubscribe any time. <a href="javascript:void(0)" onclick="showPrivacy()">Privacy policy</a></font></center>
+  </div>
+</body>
+</html>
+</script>
+  <script type="text/plain" id="sample-final">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Weekly Web Notes</title>
+</head>
+<body>
+  <nav aria-label="Main">
+    <a href="/">Home</a> | <a href="/archive">Archive</a>
+  </nav>
+  <h1>Weekly Web Notes</h1>
+  <section class="card" aria-labelledby="join-h">
+    <h2 id="join-h">Join the newsletter</h2>
+    <img src="envelope.png" alt="" width="48" height="48">
+    <p>One short email a week. No spam.</p>
+    <form action="/subscribe" method="post">
+      <label for="name">Your name</label>
+      <input type="text" id="name" name="name" autocomplete="name">
+      <label for="email">Email (required)</label>
+      <input type="email" id="email" name="email" autocomplete="email" required>
+      <label><input type="checkbox" name="digest"> Also send the monthly digest</label>
+      <button type="submit">Subscribe</button>
+    </form>
+    <button type="button" aria-label="Close" onclick="closeCard()">×</button>
+    <p class="small">Unsubscribe any time. <a href="/privacy">Privacy policy</a></p>
+  </section>
+</body>
+</html>
+</script>
+  <script>
+    const ELEMENTS = new Set('a abbr address area article aside audio b base bdi bdo blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn dialog div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hgroup hr html i iframe img input ins kbd label legend li link main map mark math menu meta meter nav noscript object ol optgroup option output p picture pre progress q rp rt ruby s samp script search section select selectedcontent slot small source span strong style sub summary sup svg table tbody td template textarea tfoot th thead time title tr track u ul var video wbr'.split(' '));
+    const OBSOLETE = new Set('acronym applet basefont big blink center dir font frame frameset marquee noframes strike tt'.split(' '));
+    const OBSOLETE_ATTRS = ['align', 'bgcolor', 'frameborder', 'valign', 'cellpadding', 'cellspacing'];
+    const INPUT_TYPES = new Set('button checkbox color date datetime-local email file hidden image month number password radio range reset search submit tel text time url week'.split(' '));
+    const ARIA = new Set('activedescendant atomic autocomplete braillelabel brailleroledescription busy checked colcount colindex colindextext colspan controls current describedby description details disabled errormessage expanded flowto haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowindextext rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ').map(a => 'aria-' + a));
+    const ROLES = new Set('alert alertdialog application article banner blockquote button caption cell checkbox code columnheader combobox comment complementary contentinfo definition deletion dialog document emphasis feed figure form generic grid gridcell group heading img insertion link list listbox listitem log main mark marquee math menu menubar menuitem menuitemcheckbox menuitemradio meter navigation none note option paragraph presentation progressbar radio radiogroup region row rowgroup rowheader scrollbar search searchbox separator slider spinbutton status strong subscript suggestion superscript switch tab table tablist tabpanel term textbox time timer toolbar tooltip tree treegrid treeitem'.split(' '));
+    const IMPLICIT = { nav: 'navigation', button: 'button', main: 'main', aside: 'complementary', ul: 'list', ol: 'list', li: 'listitem', table: 'table', article: 'article', dialog: 'dialog', h1: 'heading', h2: 'heading', h3: 'heading', h4: 'heading', h5: 'heading', h6: 'heading', search: 'search' };
+    const BOOLEAN = ['checked', 'disabled', 'required', 'readonly', 'hidden', 'selected', 'multiple', 'autofocus', 'open', 'inert'];
+    const GENERIC = new Set('div span p b i em strong small code'.split(' '));
+
+    const src = document.getElementById('src');
+    const gutter = document.getElementById('gutter');
+    const results = document.getElementById('results');
+
+    // Start tags in source order, each with its line number
+    function tokens(text) {
+      const list = [];
+      const re = /<!--[^]*?-->|<([a-zA-Z][\w-]*)((?:\s+[^\s"'>\/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>]+))?)*)\s*\/?>/g;
+      let m;
+      while ((m = re.exec(text))) if (m[1]) list.push({ name: m[1].toLowerCase(), line: text.slice(0, m.index).split('\n').length });
+      return list;
+    }
+
+    function review(text) {
+      const doc = new DOMParser().parseFromString(text, 'text/html');
+      const tags = tokens(text);
+      // Match each element to its start tag: the nth element with a name is the nth start tag with that name
+      const byName = {};
+      for (const t of tags) (byName[t.name] ||= []).push(t.line);
+      const seen = {};
+      const lineOf = new Map();
+      for (const el of doc.querySelectorAll('*')) {
+        const n = el.localName;
+        seen[n] = (seen[n] || 0) + 1;
+        const line = byName[n]?.[seen[n] - 1];
+        if (line) lineOf.set(el, line);
+      }
+      const at = el => lineOf.get(el) || null;
+      const all = [...doc.querySelectorAll('*')].filter(el => lineOf.has(el));
+      const tag = el => '<code>&lt;' + el.localName + '&gt;</code>';
+      const a = s => '<code>' + s.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</code>';
+      const accName = el => (el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') && el.getAttribute('aria-labelledby').split(/\s+/).map(id => doc.getElementById(id)?.textContent || '').join(' ') || el.textContent || el.querySelector('img[alt]')?.alt || el.getAttribute('title') || '').trim();
+      const full = /<html[\s>]/i.test(text);
+
+      const groups = [
+        ['Things that do not exist', []],
+        ['Boolean attributes set to “false”', []],
+        ['Clicks that keyboards cannot reach', []],
+        ['Missing names and labels', []],
+        ['Headings picked for their size', []],
+        ['ARIA that is redundant or wrong', []],
+        ['Obsolete HTML', []],
+        ['Broken references and duplicate ids', []],
+        ['Document basics', []],
+      ];
+      const add = (g, el, msg) => groups[g][1].push([typeof el === 'number' ? el : el && at(el), msg]);
+
+      for (const t of tags) if (!ELEMENTS.has(t.name) && !OBSOLETE.has(t.name) && !t.name.includes('-')) add(0, t.line, `${a('<' + t.name + '>')} is not an HTML element.`);
+      for (const el of all) {
+        const n = el.localName;
+        if (n === 'input' && el.hasAttribute('type') && !INPUT_TYPES.has(el.getAttribute('type').toLowerCase())) add(0, el, `${a('type="' + el.getAttribute('type') + '"')} is not an input type; the browser falls back to a text field.`);
+        if (n === 'button' && el.hasAttribute('type') && !['submit', 'button', 'reset'].includes(el.getAttribute('type'))) add(0, el, `${a('type="' + el.getAttribute('type') + '"')} is not a button type.`);
+        for (const attr of el.getAttributeNames()) {
+          if (attr.startsWith('aria-') && !ARIA.has(attr)) add(0, el, `${a(attr)} is not an ARIA attribute${attr === 'aria-role' ? '; the attribute is called ' + a('role') : ''}.`);
+          if (BOOLEAN.includes(attr) && /^(false|no|0)$/i.test(el.getAttribute(attr))) add(1, el, `${a(attr + '="' + el.getAttribute(attr) + '"')} still turns ${a(attr)} on. Remove the attribute to turn it off.`);
+          if (OBSOLETE_ATTRS.includes(attr) || (attr === 'border' && n === 'img')) add(6, el, `${a(attr)} on ${tag(el)} is obsolete; use CSS.`);
+        }
+        const role = el.getAttribute('role');
+        if (role && !role.split(/\s+/).some(r => ROLES.has(r))) add(0, el, `${a('role="' + role + '"')} is not an ARIA role.`);
+
+        if (el.hasAttribute('onclick') && !el.matches('button, a[href], input, select, textarea, summary') && !(role && el.hasAttribute('tabindex'))) add(2, el, `${tag(el)} has a click handler but cannot be focused or used with Enter or Space. Use a ${a('<button>')}.`);
+        if (n === 'a' && /^(#|javascript:)/i.test(el.getAttribute('href') || '') && el.hasAttribute('onclick')) add(2, el, `${a('href="' + el.getAttribute('href') + '"')} with a click handler is a button pretending to be a link.`);
+        if (el.tabIndex > 0 && el.hasAttribute('tabindex')) add(2, el, `${a('tabindex="' + el.getAttribute('tabindex') + '"')} changes the tab order. Use 0 or leave it out.`);
+
+        if (n === 'img' && !el.hasAttribute('alt')) add(3, el, `${tag(el)} has no ${a('alt')}.`);
+        if (n === 'img' && /^(image|picture|photo|icon|graphic)\b|\b(image|picture|photo) of\b|\.(png|jpe?g|gif|svg|webp)$/i.test(el.getAttribute('alt') || '')) add(3, el, `${a('alt="' + el.getAttribute('alt') + '"')}: say what the image shows or does, without “image of”. Use ${a('alt=""')} if it is decoration.`);
+        if (el.matches('input:not([type=hidden], [type=submit], [type=button], [type=image], [type=reset]), select, textarea') && !el.labels?.length && !el.getAttribute('aria-label') && !el.getAttribute('aria-labelledby')) add(3, el, `${tag(el)}${el.placeholder ? ' (placeholder “' + el.placeholder + '”)' : ''} has no label.`);
+        if ((n === 'button' || role === 'button' || (n === 'a' && el.hasAttribute('href'))) && !accName(el)) add(3, el, `${tag(el)} has no text or ${a('aria-label')}, so it has no name.`);
+        if (n === 'a' && /^(click here|here|read more|more|link)$/i.test(accName(el))) add(3, el, `Link text “${accName(el)}” does not say where the link goes.`);
+
+        if (role && IMPLICIT[n] === role) add(5, el, `${a('role="' + role + '"')} repeats what ${tag(el)} already is.`);
+        if (el.hasAttribute('aria-label') && GENERIC.has(n) && !role) add(5, el, `${a('aria-label')} is not allowed on ${tag(el)} without a role; most screen readers ignore it. Put the words in the text.`);
+        if (el.getAttribute('aria-hidden') === 'true' && el.matches('a[href], button, input, select, textarea, [tabindex]')) add(5, el, `${a('aria-hidden="true"')} on something focusable leaves a silent stop in the tab order.`);
+        if (OBSOLETE.has(n)) add(6, el, `${tag(el)} is obsolete; use CSS.`);
+
+        if (n === 'label' && el.htmlFor && !doc.getElementById(el.htmlFor)) add(7, el, `${a('for="' + el.htmlFor + '"')} points at an id that does not exist.`);
+        for (const ref of ['aria-labelledby', 'aria-describedby', 'aria-controls']) {
+          for (const id of (el.getAttribute(ref) || '').split(/\s+/).filter(Boolean)) if (!doc.getElementById(id)) add(7, el, `${a(ref + '="' + id + '"')} points at an id that does not exist.`);
+        }
+      }
+      const ids = {};
+      for (const el of all) if (el.id) (ids[el.id] ||= []).push(el);
+      for (const [id, els] of Object.entries(ids)) if (els.length > 1) add(7, els[1], `${a('id="' + id + '"')} is used ${els.length} times.`);
+
+      let prev = 0;
+      for (const h of all.filter(el => /^h[1-6]$/.test(el.localName))) {
+        const lvl = +h.localName[1];
+        if (prev && lvl > prev + 1) add(4, h, `${tag(h)} follows an ${a('<h' + prev + '>')}: a level is skipped. Choose the level by structure and size it with CSS.`);
+        prev = lvl;
+      }
+      if (full) {
+        if (!doc.documentElement.getAttribute('lang')) add(8, at(doc.documentElement) || 1, `${a('<html>')} has no ${a('lang')}.`);
+        if (!doc.querySelector('meta[charset]')) add(8, 1, `No ${a('<meta charset>')}.`);
+        if (!doc.querySelector('meta[name=viewport]')) add(8, at(doc.head) || 1, `No viewport ${a('<meta>')}: phones show a zoomed-out desktop page.`);
+        if (!doc.title.trim()) add(8, 1, `No ${a('<title>')}.`);
+      }
+      return groups;
+    }
+
+    function render() {
+      const text = src.value;
+      const groups = review(text);
+      const lines = new Set();
+      let total = 0;
+      results.replaceChildren(...groups.map(([title, items]) => {
+        const section = document.createElement('section');
+        if (items.length) section.className = 'has';
+        items.sort((x, y) => (x[0] || 0) - (y[0] || 0));
+        total += items.length;
+        for (const [line] of items) if (line) lines.add(line);
+        section.innerHTML = `<h2>${title}<span class="n">${items.length ? items.length + (items.length === 1 ? ' problem' : ' problems') : 'OK'}</span></h2>` +
+          (items.length ? '<ul>' + items.map(([line, msg]) => `<li>${line ? `<span class="line">Line ${line}:</span> ` : ''}${msg}</li>`).join('') + '</ul>' : '');
+        return section;
+      }));
+      document.getElementById('total').textContent = total ? `${total} problems found` : 'No problems found by these checks';
+      const count = text.split('\n').length;
+      gutter.innerHTML = Array.from({ length: count }, (_, i) => lines.has(i + 1) ? `<span class="hit">${i + 1}</span>` : i + 1).join('\n');
+    }
+
+    function load(name) {
+      src.value = document.getElementById('sample-' + name).textContent.replace(/^\n/, '');
+      render();
+    }
+    src.addEventListener('input', render);
+    src.addEventListener('scroll', () => { gutter.scrollTop = src.scrollTop; });
+    document.getElementById('sample').addEventListener('change', e => load(e.target.value));
+    load('draft');
+  </script>
+</body>
+</html>

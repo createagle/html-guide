@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>40 Exercise 1 · Final</title>
+  <style>
+    .card { position: relative; inline-size: min(420px, 100%); border: 1px solid var(--border); border-radius: 14px; padding: 20px; display: grid; gap: 10px; }
+    .card h2 { margin: 0; font-size: 1.3rem; }
+    .card p { margin: 0; }
+    .card form { display: grid; gap: 8px; }
+    .card label { font-weight: 600; }
+    .card label.choice { font-weight: 400; display: flex; gap: 8px; align-items: center; }
+    .card input[type="text"], .card input[type="email"] { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+    .card form button { justify-self: start; padding: 8px 18px; border: 0; border-radius: 999px; background: #1d4ed8; color: #fff; font-weight: 600; cursor: pointer; }
+    .close { position: absolute; inset: 10px 10px auto auto; inline-size: 32px; block-size: 32px; border: 0; border-radius: 50%; background: var(--surface); color: var(--fg); font-size: 20px; line-height: 1; cursor: pointer; }
+    .small { font-size: 13px; color: var(--muted); }
+    #thanks { color: var(--good); font-weight: 600; }
+  </style>
+</head>
+<body class="demo">
+  <section class="card" id="card" aria-labelledby="join-h">
+    <h2 id="join-h">Join the newsletter</h2>
+    <img src="envelope.svg" alt="" width="48" height="48">
+    <p>One short email a week. No spam.</p>
+    <form id="join" action="https://example.org/subscribe" method="post">
+      <label for="name">Your name</label>
+      <input type="text" id="name" name="name" autocomplete="name">
+      <label for="email">Email (required)</label>
+      <input type="email" id="email" name="email" autocomplete="email" required>
+      <label class="choice"><input type="checkbox" name="digest"> Also send the monthly digest</label>
+      <button type="submit">Subscribe</button>
+    </form>
+    <p id="thanks" role="status"></p>
+    <button type="button" class="close" aria-label="Close">×</button>
+    <p class="small">Unsubscribe any time. <a href="https://example.org/privacy">Privacy policy</a></p>
+  </section>
+  <script>
+    document.getElementById('join').addEventListener('submit', e => {
+      e.preventDefault();
+      document.getElementById('thanks').textContent = 'Thanks! Check your inbox.';
+    });
+    document.querySelector('.close').addEventListener('click', () => { document.getElementById('card').hidden = true; });
+  </script>
+</body>
+</html>

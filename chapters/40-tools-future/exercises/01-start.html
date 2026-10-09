@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>40 Exercise 1 · Start</title>
+  <style>
+    .card { position: relative; inline-size: min(420px, 100%); border: 1px solid var(--border); border-radius: 14px; padding: 20px; display: grid; gap: 10px; }
+    .card-title { margin: 0; font-size: 1.3rem; }
+    .card img { inline-size: 48px; }
+    .card p { margin: 0; }
+    .card form { display: grid; gap: 8px; }
+    .card input[type="text"], .card input[type="emailaddress"] { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+    .btn { justify-self: start; padding: 8px 18px; border-radius: 999px; background: #1d4ed8; color: #fff; font-weight: 600; cursor: pointer; }
+    .card > button { position: absolute; inset: 10px 10px auto auto; inline-size: 32px; block-size: 32px; border: 0; border-radius: 50%; background: var(--surface); cursor: pointer; }
+    .icon-x::before { content: "×"; font-style: normal; font-size: 20px; color: var(--fg); }
+    #thanks { color: var(--good); font-weight: 600; }
+  </style>
+</head>
+<body class="demo">
+  <div class="card" id="card">
+    <h4 class="card-title">Join the newsletter</h4>
+    <img src="envelope.svg" alt="image of an envelope icon">
+    <p>One short email a week. No spam.</p>
+    <form>
+      <input type="text" placeholder="Your name">
+      <label for="e-mail">Email <span aria-label="required">*</span></label>
+      <input type="emailaddress" id="email" name="email" required="false">
+      <div><input type="checkbox" id="email" checked="false"> <span>Also send the monthly digest</span></div>
+      <div class="btn" role="button" onclick="subscribe()">Subscribe</div>
+    </form>
+    <p id="thanks" hidden>Thanks! Check your inbox.</p>
+    <button aria-role="close" tabindex="3" onclick="closeCard()"><i class="icon-x"></i></button>
+    <center><font size="2">Unsubscribe any time. <a href="javascript:void(0)" onclick="showPrivacy()">Privacy policy</a></font></center>
+    <p id="privacy" hidden>We only use your email to send the newsletter.</p>
+  </div>
+  <script>
+    function subscribe() { document.getElementById('thanks').hidden = false; }
+    function closeCard() { document.getElementById('card').hidden = true; }
+    function showPrivacy() { document.getElementById('privacy').hidden = false; }
+  </script>
+</body>
+</html>

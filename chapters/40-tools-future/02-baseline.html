@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <title>40-2 Baseline for the Features in This Book</title>
+  <style>
+    .controls { max-width: 900px; }
+    .controls select, .controls input { padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+    .stage { width: min(1000px, 100%); flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 12px; }
+    .counts { display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: center; margin: 0; padding: 0; list-style: none; font-size: 14px; color: var(--muted); }
+    .counts strong { color: var(--fg); font-size: 18px; margin-right: 4px; }
+    .scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+    table { inline-size: 100%; border-collapse: collapse; font-size: 13.5px; }
+    caption { caption-side: bottom; text-align: start; padding: 8px 12px; font-size: 12px; color: var(--muted); }
+    th, td { padding: 7px 10px; text-align: start; border-bottom: 1px solid var(--border); vertical-align: top; }
+    thead th { position: sticky; top: 0; background: var(--bg); font-size: 12px; color: var(--muted); white-space: nowrap; }
+    tbody th { font-weight: 600; min-inline-size: 13em; }
+    td.v { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); }
+    td.v.no { color: var(--bad); }
+    .status { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; color: #fff; }
+    .status.high { background: #15803d; }
+    .status.low { background: #1d4ed8; }
+    .status.limited { background: #9a3412; }
+    .when { display: block; font-size: 12px; color: var(--muted); white-space: nowrap; margin-top: 2px; }
+    .here { font-weight: 700; }
+    .here.yes { color: #15803d; }
+    @media (prefers-color-scheme: dark) { .here.yes { color: var(--good); } }
+    .here.no { color: var(--bad); }
+    .key { display: block; font: 12px var(--mono); color: var(--muted); font-weight: 400; }
+  </style>
+</head>
+<body class="demo">
+  <div class="controls">
+    <label class="control">Status
+      <select id="status">
+        <option value="">All</option>
+        <option value="high">Widely available</option>
+        <option value="low">Newly available</option>
+        <option value="false">Limited availability</option>
+      </select>
+    </label>
+    <label class="control">Search <input type="search" id="q" autocomplete="off"></label>
+    <output id="shown" for="status q"></output>
+  </div>
+  <div class="stage">
+    <ul class="counts" id="counts"></ul>
+    <div class="scroll" tabindex="0" role="region" aria-labelledby="cap">
+      <table>
+        <caption id="cap">Baseline status of HTML features used in this book. Versions are the first release with full support. Data: web-features 3.41.0. “This browser” is a feature test run on this page.</caption>
+        <thead>
+          <tr><th scope="col">Feature</th><th scope="col">Chapter</th><th scope="col">Baseline</th><th scope="col">Chrome</th><th scope="col">Edge</th><th scope="col">Firefox</th><th scope="col">Safari</th><th scope="col">Safari iOS</th><th scope="col">This browser</th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    const features = [
+      {"key":"download","name":"download","chapter":4,"baseline":"high","low":"2019-09-19","high":"2022-03-19","chrome":"14","edge":"18","firefox":"20","safari":"10.1","safari_ios":"13"},
+      {"key":"scroll-to-text-fragment","name":"Scroll to text fragment","chapter":4,"baseline":"low","low":"2024-10-01","high":null,"chrome":"80","edge":"80","firefox":"131","safari":"16.1","safari_ios":"16.1"},
+      {"key":"picture","name":"<picture>","chapter":5,"baseline":"high","low":"2016-03-21","high":"2018-09-21","chrome":"38","edge":"13","firefox":"38","safari":"9.1","safari_ios":"9.3"},
+      {"key":"srcset","name":"srcset and sizes","chapter":5,"baseline":"high","low":"2017-03-27","high":"2019-09-27","chrome":"38","edge":"13","firefox":"38","safari":"10.1","safari_ios":"10.3"},
+      {"key":"search","name":"<search>","chapter":10,"baseline":"high","low":"2023-10-13","high":"2026-04-13","chrome":"118","edge":"118","firefox":"118","safari":"17","safari_ios":"17"},
+      {"key":"dirname","name":"dirname","chapter":13,"baseline":"high","low":"2023-08-01","high":"2026-02-01","chrome":"17","edge":"79","firefox":"116","safari":"6","safari_ios":"6"},
+      {"key":"translate","name":"translate","chapter":13,"baseline":"high","low":"2023-03-14","high":"2025-09-14","chrome":"19","edge":"79","firefox":"111","safari":"6","safari_ios":"6"},
+      {"key":"iframe-srcdoc","name":"srcdoc","chapter":15,"baseline":"high","low":"2020-01-15","high":"2022-07-15","chrome":"20","edge":"79","firefox":"25","safari":"6","safari_ios":"6"},
+      {"key":"mathml","name":"MathML","chapter":16,"baseline":"high","low":"2023-01-12","high":"2025-07-12","chrome":"109","edge":"109","firefox":"4","safari":"5.1","safari_ios":"5"},
+      {"key":"input-date-time","name":"Date and time <input> types","chapter":17,"baseline":"high","low":"2021-10-05","high":"2024-04-05","chrome":"20","edge":"12","firefox":"93","safari":"14.1","safari_ios":"5"},
+      {"key":"user-pseudos","name":":user-valid and :user-invalid","chapter":18,"baseline":"high","low":"2023-11-02","high":"2026-05-02","chrome":"119","edge":"119","firefox":"88","safari":"16.5","safari_ios":"16.5"},
+      {"key":"constraint-validation","name":"Constraint validation API","chapter":19,"baseline":"high","low":"2018-12-11","high":"2021-06-11","chrome":"40","edge":"18","firefox":"51","safari":"10.1","safari_ios":"10.3"},
+      {"key":"datalist","name":"<datalist>","chapter":20,"baseline":false,"low":null,"high":null,"chrome":"69","edge":"12","firefox":"110","safari":"12.1","safari_ios":"12.2"},
+      {"key":"inputmode","name":"inputmode","chapter":20,"baseline":"high","low":"2021-12-07","high":"2024-06-07","chrome":"66","edge":"79","firefox":"95","safari":"12.1","safari_ios":"12.2"},
+      {"key":"enterkeyhint","name":"enterkeyhint","chapter":20,"baseline":"high","low":"2021-11-02","high":"2024-05-02","chrome":"77","edge":"79","firefox":"94","safari":"13.1","safari_ios":"13.4"},
+      {"key":"customizable-select","name":"Customizable <select>","chapter":22,"baseline":false,"low":null,"high":null,"chrome":"135","edge":"135","firefox":null,"safari":"27","safari_ios":"27"},
+      {"key":"details","name":"<details>","chapter":23,"baseline":"high","low":"2020-01-15","high":"2022-07-15","chrome":"12","edge":"79","firefox":"49","safari":"6","safari_ios":"6"},
+      {"key":"details-name","name":"Mutually exclusive <details> elements","chapter":23,"baseline":"low","low":"2024-09-03","high":null,"chrome":"120","edge":"120","firefox":"130","safari":"17.2","safari_ios":"17.2"},
+      {"key":"hidden-until-found","name":"hidden=\"until-found\"","chapter":23,"baseline":false,"low":null,"high":null,"chrome":"102","edge":"102","firefox":"148","safari":null,"safari_ios":null},
+      {"key":"dialog","name":"<dialog>","chapter":24,"baseline":"high","low":"2022-03-14","high":"2024-09-14","chrome":"37","edge":"79","firefox":"98","safari":"15.4","safari_ios":"15.4"},
+      {"key":"requestclose","name":"dialog.requestClose()","chapter":24,"baseline":"low","low":"2025-05-27","high":null,"chrome":"134","edge":"134","firefox":"139","safari":"18.4","safari_ios":"18.4"},
+      {"key":"dialog-closedby","name":"<dialog closedby>","chapter":24,"baseline":false,"low":null,"high":null,"chrome":"134","edge":"134","firefox":"141","safari":null,"safari_ios":null},
+      {"key":"popover","name":"Popover","chapter":25,"baseline":"low","low":"2025-01-27","high":null,"chrome":"116","edge":"116","firefox":"125","safari":"17","safari_ios":"18.3"},
+      {"key":"invoker-commands","name":"Invoker commands","chapter":26,"baseline":"low","low":"2025-12-12","high":null,"chrome":"135","edge":"135","firefox":"144","safari":"26.2","safari_ios":"26.2"},
+      {"key":"interest-invokers","name":"Interest invokers","chapter":26,"baseline":false,"low":null,"high":null,"chrome":"142","edge":"142","firefox":null,"safari":null,"safari_ios":null},
+      {"key":"template","name":"<template>","chapter":27,"baseline":"high","low":"2015-11-12","high":"2018-05-12","chrome":"26","edge":"13","firefox":"22","safari":"8","safari_ios":"8"},
+      {"key":"slot","name":"<slot>","chapter":28,"baseline":"high","low":"2020-01-15","high":"2022-07-15","chrome":"53","edge":"79","firefox":"63","safari":"10","safari_ios":"10"},
+      {"key":"autonomous-custom-elements","name":"Autonomous custom elements","chapter":28,"baseline":"high","low":"2020-01-15","high":"2022-07-15","chrome":"54","edge":"79","firefox":"63","safari":"10.1","safari_ios":"10.3"},
+      {"key":"declarative-shadow-dom","name":"Declarative shadow DOM","chapter":28,"baseline":"high","low":"2024-02-20","high":"2026-08-20","chrome":"111","edge":"111","firefox":"123","safari":"16.4","safari_ios":"16.4"},
+      {"key":"form-associated-custom-elements","name":"Form-associated custom elements","chapter":28,"baseline":"high","low":"2023-03-27","high":"2025-09-27","chrome":"77","edge":"79","firefox":"98","safari":"16.4","safari_ios":"16.4"},
+      {"key":"import-maps","name":"Import maps","chapter":29,"baseline":"high","low":"2023-03-27","high":"2025-09-27","chrome":"89","edge":"89","firefox":"108","safari":"16.4","safari_ios":"16.4"},
+      {"key":"contenteditable-plaintextonly","name":"contenteditable=\"plaintext-only\"","chapter":30,"baseline":"low","low":"2025-03-04","high":null,"chrome":"51","edge":"12","firefox":"136","safari":"5.1","safari_ios":"5"},
+      {"key":"draganddrop","name":"Drag and Drop","chapter":30,"baseline":"high","low":"2015-07-29","high":"2018-01-29","chrome":"3","edge":"12","firefox":"3.5","safari":"4","safari_ios":"3.2"},
+      {"key":"inert","name":"inert","chapter":31,"baseline":"high","low":"2023-04-11","high":"2025-10-11","chrome":"102","edge":"102","firefox":"112","safari":"15.5","safari_ios":"15.5"},
+      {"key":"loading-lazy","name":"Lazy-loading images and iframes","chapter":33,"baseline":"high","low":"2023-12-19","high":"2026-06-19","chrome":"77","edge":"79","firefox":"121","safari":"16.4","safari_ios":"16.4"},
+      {"key":"fetch-priority","name":"Fetch priority","chapter":33,"baseline":"low","low":"2024-10-29","high":null,"chrome":"103","edge":"103","firefox":"132","safari":"17.2","safari_ios":"17.2"},
+      {"key":"modulepreload","name":"<link rel=\"modulepreload\">","chapter":33,"baseline":"high","low":"2023-09-18","high":"2026-03-18","chrome":"66","edge":"79","firefox":"115","safari":"17","safari_ios":"17"},
+      {"key":"speculation-rules","name":"Speculation rules","chapter":33,"baseline":false,"low":null,"high":null,"chrome":"109","edge":"109","firefox":null,"safari":null,"safari_ios":null},
+      {"key":"blocking-render","name":"blocking=\"render\"","chapter":33,"baseline":false,"low":null,"high":null,"chrome":"105","edge":"105","firefox":null,"safari":"18.2","safari_ios":"18.2"},
+      {"key":"sizes-auto","name":"<img sizes=\"auto\" loading=\"lazy\">","chapter":33,"baseline":false,"low":null,"high":null,"chrome":"126","edge":"126","firefox":"150","safari":null,"safari_ios":null},
+      {"key":"service-workers","name":"Service workers","chapter":38,"baseline":"high","low":"2018-04-30","high":"2020-10-30","chrome":"45","edge":"17","firefox":"44","safari":"11.1","safari_ios":"11.3"},
+      {"key":"manifest","name":"Web app manifest","chapter":38,"baseline":false,"low":null,"high":null,"chrome":"53","edge":"79","firefox":null,"safari":"17","safari_ios":"15.4"},
+      {"key":"beforeinstallprompt","name":"beforeinstallprompt","chapter":38,"baseline":false,"low":null,"high":null,"chrome":"76","edge":"79","firefox":null,"safari":null,"safari_ios":null},
+      {"key":"focusgroup","name":"focusgroup","chapter":40,"baseline":false,"low":null,"high":null,"chrome":null,"edge":null,"firefox":null,"safari":null,"safari_ios":null}
+    ];
+    const tests = {
+    "download": () => 'download' in HTMLAnchorElement.prototype,
+    "scroll-to-text-fragment": () => 'fragmentDirective' in document,
+    "picture": () => 'HTMLPictureElement' in window,
+    "srcset": () => 'srcset' in HTMLImageElement.prototype,
+    "search": () => !(document.createElement('search') instanceof HTMLUnknownElement),
+    "dirname": () => 'dirName' in HTMLInputElement.prototype,
+    "translate": () => 'translate' in HTMLElement.prototype,
+    "iframe-srcdoc": () => 'srcdoc' in HTMLIFrameElement.prototype,
+    "mathml": () => 'MathMLElement' in window,
+    "input-date-time": () => (() => { const i = document.createElement('input'); i.type = 'date'; return i.type === 'date'; })(),
+    "user-pseudos": () => CSS.supports('selector(:user-invalid)'),
+    "constraint-validation": () => 'checkValidity' in HTMLInputElement.prototype,
+    "datalist": () => 'HTMLDataListElement' in window,
+    "inputmode": () => 'inputMode' in HTMLElement.prototype,
+    "enterkeyhint": () => 'enterKeyHint' in HTMLElement.prototype,
+    "customizable-select": () => CSS.supports('appearance', 'base-select'),
+    "details": () => 'open' in HTMLDetailsElement.prototype,
+    "details-name": () => 'name' in HTMLDetailsElement.prototype,
+    "hidden-until-found": () => 'onbeforematch' in HTMLElement.prototype,
+    "dialog": () => 'showModal' in HTMLDialogElement.prototype,
+    "requestclose": () => 'requestClose' in HTMLDialogElement.prototype,
+    "dialog-closedby": () => 'closedBy' in HTMLDialogElement.prototype,
+    "popover": () => 'showPopover' in HTMLElement.prototype,
+    "invoker-commands": () => 'command' in HTMLButtonElement.prototype,
+    "interest-invokers": () => 'interestForElement' in HTMLButtonElement.prototype,
+    "template": () => 'content' in HTMLTemplateElement.prototype,
+    "slot": () => 'HTMLSlotElement' in window,
+    "autonomous-custom-elements": () => 'customElements' in window,
+    "declarative-shadow-dom": () => 'shadowRootMode' in HTMLTemplateElement.prototype,
+    "form-associated-custom-elements": () => 'attachInternals' in HTMLElement.prototype,
+    "import-maps": () => !!(HTMLScriptElement.supports && HTMLScriptElement.supports('importmap')),
+    "contenteditable-plaintextonly": () => (() => { const d = document.createElement('div'); try { d.contentEditable = 'plaintext-only'; } catch { return false; } return d.contentEditable === 'plaintext-only'; })(),
+    "draganddrop": () => 'draggable' in HTMLElement.prototype,
+    "inert": () => 'inert' in HTMLElement.prototype,
+    "loading-lazy": () => 'loading' in HTMLImageElement.prototype,
+    "fetch-priority": () => 'fetchPriority' in HTMLImageElement.prototype,
+    "modulepreload": () => document.createElement('link').relList.supports('modulepreload'),
+    "speculation-rules": () => !!(HTMLScriptElement.supports && HTMLScriptElement.supports('speculationrules')),
+    "blocking-render": () => 'blocking' in HTMLLinkElement.prototype,
+    "sizes-auto": null,
+    "service-workers": () => 'serviceWorker' in navigator,
+    "manifest": null,
+    "beforeinstallprompt": () => 'onbeforeinstallprompt' in window,
+    "focusgroup": () => 'focusgroup' in HTMLElement.prototype,
+    };
+
+    // Newly available features become widely available 30 months later
+    function widelyFrom(low) {
+      const d = new Date(low + 'T00:00:00Z');
+      d.setUTCMonth(d.getUTCMonth() + 30);
+      return d.toISOString().slice(0, 7);
+    }
+    const label = { high: 'Widely available', low: 'Newly available', false: 'Limited availability' };
+    const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    function here(key) {
+      const test = tests[key];
+      if (!test) return ['–', ''];
+      try { return test() ? ['Yes', 'yes'] : ['No', 'no']; } catch { return ['No', 'no']; }
+    }
+
+    const rows = features.map(f => {
+      const tr = document.createElement('tr');
+      const status = String(f.baseline);
+      const when = f.baseline === 'high' ? `since ${f.high}` : f.baseline === 'low' ? `since ${f.low}, widely from ${widelyFrom(f.low)}` : 'not in all core browsers';
+      const [result, cls] = here(f.key);
+      const cell = v => `<td class="v${v ? '' : ' no'}">${v || '—'}</td>`;
+      tr.innerHTML = `<th scope="row">${esc(f.name)}<span class="key">${f.key}</span></th><td>${f.chapter}</td>` +
+        `<td><span class="status ${status === 'false' ? 'limited' : status}">${label[status]}</span><span class="when">${when}</span></td>` +
+        cell(f.chrome) + cell(f.edge) + cell(f.firefox) + cell(f.safari) + cell(f.safari_ios) +
+        `<td class="here ${cls}">${result}</td>`;
+      tr.dataset.status = status;
+      tr.dataset.text = (f.name + ' ' + f.key).toLowerCase();
+      return tr;
+    });
+    document.getElementById('rows').append(...rows);
+
+    const counts = { high: 0, low: 0, false: 0 };
+    for (const f of features) counts[String(f.baseline)]++;
+    document.getElementById('counts').innerHTML = Object.entries(counts).map(([k, n]) => `<li><strong>${n}</strong>${label[k]}</li>`).join('');
+
+    const status = document.getElementById('status');
+    const q = document.getElementById('q');
+    function filter() {
+      const words = q.value.trim().toLowerCase();
+      let n = 0;
+      for (const tr of rows) {
+        const show = (!status.value || tr.dataset.status === status.value) && (!words || tr.dataset.text.includes(words));
+        tr.hidden = !show;
+        if (show) n++;
+      }
+      document.getElementById('shown').textContent = `${n} of ${rows.length} shown`;
+    }
+    status.addEventListener('change', filter);
+    q.addEventListener('input', filter);
+    filter();
+  </script>
+</body>
+</html>

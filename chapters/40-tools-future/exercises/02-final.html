@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../assets/style.css">
+  <title>40 Exercise 2 · Final</title>
+  <style>
+    .page { inline-size: min(640px, 100%); display: grid; gap: 12px; }
+    h1 { margin: 0; font-size: 1.6rem; }
+    search { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+    search label { font-weight: 600; }
+    #q { flex: 1 1 200px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+    h2 { margin: 8px 0 6px; font-size: 1.1rem; }
+    ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+    li { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+    li a { font-weight: 600; }
+    li p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+  </style>
+</head>
+<body class="demo">
+  <main class="page">
+    <h1>HTML tools</h1>
+    <search>
+      <label for="q">Filter</label>
+      <input type="search" id="q" autocomplete="off">
+      <output id="count" for="q"></output>
+    </search>
+    <section aria-labelledby="check-h">
+      <h2 id="check-h">Checkers</h2>
+      <ul>
+        <li><a href="https://validator.w3.org/nu/">Nu Html Checker</a><p>The W3C validator: markup errors against the standard.</p></li>
+        <li><a href="https://html-validate.org/">html-validate</a><p>An offline validator with extra rules, for editors and CI.</p></li>
+        <li><a href="https://github.com/dequelabs/axe-core">axe-core</a><p>Automated accessibility checks, also built into browser tools.</p></li>
+      </ul>
+    </section>
+    <section aria-labelledby="ref-h">
+      <h2 id="ref-h">Reference</h2>
+      <ul>
+        <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements">MDN: HTML elements</a><p>Every element with examples, attributes and browser support.</p></li>
+        <li><a href="https://html.spec.whatwg.org/multipage/">HTML Living Standard</a><p>The definition of HTML, maintained by WHATWG.</p></li>
+      </ul>
+    </section>
+    <section aria-labelledby="compat-h">
+      <h2 id="compat-h">Compatibility</h2>
+      <ul>
+        <li><a href="https://web.dev/baseline">Baseline</a><p>What “newly” and “widely available” mean.</p></li>
+        <li><a href="https://caniuse.com/">Can I use</a><p>Support tables by browser version.</p></li>
+        <li><a href="https://webstatus.dev/">Web Platform Status</a><p>Baseline status of every web feature.</p></li>
+      </ul>
+    </section>
+    <p id="none" hidden>Nothing matches.</p>
+  </main>
+  <script>
+    const q = document.getElementById('q');
+    const items = [...document.querySelectorAll('section li')];
+    // Filter as you type; hide a section when none of its items match
+    q.addEventListener('input', () => {
+      const words = q.value.trim().toLowerCase();
+      let shown = 0;
+      for (const li of items) {
+        li.hidden = !li.textContent.toLowerCase().includes(words);
+        if (!li.hidden) shown++;
+      }
+      for (const section of document.querySelectorAll('section')) section.hidden = !section.querySelector('li:not([hidden])');
+      document.getElementById('none').hidden = shown > 0;
+      document.getElementById('count').textContent = words ? `${shown} of ${items.length} shown` : '';
+    });
+  </script>
+</body>
+</html>
